@@ -115,8 +115,8 @@ loadTexture =
 other formats have not been as well-tested yet. Configurable filter.
 -}
 loadTextureWithFilter : TextureFilter -> String -> Task Error Texture
-loadTextureWithFilter filter url =
-    Native.WebGL.loadTextureRaw Linear url
+loadTextureWithFilter =
+    Native.WebGL.loadTextureWithFilter
 
 
 {-| Return the (width, height) size of a texture. Useful for sprite sheets
