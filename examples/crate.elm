@@ -49,7 +49,7 @@ rotatedFace (angleX,angleY) =
     each f (a,b,c) =
       (f a, f b, f c)
   in
-    List.map (each (\x -> {x | pos <- transform t x.pos })) face
+    List.map (each (\x -> {x | pos = transform t x.pos })) face
 
 
 face : List ({ pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 })

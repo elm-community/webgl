@@ -1,17 +1,17 @@
 {
     "version": "1.0.0",
     "summary": "Examples",
-    "repository": "https://github.com/USER/PROJECT.git",
+    "repository": "https://github.com/elm-community/elm-webgl.git",
     "license": "BSD3",
     "source-directories": [
         "."
 	, "../src"
+	, "../../elm-linear-algebra/src"
     ],
     "native-modules": true,
     "exposed-modules": [],
     "dependencies": {
-        "elm-lang/core": "2.1.0 <= v < 3.0.0",
-        "johnpmayer/elm-linear-algebra": "2.0.2 <= v < 3.0.0"
+        "elm-lang/core": "2.1.0 <= v < 4.0.0"
     },
-    "elm-version": "0.15.1 <= v < 0.16.0"
+    "elm-version": "0.16.0 <= v < 0.17.0"
 }
