@@ -57,7 +57,7 @@ rotatedSquare (angleXZ,angleYZ) =
         t = x `mul` y
         each f (a,b,c) = (f a, f b, f c)
     in
-        List.map (each (\v -> {v | position <- transform t v.position })) square
+        List.map (each (\v -> {v | position = transform t v.position })) square
 
 
 square : List (Vertex, Vertex, Vertex)

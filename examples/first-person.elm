@@ -57,7 +57,7 @@ walk directions person =
       vz = toFloat  directions.y
     in
       { person |
-          velocity <- vec3 vx (getY person.velocity) vz
+          velocity = vec3 vx (getY person.velocity) vz
       }
 
 
@@ -70,7 +70,7 @@ jump isJumping person =
       (vx,_,vz) = toTuple person.velocity
     in
       { person |
-          velocity <- vec3 vx 2 vz
+          velocity = vec3 vx 2 vz
       }
 
 
@@ -83,7 +83,7 @@ physics dt person =
     (x,y,z) = toTuple position
   in
     { person |
-        position <-
+        position =
             if y < eyeLevel then vec3 x eyeLevel z else position
     }
 
@@ -97,7 +97,7 @@ gravity dt person =
       v = toRecord person.velocity
     in
       { person |
-          velocity <- vec3 v.x (v.y - 2 * dt) v.z
+          velocity = vec3 v.x (v.y - 2 * dt) v.z
       }
 
 
@@ -195,7 +195,7 @@ rotatedFace (angleXZ,angleYZ) =
     t = x `mul` y
     each f (a,b,c) = (f a, f b, f c)
   in
-    List.map (each (\v -> {v | position <- transform t v.position })) face
+    List.map (each (\v -> {v | position = transform t v.position })) face
 
 
 face : List (Vertex, Vertex, Vertex)
