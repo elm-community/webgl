@@ -154,7 +154,7 @@ is not yet available via elm-package for elm version 0.16. So, to build
 elm-webgl you must first install the 0.16-compatible version of
 elm-linear-algebra alongside of elm-webgl. It goes something like this:
 
-    git clone git@github.com:elm-community/elm-linear-algebra.git
-    git clone git@github.com:elm-community/elm-webgl.git
+    git clone https://github.com/elm-community/elm-linear-algebra.git
+    git clone https://github.com/elm-community/elm-webgl.git
     cd elm-webgl/examples
     elm reactor
