@@ -1,6 +1,6 @@
 # WebGL for Elm
 
-[A simple API](http://package.elm-lang.org/packages/johnpmayer/elm-webgl/latest/WebGL)
+[A simple API](http://package.elm-lang.org/packages//elm-webgl/latest/WebGL)
 for rendering with WebGL. This is useful for both 2D and 3D
 rendering because it lets you take advantage of hardware acceleration with the
 GPU, meaning you can render things more quickly.
@@ -145,16 +145,3 @@ type of `vertexShader` says that we have two attributes named `position` and
 Elm's type checker can make sure you are using the shader in a meaningful way,
 avoiding a totally blank screen that can happen if your shader has an error in
 it.
-
-### Installing
-
-This library depends on
-[elm-linear-algebra](https://github.com/elm-community/elm-linear-algebra) which
-is not yet available via elm-package for elm version 0.16. So, to build
-elm-webgl you must first install the 0.16-compatible version of
-elm-linear-algebra alongside of elm-webgl. It goes something like this:
-
-    git clone https://github.com/elm-community/elm-linear-algebra.git
-    git clone https://github.com/elm-community/elm-webgl.git
-    cd elm-webgl/examples
-    elm reactor
