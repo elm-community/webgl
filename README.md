@@ -1,6 +1,6 @@
 # WebGL for Elm
 
-[A simple API](http://package.elm-lang.org/packages//elm-webgl/latest/WebGL)
+[A simple API](http://package.elm-lang.org/packages/elm-community/elm-webgl/latest/WebGL)
 for rendering with WebGL. This is useful for both 2D and 3D
 rendering because it lets you take advantage of hardware acceleration with the
 GPU, meaning you can render things more quickly.
