@@ -47,7 +47,7 @@ be things like position and color.
 So when you create a `Triangle` you are really providing three sets of attributes
 that describe the corners of a triangle.
 
-See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395(v=vs.85).aspx) for the description of each type. 
+See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type. 
 -}
 
 type Drawable attributes
