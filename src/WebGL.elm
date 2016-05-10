@@ -1,4 +1,4 @@
-module WebGL where
+module WebGL exposing (..) -- where
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/johnpmayer/elm-webgl/blob/master/README.md)
@@ -31,13 +31,14 @@ documentation provided here.
 
 -}
 
-import Graphics.Element exposing (Element)
-import Native.WebGL
+import Element exposing (Element)
 import Task exposing (Task)
+import List
+import Native.WebGL
 
-{-| 
-WebGl has a number of rendering modes available. Each of the tagged union types 
-maps to a separate rendering mode. 
+{-|
+WebGl has a number of rendering modes available. Each of the tagged union types
+maps to a separate rendering mode.
 
 Triangles are the basic building blocks of a mesh. You can put them together
 to form any shape. Each corner of a triangle is called a *vertex* and contains a
@@ -47,7 +48,7 @@ be things like position and color.
 So when you create a `Triangle` you are really providing three sets of attributes
 that describe the corners of a triangle.
 
-See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type. 
+See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
 -}
 
 type Drawable attributes
@@ -84,7 +85,7 @@ want filtering, create a `RawTexture` with `loadTextureRaw`.
 -}
 type Texture = Texture
 
-{-| Textures work in two ways when looking up a pixel value - Linear or Nearest 
+{-| Textures work in two ways when looking up a pixel value - Linear or Nearest
 -}
 type TextureFilter = Linear | Nearest
 
@@ -95,7 +96,7 @@ type Error = Error
 other formats have not been as well-tested yet.
 -}
 loadTexture : String -> Task Error Texture
-loadTexture = loadTextureWithFilter Linear 
+loadTexture = loadTextureWithFilter Linear
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
 other formats have not been as well-tested yet. Configurable filter.
@@ -111,7 +112,7 @@ textureSize =
     Native.WebGL.textureSize
 
 {-| Conceptually, an encapsulataion of the instructions to render something -}
-type Renderable = Renderable 
+type Renderable = Renderable
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
 as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
@@ -273,7 +274,7 @@ if the coverage masks should be inverted. The initial value is `False`
 + set front and back function and reference value for stencil testing
 + `func`: Specifies the test function.  The initial value is `Always`
 + `ref`: Specifies the reference value for the stencil test. ref is
-clamped to the range 0 2 n - 1 , where n is the number of bitplanes
+clamped to the range 0 2 n - 1 , n is the number of bitplanes
 in the stencil buffer. The initial value is `0`.
 + `mask`: Specifies a mask that is ANDed with both the reference value
 and the stored stencil value when the test is done.

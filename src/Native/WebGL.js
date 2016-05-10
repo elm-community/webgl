@@ -1,52 +1,46 @@
-Elm.Native.WebGL = {};
-Elm.Native.WebGL.make = function(elm) {
-
-  elm.Native = elm.Native || {};
-  elm.Native.Graphics = elm.Native.Graphics || {};
-  elm.Native.WebGL = elm.Native.WebGL || {};
-  if (elm.Native.WebGL.values) {
-      return elm.Native.WebGL.values;
-  }
+var _elm_community$elm_webgl$Native_WebGL = function() {
 
   // setup logging
   function LOG(msg) {
     // console.log(msg);
   }
 
-  var createNode = Elm.Native.Graphics.Element.make(elm).createNode;
-  var newElement = Elm.Native.Graphics.Element.make(elm).newElement;
+  var createNode = _evancz$elm_graphics$Native_Element.createNode;
+  var newElement = _evancz$elm_graphics$Native_Element.newElement;
 
-  var List   = Elm.List.make(elm);
-  var Utils  = Elm.Native.Utils.make(elm);
-  var Signal = Elm.Signal.make(elm);
-  var Tuple2 = Utils.Tuple2;
-  var Task   = Elm.Native.Task.make(elm);
+  var List   =
+    { map: _elm_lang$core$List$map
+    , length: _elm_lang$core$List$length
+    };
+  var Utils  = _elm_lang$core$Native_Utils;
+  var Tuple2 = F2(function(a, b) { return {'ctor' : '_Tuple2', _0: a, _1: b} ;});
 
   function unsafeCoerceGLSL(src) {
     return { src : src };
   }
 
   function loadTexture(source) {
-    return Task.asyncFunction(function(callback) {
+
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback){
       var img = new Image();
       img.onload = function() {
-        return callback(Task.succeed({ctor:'Texture', img:img}));
+        return callback(_elm_lang$core$Native_Scheduler.succeed({ctor:'Texture', img:img}));
       };
       img.onerror = function(e) {
-        return callback(Task.fail({ ctor: 'Error' }));
+        return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
       img.src = source;
     });
   }
 
   function loadTextureRaw(filter,source) {
-    return Task.asyncFunction(function(callback) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback){
       var img = new Image();
       img.onload = function() {
-        return callback(Task.succeed({ctor:'RawTexture', img:img}));
+        return callback(_elm_lang$core$Native_Scheduler.succeed({ctor:'RawTexture', img:img}));
       };
       img.onerror = function(e) {
-        return callback(Task.fail({ ctor: 'Error' }));
+        return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
       img.src = source;
     });
@@ -57,7 +51,7 @@ Elm.Native.WebGL.make = function(elm) {
     return Tuple2(texture.img.width, texture.img.height);
 
   }
-  
+
   function render(vert, frag, buffer, uniforms, functionCalls) {
 
     if (!buffer.guid) {
@@ -131,65 +125,65 @@ Elm.Native.WebGL.make = function(elm) {
 
   function get_render_info(gl, render_type) {
 	switch(render_type) {
-		case 'Triangle': return { mode: gl.TRIANGLES, elemSize: 3 }; 
+		case 'Triangle': return { mode: gl.TRIANGLES, elemSize: 3 };
 		case 'LineStrip' : return { mode: gl.LINE_STRIP, elemSize: 1 };
 		case 'LineLoop' : return { mode: gl.LINE_LOOP, elemSize: 1 };
 		case 'Points' : return { mode: gl.POINTS, elemSize: 1 };
-		case 'Lines': return { mode: gl.LINES, elemSize: 2 }; 
-		case 'TriangleStrip': return { mode: gl.TRIANGLE_STRIP, elemSize: 1 }; 
-		case 'TriangleFan': return { mode: gl.TRIANGLE_FAN, elemSize: 1 }; 
+		case 'Lines': return { mode: gl.LINES, elemSize: 2 };
+		case 'TriangleStrip': return { mode: gl.TRIANGLE_STRIP, elemSize: 1 };
+		case 'TriangleFan': return { mode: gl.TRIANGLE_FAN, elemSize: 1 };
 	}
-  }; 
+  };
 
   function get_attribute_info(gl, type) {
 		switch(type) {
 			case gl.FLOAT:      return { size: 1, type: Float32Array, baseType: gl.FLOAT };
 			case gl.FLOAT_VEC2: return { size: 2, type: Float32Array, baseType: gl.FLOAT };
 			case gl.FLOAT_VEC3: return { size: 3, type: Float32Array, baseType: gl.FLOAT };
-			case gl.FLOAT_VEC4: return { size: 4, type: Float32Array, baseType: gl.FLOAT };			
+			case gl.FLOAT_VEC4: return { size: 4, type: Float32Array, baseType: gl.FLOAT };
 			case gl.INT: 		return { size: 1, type: Int32Array, baseType: gl.INT };
 			case gl.INT_VEC2: 	return { size: 2, type: Int32Array, baseType: gl.INT };
 			case gl.INT_VEC3: 	return { size: 3, type: Int32Array, baseType: gl.INT };
-			case gl.INT_VEC4: 	return { size: 4, type: Int32Array, baseType: gl.INT };			
+			case gl.INT_VEC4: 	return { size: 4, type: Int32Array, baseType: gl.INT };
 		}
 	  };
-      
+
   /**
-        Form the buffer for a given attribute. 
-        
+        Form the buffer for a given attribute.
+
         @param gl gl context
         @param attribute the attribute to bind to. We use its name to grab the record by name and also to know
                 how many elements we need to grab.
-        @param bufferElems The list coming in from elm. 
-        @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode. 
-            ie, 2 for Lines, 3 for Triangles, etc. 
+        @param bufferElems The list coming in from elm.
+        @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
+            ie, 2 for Lines, 3 for Triangles, etc.
   */
-  function do_bind_attribute (gl, attribute, bufferElems, elem_length) {      
-    var idxKeys = []; 
-    for(var i = 0;i < elem_length;i++) idxKeys.push('_'+i); 
+  function do_bind_attribute (gl, attribute, bufferElems, elem_length) {
+    var idxKeys = [];
+    for(var i = 0;i < elem_length;i++) idxKeys.push('_'+i);
 
-    function dataFill(data, cnt, fillOffset, elem, key) {						
+    function dataFill(data, cnt, fillOffset, elem, key) {
         if(elem_length == 1)
             for(var i = 0;i < cnt;i++)
-                data[fillOffset++] = cnt === 1 ? elem[key] : elem[key][i];			
+                data[fillOffset++] = cnt === 1 ? elem[key] : elem[key][i];
         else
             idxKeys.forEach( function(idx) {
-                for(var i = 0;i < cnt;i++) 
-                    data[fillOffset++] = (cnt === 1 ? elem[idx][key] : elem[idx][key][i]);						
-            }); 		
+                for(var i = 0;i < cnt;i++)
+                    data[fillOffset++] = (cnt === 1 ? elem[idx][key] : elem[idx][key][i]);
+            });
     };
 
-    var attributeInfo = get_attribute_info(gl, attribute.type); 
+    var attributeInfo = get_attribute_info(gl, attribute.type);
 
     if(attributeInfo === undefined) {
-        throw error("No info available for: " + attribute.type); 
+        throw error("No info available for: " + attribute.type);
     }
 
-    var data_idx = 0; 
+    var data_idx = 0;
     var array = new attributeInfo.type( List.length(bufferElems) * attributeInfo.size * elem_length);
-      
+
     A2(List.map, function(elem) {
-        dataFill(array, attributeInfo.size, data_idx, elem, attribute.name); 
+        dataFill(array, attributeInfo.size, data_idx, elem, attribute.name);
         data_idx += attributeInfo.size * elem_length;
     }, bufferElems);
 
@@ -197,29 +191,29 @@ Elm.Native.WebGL.make = function(elm) {
     LOG("Created attribute buffer " + attribute.name);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, array, gl.STATIC_DRAW);
-    return buffer; 
+    return buffer;
   };
-  
+
   /**
-    This sets up the binding cacheing buffers. 
-    
+    This sets up the binding cacheing buffers.
+
     We don't actually bind any buffers now except for the indices buffer, which we fill with 0..n. The problem
     with filling the buffers here is that it is possible to have a buffer shared between two webgl shaders; which
-    could have different active attributes. If we bind it here against a particular program, we might not bind 
-    them all. That final bind is now done right before drawing. 
-    
+    could have different active attributes. If we bind it here against a particular program, we might not bind
+    them all. That final bind is now done right before drawing.
+
     @param gl gl context
-    @param bufferElems The list coming in from elm. 
-    @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode. 
-            ie, 2 for Lines, 3 for Triangles, etc. 
+    @param bufferElems The list coming in from elm.
+    @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
+            ie, 2 for Lines, 3 for Triangles, etc.
   */
   function do_bind_setup (gl, bufferElems, elem_length) {
 	var buffers = {};
-    
+
     var numIndices = elem_length * List.length(bufferElems);
     var indices = new Uint16Array(numIndices);
     for (var i = 0; i < numIndices; i += 1) {
-      indices[i] = i; 
+      indices[i] = i;
     }
     LOG("Created index buffer");
     var indexBuffer = gl.createBuffer();
@@ -247,7 +241,7 @@ Elm.Native.WebGL.make = function(elm) {
     function drawEntity(render) {
       if(List.length(render.buffer._0) === 0)
           return;
-      
+
       var program;
       if (render.vert.id && render.frag.id) {
         var progid = render.vert.id + '#' + render.frag.id;
@@ -335,9 +329,9 @@ Elm.Native.WebGL.make = function(elm) {
             break;
         }
       }
-	  var renderType = get_render_info(gl, render.buffer.ctor); 
+	  var renderType = get_render_info(gl, render.buffer.ctor);
       var buffer = model.cache.buffers[render.buffer.guid];
-      
+
       if (!buffer) {
         buffer = do_bind_setup(gl, render.buffer._0, renderType.elemSize);
         model.cache.buffers[render.buffer.guid] = buffer;
@@ -348,18 +342,18 @@ Elm.Native.WebGL.make = function(elm) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
       var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
-        
+
       for (var i = 0; i < numAttributes; i += 1) {
         var attribute = gl.getActiveAttrib(program, i);
-        
+
         var attribLocation = gl.getAttribLocation(program, attribute.name);
         gl.enableVertexAttribArray(attribLocation);
-                
-        if(buffer.buffers[attribute.name] === undefined) {                 
+
+        if(buffer.buffers[attribute.name] === undefined) {
             buffer.buffers[attribute.name] = do_bind_attribute (gl, attribute, render.buffer._0, renderType.elemSize);
         }
-        var attributeBuffer = buffer.buffers[attribute.name];         
-        var attributeInfo = get_attribute_info(gl, attribute.type); 
+        var attributeBuffer = buffer.buffers[attribute.name];
+        var attributeInfo = get_attribute_info(gl, attribute.type);
 
         A2(List.map, function(functionCall){
           functionCall(gl);
@@ -513,7 +507,7 @@ Elm.Native.WebGL.make = function(elm) {
 
   }
 
-  return elm.Native.WebGL.values = {
+  return {
     unsafeCoerceGLSL:unsafeCoerceGLSL,
     textureSize:textureSize,
     loadTexture:loadTexture,
@@ -534,4 +528,4 @@ Elm.Native.WebGL.make = function(elm) {
     loadTextureRaw:F2(loadTextureRaw),
   };
 
-};
+}();

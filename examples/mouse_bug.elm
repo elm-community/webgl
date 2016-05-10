@@ -1,13 +1,12 @@
+
 import Mouse
 import Window
-import Signal exposing (map, map2)
 import WebGL as GL
 import Math.Vector3 exposing (..)
 import Math.Vector2 exposing (..)
 import Math.Matrix4 as Mat4
-import Graphics.Element exposing (..)
 
-main = map view Mouse.position 
+main = map view Mouse.position
 
 
 type alias Vertex = { position : Vec2, color : Vec3 }
@@ -29,7 +28,7 @@ ortho2D w h = Mat4.makeOrtho2D 0 w h 0
 
 
 
-view : (Int,Int)  -> Element 
+view : (Int,Int)  -> a
 view (w,h) =
   let matrix = ortho2D 1 1
   in GL.webgl (w,h)
