@@ -1,5 +1,3 @@
-
-import Element
 import Mouse
 import WebGL as GL
 import Math.Vector3 exposing (..)
@@ -7,6 +5,7 @@ import Math.Vector2 exposing (..)
 import Math.Matrix4 as Mat4
 import Html.App as Html
 import Html exposing (Html)
+import Html.Attributes exposing (width, height)
 
 
 main : Program Never
@@ -40,10 +39,9 @@ ortho2D w h = Mat4.makeOrtho2D 0 w h 0
 
 view : Mouse.Position -> Html (Mouse.Position)
 view {x, y} =
-  let matrix = ortho2D 1 1
-  in GL.webgl (x, y)
-    [ GL.render vertexShader fragmentShader mesh { mat = matrix } ]
-    |> Element.toHtml
+  GL.toHtml
+    [width x, height y]
+    [ GL.render vertexShader fragmentShader mesh { mat = ortho2D 1 1 } ]
 
 
 -- Shaders

@@ -1,4 +1,4 @@
-module WebGL exposing (..) -- where
+module WebGL exposing (..)
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/johnpmayer/elm-webgl/blob/master/README.md)
@@ -11,8 +11,8 @@ documentation provided here.
 # Entities
 @docs render, renderWithConfig
 
-# WebGL Element
-@docs webgl, webglWithConfig, defaultConfiguration
+# WebGL Html
+@docs toHtml, toHtmlWith, defaultConfiguration
 
 # WebGL API Calls
 @docs FunctionCall
@@ -31,7 +31,7 @@ documentation provided here.
 
 -}
 
-import Element exposing (Element)
+import Html exposing (Html, Attribute)
 import Task exposing (Task)
 import List
 import Native.WebGL
@@ -145,22 +145,21 @@ defaultConfiguration =
   ]
 
 
-{-| Same as webglWithConfig but with default configurations,
+{-| Same as toHtmlWith but with default configurations,
 implicitly configured for you. See `defaultConfiguration` for more information.
 -}
-webgl : (Int,Int) -> List Renderable -> Element
-webgl =
-  webglWithConfig defaultConfiguration
+toHtml : List (Attribute msg) -> List Renderable -> Html msg
+toHtml =
+  toHtmlWith defaultConfiguration
 
 
 {-| Render a WebGL scene with the given dimensions and entities. Shaders and
 meshes are cached so that they do not get resent to the GPU, so it should be
 relatively cheap to create new entities out of existing values.
 -}
-webglWithConfig : List FunctionCall -> (Int,Int) -> List Renderable -> Element
-webglWithConfig functionCalls dimensions entities =
-  computeAPICalls functionCalls
-  |> Native.WebGL.webgl dimensions entities
+toHtmlWith : List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
+toHtmlWith functionCalls =
+  Native.WebGL.toHtml (computeAPICalls functionCalls)
 
 
 {-| -}

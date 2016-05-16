@@ -1,9 +1,9 @@
-import Element
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
 import Html exposing (Html)
 import Html.App as Html
+import Html.Attributes exposing (width, height)
 import AnimationFrame
 
 -- Create a mesh with two triangles
@@ -32,9 +32,9 @@ main =
 
 view : Float -> Html msg
 view t =
-  webgl (400,400)
+  WebGL.toHtml
+    [ width 400, height 400 ]
     [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
-    |> Element.toHtml
 
 
 perspective : Float -> Mat4
