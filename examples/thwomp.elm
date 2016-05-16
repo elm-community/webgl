@@ -1,7 +1,7 @@
 -- Thanks to The PaperNES Guy for the texture:
 -- http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
 
-import Graphics.Element exposing (..)
+import Element
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 as V3 exposing (..)
 import Math.Matrix4 exposing (..)
@@ -9,29 +9,73 @@ import Mouse
 import Task exposing (Task)
 import WebGL exposing (..)
 import Window
+import Html.App as Html
+import Html exposing (Html)
 
 
--- SIGNALS
+type alias Model =
+  { size : Window.Size
+  , position : Mouse.Position
+  , textures : (Maybe Texture, Maybe Texture)
+  }
 
-main : Signal Element
+
+type Action
+  = TexturesError Error
+  | TexturesLoaded (Maybe Texture, Maybe Texture)
+  | Resize Window.Size
+  | MouseMove Mouse.Position
+
+
+update : Action -> Model -> (Model, Cmd Action)
+update action model =
+  case action of
+    TexturesError err ->
+      (model, Cmd.none)
+    TexturesLoaded textures ->
+      ({model | textures = textures}, Cmd.none)
+    Resize size ->
+      ({model | size = size}, Cmd.none)
+    MouseMove position ->
+      ({model | position = position}, Cmd.none)
+
+
+init : (Model, Cmd Action)
+init =
+  ( { size = {width = 0, height = 0}
+    , position = {x = 0, y = 0}
+    , textures = (Nothing, Nothing)
+    }
+  , Cmd.batch
+      [ Window.size |> Task.perform (always Resize (0, 0)) Resize
+      , fetchTextures |> Task.perform TexturesError TexturesLoaded
+      ]
+  )
+
+
+subscriptions : Model -> Sub Action
+subscriptions _ =
+  Sub.batch
+    [ Window.resizes Resize
+    , Mouse.moves MouseMove
+    ]
+
+
+main : Program Never
 main =
-  let
-    perspectiveMatrix =
-      Signal.map2 perspective Window.dimensions Mouse.position
-  in
-    Signal.map3 (view face sides) Window.dimensions textures.signal perspectiveMatrix
+  Html.program
+    { init = init
+    , view = view face sides
+    , subscriptions = subscriptions
+    , update = update
+    }
 
 
-textures : Signal.Mailbox (Maybe Texture, Maybe Texture)
-textures =
-  Signal.mailbox (Nothing, Nothing)
-
-
-port fetchTextures : Task WebGL.Error ()
-port fetchTextures =
+fetchTextures : Task Error (Maybe Texture, Maybe Texture)
+fetchTextures =
   loadTexture "/texture/thwomp_face.jpg" `Task.andThen` \faceTexture ->
   loadTexture "/texture/thwomp_side.jpg" `Task.andThen` \sideTexture ->
-  Signal.send textures.address (Just faceTexture, Just sideTexture)
+  Task.succeed (Just faceTexture, Just sideTexture)
 
 
 -- MESHES - define the mesh for a Thwomp's face
@@ -74,12 +118,12 @@ square =
 
 -- VIEW
 
-perspective : (Int,Int) -> (Int,Int) -> Mat4
-perspective (w',h') (x',y') =
-    let w = toFloat w'
-        h = toFloat h'
-        x = toFloat x'
-        y = toFloat y'
+perspective : Model -> Mat4
+perspective {size, position} =
+    let w = toFloat size.width
+        h = toFloat size.height
+        x = toFloat position.x
+        y = toFloat position.y
 
         distance = 6
 
@@ -93,13 +137,19 @@ perspective (w',h') (x',y') =
 
 view : List (Vertex, Vertex, Vertex)
     -> List (Vertex, Vertex, Vertex)
-    -> (Int,Int)
-    -> (Maybe Texture, Maybe Texture)
-    -> Mat4
-    -> Element
-view mesh1 mesh2 dimensions (texture1, texture2) perspective =
+    -> Model
+    -> Html Action
+view mesh1 mesh2 ({textures, size} as model) =
+  let
+    perspectiveMatrix = perspective model
+    dimensions = (size.width, size.height)
+    (texture1, texture2) = textures
+  in
     webgl dimensions
-        (toEntity mesh1 texture1 perspective ++ toEntity mesh2 texture2 perspective)
+      ( toEntity mesh1 texture1 perspectiveMatrix ++
+        toEntity mesh2 texture2 perspectiveMatrix
+      )
+    |> Element.toHtml
 
 
 toEntity : List (Vertex, Vertex, Vertex) -> Maybe Texture -> Mat4 -> List Renderable

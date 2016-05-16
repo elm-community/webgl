@@ -1,35 +1,54 @@
-import Graphics.Element exposing (..)
+import Element
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
-import Task exposing (Task)
-import Time exposing (..)
+import Task
+import Time exposing (Time)
 import WebGL exposing (..)
+import Html exposing (Html)
+import Html.App as Html
+import AnimationFrame
 
 
--- SIGNALS
+type alias Model =
+  { texture : Maybe Texture
+  , theta : Float
+  }
 
-main : Signal Element
+
+type Action
+  = TextureError Error
+  | TextureLoaded Texture
+  | Animate Time
+
+
+update : Action -> Model -> (Model, Cmd Action)
+update action model =
+  case action of
+    TextureError err ->
+      (model, Cmd.none)
+    TextureLoaded texture ->
+      ({model | texture = Just texture}, Cmd.none)
+    Animate dt ->
+      ({model | theta = model.theta + dt / 10000}, Cmd.none)
+
+
+init : (Model, Cmd Action)
+init =
+  ( {texture = Nothing, theta = 0}
+  , loadTexture "/texture/woodCrate.jpg"
+    |> Task.perform TextureError TextureLoaded
+  )
+
+
+main : Program Never
 main =
-  Signal.map perspective angle
-    |> Signal.map2 view texture.signal
-    |> Signal.map (webgl (400,400))
-
-
-angle : Signal Float
-angle =
-  Signal.foldp (\dt theta -> theta + dt / 10000) 0 (fps 25)
-
-
-texture : Signal.Mailbox (Maybe Texture)
-texture =
-  Signal.mailbox Nothing
-
-
-port textureFetcher : Task WebGL.Error ()
-port textureFetcher =
-  loadTexture "/texture/woodCrate.jpg"
-    `Task.andThen` \tex -> Signal.send texture.address (Just tex)
+  Html.program
+    { init = init
+    , view = view
+    , subscriptions = (\model -> AnimationFrame.diffs Animate)
+    , update = update
+    }
 
 
 -- MESHES
@@ -87,14 +106,16 @@ camera =
   makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
 
 
-view : Maybe Texture -> Mat4 -> List Renderable
-view maybeTexture perspective =
-  case maybeTexture of
+view : Model -> Html Action
+view {texture, theta} =
+  (case texture of
     Nothing ->
         []
-
     Just tex ->
-        [render vertexShader fragmentShader crate { crate = tex, perspective = perspective }]
+        [render vertexShader fragmentShader crate { crate = tex, perspective = perspective theta }]
+  )
+  |> webgl (400, 400)
+  |> Element.toHtml
 
 
 -- SHADERS

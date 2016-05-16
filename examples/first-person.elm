@@ -1,6 +1,6 @@
 -- Try adding the ability to crouch or to land on top of the crate.
 
-import Graphics.Element exposing (..)
+import Element exposing (..)
 import Keyboard
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (..)
@@ -10,6 +10,9 @@ import Task exposing (Task)
 import Text
 import Time exposing (..)
 import WebGL exposing (..)
+import Html exposing (Html)
+import Html.App as Html
+import AnimationFrame
 import Window
 
 
@@ -21,8 +24,29 @@ type alias Person =
     }
 
 
-type alias Inputs =
-    ( Bool, {x:Int, y:Int}, Float )
+type alias Keys =
+  { left : Bool
+  , right : Bool
+  , up : Bool
+  , down : Bool
+  , space : Bool
+  }
+
+
+type alias Model =
+  { texture : Maybe Texture
+  , keys : Keys
+  , size : Window.Size
+  , person : Person
+  }
+
+
+type Action
+  = TextureError Error
+  | TextureLoaded Texture
+  | KeyChange (Keys -> Keys)
+  | Animate Time
+  | Resize Window.Size
 
 
 eyeLevel : Float
@@ -36,15 +60,88 @@ defaultPerson =
   }
 
 
--- UPDATE
+update : Action -> Model -> (Model, Cmd Action)
+update action model =
+  case action of
+    TextureError err ->
+      (model, Cmd.none)
+    TextureLoaded texture ->
+      ({model | texture = Just texture}, Cmd.none)
+    KeyChange keyfunc ->
+      ({model | keys = keyfunc model.keys}, Cmd.none)
+    Resize size ->
+      ({model | size = size}, Cmd.none)
+    Animate dt ->
+      ( { model
+        | person = model.person
+            |> walk (directions model.keys)
+            |> jump model.keys.space
+            |> gravity (dt / 500)
+            |> physics (dt / 500)
+        }
+      , Cmd.none
+      )
 
-update : Inputs -> Person -> Person
-update (isJumping, directions, dt) person =
-  person
-    |> walk directions
-    |> jump isJumping
-    |> gravity dt
-    |> physics dt
+
+init : (Model, Cmd Action)
+init =
+  ( { texture = Nothing
+    , person = defaultPerson
+    , keys = Keys False False False False False
+    , size = Window.Size 0 0
+    }
+  , Cmd.batch
+      [ loadTexture "/texture/woodCrate.jpg"
+        |> Task.perform TextureError TextureLoaded
+      , Window.size |> Task.perform (always Resize (0, 0)) Resize
+      ]
+  )
+
+
+subscriptions : Model -> Sub Action
+subscriptions _ =
+  [ AnimationFrame.diffs Animate
+  , Keyboard.downs (keyChange True)
+  , Keyboard.ups (keyChange False)
+  , Window.resizes Resize
+  ]
+  |> Sub.batch
+
+
+keyChange : Bool -> Keyboard.KeyCode -> Action
+keyChange on keyCode =
+  (case keyCode of
+    32 -> \k -> {k | space = on}
+    37 -> \k -> {k | left = on}
+    39 -> \k -> {k | right = on}
+    38 -> \k -> {k | up = on}
+    40 -> \k -> {k | down = on}
+    _ -> Basics.identity
+  ) |> KeyChange
+
+
+main : Program Never
+main =
+  Html.program
+    { init = init
+    , view = view
+    , subscriptions = subscriptions
+    , update = update
+    }
+
+
+directions : Keys -> {x : Int, y : Int}
+directions {left, right, up, down} =
+  let
+    direction a b =
+      case (a, b) of
+        (True, False) -> -1
+        (False, True) -> 1
+        _ -> 0
+  in
+  { x = direction left right
+  , y = direction down up
+  }
 
 
 walk : { x:Int, y:Int } -> Person -> Person
@@ -101,8 +198,6 @@ gravity dt person =
       }
 
 
--- SIGNALS
-
 world : Maybe Texture -> Mat4 -> List Renderable
 world maybeTexture perspective =
   case maybeTexture of
@@ -113,40 +208,6 @@ world maybeTexture perspective =
         [render vertexShader fragmentShader crate { crate=tex, perspective=perspective }]
 
 
-main : Signal Element
-main =
-  let
-    person =
-      Signal.foldp update defaultPerson inputs
-
-    entities =
-      Signal.map2 world
-        texture.signal
-        (Signal.map2 perspective Window.dimensions person)
-  in
-    Signal.map2 view Window.dimensions entities
-
-
-texture : Signal.Mailbox (Maybe Texture)
-texture =
-  Signal.mailbox Nothing
-
-
-port fetchTexture : Task WebGL.Error ()
-port fetchTexture =
-  loadTexture "/texture/woodCrate.jpg"
-    `Task.andThen` \tex -> Signal.send texture.address (Just tex)
-
-
-inputs : Signal Inputs
-inputs =
-  let
-    dt = Signal.map (\t -> t/500) (fps 25)
-  in
-    Signal.map3 (,,) Keyboard.space Keyboard.arrows dt
-      |> Signal.sampleOn dt
-
-
 -- VIEW
 
 perspective : (Int,Int) -> Person -> Mat4
@@ -155,14 +216,20 @@ perspective (w,h) person =
       (makeLookAt person.position (person.position `add` k) j)
 
 
-view : (Int,Int) -> List Renderable -> Element
-view (w,h) entities =
-  layers
-    [ webgl (w,h) entities
-    , container w 100 position message
-    ]
+view : Model -> Html Action
+view {size, person, texture} =
+  let
+    perspectiveMatrix = perspective (size.width, size.height) person
+    entities = world texture perspectiveMatrix
+  in
+    layers
+      [ webgl (size.width, size.height) entities
+      , container size.width 100 position message
+      ]
+    |> Element.toHtml
 
 
+position : Position
 position =
   midLeftAt (absolute 40) (relative 0.5)
 
