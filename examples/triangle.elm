@@ -1,11 +1,10 @@
-import Element exposing (..)
+import Element
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
-import Time exposing (..)
 import WebGL exposing (..)
 import Html exposing (Html)
 import Html.App as Html
-
+import AnimationFrame
 
 -- Create a mesh with two triangles
 
@@ -21,15 +20,13 @@ mesh = Triangle
   ]
 
 
---type Msg = NewTime Float
--- Create the scene
-
+main : Program Never
 main =
   Html.program
-    { init = (5, Cmd.none)
+    { init = (0, Cmd.none)
     , view = view
-    , subscriptions = (\model -> Sub.batch [ Time.every (30 * Time.millisecond) Basics.identity ])
-    , update = (\x m -> (x, Cmd.none))
+    , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
+    , update = (\elapsed currentTime -> (elapsed + currentTime, Cmd.none))
     }
 
 
@@ -38,6 +35,7 @@ view t =
   webgl (400,400)
     [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
     |> Element.toHtml
+
 
 perspective : Float -> Mat4
 perspective t =

@@ -5,15 +5,11 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     // console.log(msg);
   }
 
-  var createNode = _evancz$elm_graphics$Native_Element.createNode;
-  var newElement = _evancz$elm_graphics$Native_Element.newElement;
-
   var List   =
     { map: _elm_lang$core$List$map
     , length: _elm_lang$core$List$length
     };
   var Utils  = _elm_lang$core$Native_Utils;
-  var Tuple2 = F2(function(a, b) { return {'ctor' : '_Tuple2', _0: a, _1: b} ;});
 
   function unsafeCoerceGLSL(src) {
     return { src : src };
@@ -48,7 +44,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   function textureSize(texture) {
 
-    return Tuple2(texture.img.width, texture.img.height);
+    return Utils.Tuple2(texture.img.width, texture.img.height);
 
   }
 
@@ -437,9 +433,9 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
     function render(model) {
 
-      var div = createNode('div');
+      var div = _evancz$elm_graphics$Native_Element.createNode('div');
       div.style.overflow = 'hidden';
-      var canvas = createNode('canvas');
+      var canvas = _evancz$elm_graphics$Native_Element.createNode('canvas');
       var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
       if (gl) {
@@ -503,7 +499,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
       }
     };
 
-    return A3(newElement, w, h, elem);
+    return A3(_evancz$elm_graphics$Native_Element.newElement, w, h, elem);
 
   }
 

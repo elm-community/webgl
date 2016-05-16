@@ -1,12 +1,22 @@
 
+import Element
 import Mouse
-import Window
 import WebGL as GL
 import Math.Vector3 exposing (..)
 import Math.Vector2 exposing (..)
 import Math.Matrix4 as Mat4
+import Html.App as Html
+import Html exposing (Html)
 
-main = map view Mouse.position
+
+main : Program Never
+main =
+  Html.program
+    { init = ({x = 0, y = 0}, Cmd.none)
+    , view = view
+    , subscriptions = (\_ -> Mouse.moves identity)
+    , update = (\pos _ -> (pos, Cmd.none))
+    }
 
 
 type alias Vertex = { position : Vec2, color : Vec3 }
@@ -24,15 +34,16 @@ mesh = GL.Triangle <|
     ]
 
 
+ortho2D : Float -> Float -> Mat4.Mat4
 ortho2D w h = Mat4.makeOrtho2D 0 w h 0
 
 
-
-view : (Int,Int)  -> a
-view (w,h) =
+view : Mouse.Position -> Html (Mouse.Position)
+view {x, y} =
   let matrix = ortho2D 1 1
-  in GL.webgl (w,h)
+  in GL.webgl (x, y)
     [ GL.render vertexShader fragmentShader mesh { mat = matrix } ]
+    |> Element.toHtml
 
 
 -- Shaders
