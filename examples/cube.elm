@@ -1,17 +1,17 @@
 import Color exposing (..)
-import Element
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
 import Html.App as Html
 import AnimationFrame
+import Html.Attributes exposing (width, height)
 
 
 main : Program Never
 main =
   Html.program
     { init = (0, Cmd.none)
-    , view = scene >> webgl (400, 400) >> Element.toHtml
+    , view = scene >> WebGL.toHtml [width 400, height 400]
     , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
     , update = (\dt theta -> (theta + dt / 5000, Cmd.none))
     }

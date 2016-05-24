@@ -1,4 +1,3 @@
-import Element
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
@@ -8,6 +7,7 @@ import WebGL exposing (..)
 import Html exposing (Html)
 import Html.App as Html
 import AnimationFrame
+import Html.Attributes exposing (width, height)
 
 
 type alias Model =
@@ -108,14 +108,14 @@ camera =
 
 view : Model -> Html Action
 view {texture, theta} =
+
   (case texture of
     Nothing ->
         []
     Just tex ->
         [render vertexShader fragmentShader crate { crate = tex, perspective = perspective theta }]
   )
-  |> webgl (400, 400)
-  |> Element.toHtml
+  |> WebGL.toHtml [width 400, height 400]
 
 
 -- SHADERS

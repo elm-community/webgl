@@ -226,11 +226,14 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   }
 
-  function drawGL(model) {
+  function drawGL(domNode, data) {
 
+    var model = data.model;
     var gl = model.cache.gl;
 
-    gl.viewport(0, 0, model.w, model.h);
+    if (!gl) return domNode;
+
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     LOG("Drawing");
 
@@ -362,8 +365,8 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
     }
 
-    A2(List.map, drawEntity, model.models);
-
+    A2(List.map, drawEntity, model.renderables);
+    return domNode;
   }
 
   function enable(capability) {
@@ -426,81 +429,57 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     }
   }
 
-  function webgl(dimensions, models, functionCalls) {
 
-    var w = dimensions._0;
-    var h = dimensions._1;
+  // VIRTUAL-DOM WIDGETS
 
-    function render(model) {
+  function toHtml(functionCalls, factList, renderables) {
+  	var model = {
+  		functionCalls: functionCalls,
+  		renderables: renderables,
+      cache: {}
+  	};
+  	return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
+  }
 
-      var div = _evancz$elm_graphics$Native_Element.createNode('div');
-      div.style.overflow = 'hidden';
-      var canvas = _evancz$elm_graphics$Native_Element.createNode('canvas');
-      var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  // WIDGET IMPLEMENTATION
+  var implementation = {
+  	render: renderCanvas,
+  	diff: diff
+  };
 
-      if (gl) {
-        A2(List.map, function(functionCall){
-          functionCall(gl);
-        }, functionCalls);
-      } else {
-        div.innerHTML =
-          '<div style="display: table-cell; text-align: center; width: ' + w + 'px; height: ' + h +
-          'px; vertical-align: middle;"><a href="http://get.webgl.org/">Enable WebGL</a> to see this content!</div>';
-      }
 
-      model.cache.gl = gl;
-      model.cache.canvas = canvas;
-      model.cache.shaders = [];
-      model.cache.programs = {};
-      model.cache.buffers = [];
-      model.cache.textures = [];
+  function renderCanvas(model) {
 
-      update(div, model, model);
+    LOG("Render canvas");
+	  var canvas = document.createElement('canvas');
+    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
-      return div;
-
+    if (gl) {
+      A2(List.map, function(functionCall){
+        functionCall(gl);
+      }, model.functionCalls);
+    } else {
+      canvas = document.createElement('div');
+      canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
     }
 
-    function update(div, oldModel, newModel) {
+    model.cache = model.cache || {};
+    model.cache.gl = gl;
+    model.cache.shaders = [];
+    model.cache.programs = {};
+    model.cache.buffers = [];
+    model.cache.textures = [];
 
-      newModel.cache = oldModel.cache;
+    return canvas;
+  }
 
-      var canvas = newModel.cache.canvas;
 
-      canvas.style.width = oldModel.w + 'px';
-      canvas.style.height = oldModel.h + 'px';
-      canvas.style.display = "block";
-      canvas.style.position = "absolute";
-      canvas.width = oldModel.w;
-      canvas.height = oldModel.h;
-
-      if (newModel.cache.gl) {
-        drawGL(newModel);
-      } else {
-        div.firstChild.width = newModel.w + 'px';
-        div.firstChild.height = newModel.h + 'px';
-      }
-
-      div.appendChild(canvas);
-
-      return div;
-    }
-
-    var elem = {
-      ctor: 'Custom',
-      type: 'WebGL',
-      render: render,
-      update: update,
-      model: {
-        models: models,
-        cache: {},
-        w: w,
-        h: h
-      }
-    };
-
-    return A3(_evancz$elm_graphics$Native_Element.newElement, w, h, elem);
-
+  function diff(oldModel, newModel) {
+    newModel.model.cache = oldModel.model.cache;
+    return {
+  		applyPatch: drawGL,
+  		data: newModel
+  	};
   }
 
   return {
@@ -508,7 +487,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     textureSize:textureSize,
     loadTexture:loadTexture,
     render:F5(render),
-    webgl:F3(webgl),
+    toHtml:F3(toHtml),
     enable:enable,
     disable:disable,
     blendColor:F4(blendColor),

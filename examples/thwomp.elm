@@ -1,7 +1,6 @@
 -- Thanks to The PaperNES Guy for the texture:
 -- http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
 
-import Element
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 as V3 exposing (..)
 import Math.Matrix4 exposing (..)
@@ -11,6 +10,7 @@ import WebGL exposing (..)
 import Window
 import Html.App as Html
 import Html exposing (Html)
+import Html.Attributes exposing (width, height)
 
 
 type alias Model =
@@ -142,14 +142,13 @@ view : List (Vertex, Vertex, Vertex)
 view mesh1 mesh2 ({textures, size} as model) =
   let
     perspectiveMatrix = perspective model
-    dimensions = (size.width, size.height)
     (texture1, texture2) = textures
   in
-    webgl dimensions
+    WebGL.toHtml
+      [ width size.width, height size.height ]
       ( toEntity mesh1 texture1 perspectiveMatrix ++
         toEntity mesh2 texture2 perspectiveMatrix
       )
-    |> Element.toHtml
 
 
 toEntity : List (Vertex, Vertex, Vertex) -> Maybe Texture -> Mat4 -> List Renderable
