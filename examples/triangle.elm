@@ -1,9 +1,10 @@
-import Graphics.Element exposing (..)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
-import Time exposing (..)
 import WebGL exposing (..)
-
+import Html exposing (Html)
+import Html.App as Html
+import Html.Attributes exposing (width, height)
+import AnimationFrame
 
 -- Create a mesh with two triangles
 
@@ -19,16 +20,20 @@ mesh = Triangle
   ]
 
 
--- Create the scene
-
-main : Signal Element
+main : Program Never
 main =
-  Signal.map view (Signal.foldp (+) 0 (fps 30))
+  Html.program
+    { init = (0, Cmd.none)
+    , view = view
+    , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
+    , update = (\elapsed currentTime -> (elapsed + currentTime, Cmd.none))
+    }
 
 
-view : Float -> Element
+view : Float -> Html msg
 view t =
-  webgl (400,400)
+  WebGL.toHtml
+    [ width 400, height 400 ]
     [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 
 

@@ -1,21 +1,20 @@
 import Color exposing (..)
-import Graphics.Element exposing (..)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
-import Time exposing (..)
 import WebGL exposing (..)
+import Html.App as Html
+import AnimationFrame
+import Html.Attributes exposing (width, height)
 
 
--- SIGNALS
-
-main : Signal Element
+main : Program Never
 main =
-  Signal.map (webgl (400,400)) (Signal.map scene angle)
-
-
-angle : Signal Float
-angle =
-  Signal.foldp (\dt theta -> theta + dt / 5000) 0 (fps 25)
+  Html.program
+    { init = (0, Cmd.none)
+    , view = scene >> WebGL.toHtml [width 400, height 400]
+    , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
+    , update = (\dt theta -> (theta + dt / 5000, Cmd.none))
+    }
 
 
 -- MESHES - create a cube in which each vertex has a position and color

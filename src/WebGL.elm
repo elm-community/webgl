@@ -1,4 +1,4 @@
-module WebGL where
+module WebGL exposing (..)
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/johnpmayer/elm-webgl/blob/master/README.md)
@@ -11,8 +11,8 @@ documentation provided here.
 # Entities
 @docs render, renderWithConfig
 
-# WebGL Element
-@docs webgl, webglWithConfig, defaultConfiguration
+# WebGL Html
+@docs toHtml, toHtmlWith, defaultConfiguration
 
 # WebGL API Calls
 @docs FunctionCall
@@ -31,13 +31,14 @@ documentation provided here.
 
 -}
 
-import Graphics.Element exposing (Element)
-import Native.WebGL
+import Html exposing (Html, Attribute)
 import Task exposing (Task)
+import List
+import Native.WebGL
 
-{-| 
-WebGl has a number of rendering modes available. Each of the tagged union types 
-maps to a separate rendering mode. 
+{-|
+WebGl has a number of rendering modes available. Each of the tagged union types
+maps to a separate rendering mode.
 
 Triangles are the basic building blocks of a mesh. You can put them together
 to form any shape. Each corner of a triangle is called a *vertex* and contains a
@@ -47,7 +48,7 @@ be things like position and color.
 So when you create a `Triangle` you are really providing three sets of attributes
 that describe the corners of a triangle.
 
-See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type. 
+See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
 -}
 
 type Drawable attributes
@@ -84,7 +85,7 @@ want filtering, create a `RawTexture` with `loadTextureRaw`.
 -}
 type Texture = Texture
 
-{-| Textures work in two ways when looking up a pixel value - Linear or Nearest 
+{-| Textures work in two ways when looking up a pixel value - Linear or Nearest
 -}
 type TextureFilter = Linear | Nearest
 
@@ -95,7 +96,7 @@ type Error = Error
 other formats have not been as well-tested yet.
 -}
 loadTexture : String -> Task Error Texture
-loadTexture = loadTextureWithFilter Linear 
+loadTexture = loadTextureWithFilter Linear
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
 other formats have not been as well-tested yet. Configurable filter.
@@ -111,7 +112,7 @@ textureSize =
     Native.WebGL.textureSize
 
 {-| Conceptually, an encapsulataion of the instructions to render something -}
-type Renderable = Renderable 
+type Renderable = Renderable
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
 as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
@@ -144,22 +145,21 @@ defaultConfiguration =
   ]
 
 
-{-| Same as webglWithConfig but with default configurations,
+{-| Same as toHtmlWith but with default configurations,
 implicitly configured for you. See `defaultConfiguration` for more information.
 -}
-webgl : (Int,Int) -> List Renderable -> Element
-webgl =
-  webglWithConfig defaultConfiguration
+toHtml : List (Attribute msg) -> List Renderable -> Html msg
+toHtml =
+  toHtmlWith defaultConfiguration
 
 
 {-| Render a WebGL scene with the given dimensions and entities. Shaders and
 meshes are cached so that they do not get resent to the GPU, so it should be
 relatively cheap to create new entities out of existing values.
 -}
-webglWithConfig : List FunctionCall -> (Int,Int) -> List Renderable -> Element
-webglWithConfig functionCalls dimensions entities =
-  computeAPICalls functionCalls
-  |> Native.WebGL.webgl dimensions entities
+toHtmlWith : List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
+toHtmlWith functionCalls =
+  Native.WebGL.toHtml (computeAPICalls functionCalls)
 
 
 {-| -}
@@ -273,7 +273,7 @@ if the coverage masks should be inverted. The initial value is `False`
 + set front and back function and reference value for stencil testing
 + `func`: Specifies the test function.  The initial value is `Always`
 + `ref`: Specifies the reference value for the stencil test. ref is
-clamped to the range 0 2 n - 1 , where n is the number of bitplanes
+clamped to the range 0 2 n - 1 , n is the number of bitplanes
 in the stencil buffer. The initial value is `0`.
 + `mask`: Specifies a mask that is ANDed with both the reference value
 and the stored stencil value when the test is done.
