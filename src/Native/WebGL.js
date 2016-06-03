@@ -226,6 +226,10 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   }
 
+  function getProgID (vertID, fragID) {
+    return vertID + '#' + fragID;
+  }
+
   function drawGL(domNode, data) {
 
     var model = data.model;
@@ -241,9 +245,10 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
       if(List.length(render.buffer._0) === 0)
           return;
 
+      var progid
       var program;
       if (render.vert.id && render.frag.id) {
-        var progid = render.vert.id + '#' + render.frag.id;
+        progid = getProgID(render.vert.id, render.frag.id);
         program = model.cache.programs[progid];
       }
 
@@ -274,14 +279,19 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
         }
 
         program = do_link(gl, vshader, fshader);
-        var progid = render.vert.id + '#' + render.frag.id;
+        progid = getProgID(render.vert.id, render.frag.id);
         model.cache.programs[progid] = program;
 
       }
 
       gl.useProgram(program);
 
-      var setters = createUniformSetters(gl, model, program);
+      progid = progid || getProgID(render.vert.id, render.frag.id);
+      var setters = model.cache.uniformSetters[progid];
+      if (!setters) {
+        setters = createUniformSetters(gl, model, program);
+        model.cache.uniformSetters[progid] = setters;
+      }
 
       setUniforms(setters, render.uniforms);
 
@@ -507,6 +517,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     model.cache.gl = gl;
     model.cache.shaders = [];
     model.cache.programs = {};
+    model.cache.uniformSetters = {};
     model.cache.buffers = [];
     model.cache.textures = [];
 
