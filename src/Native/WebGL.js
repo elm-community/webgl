@@ -11,6 +11,10 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     };
   var Utils  = _elm_lang$core$Native_Utils;
 
+  var rAF = typeof requestAnimationFrame !== 'undefined' ?
+    requestAnimationFrame :
+    function(cb) { setTimeout(cb, 1000 / 60); };
+
   function unsafeCoerceGLSL(src) {
     return { src : src };
   }
@@ -520,6 +524,14 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     model.cache.uniformSetters = {};
     model.cache.buffers = [];
     model.cache.textures = [];
+
+    // Render for the first time.
+    // This has to be done in animation frame,
+    // because the canvas is not in the DOM yet,
+    // when renderCanvas is called by virtual-dom
+    rAF(function () {
+      drawGL(canvas, {model: model});
+    });
 
     return canvas;
   }
