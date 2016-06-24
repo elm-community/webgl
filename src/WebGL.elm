@@ -89,7 +89,7 @@ type Texture = Texture
 -}
 type TextureFilter = Linear | Nearest
 
-{-| An error which occured in the graphics ocntext -}
+{-| An error which occured in the graphics context -}
 type Error = Error
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
