@@ -473,13 +473,13 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   function stencilOperation(fail, zfail, zpass) {
     return function(gl) {
-      gl.stencilOperation(gl[fail], gl[zfail], gl[zpass]);
+      gl.stencilOp(gl[fail], gl[zfail], gl[zpass]);
     }
   }
 
   function stencilOperationSeparate(face, fail, zfail, zpass) {
     return function(gl) {
-      gl.stencilOperationSeparate(gl[face], gl[fail], gl[zfail], gl[zpass]);
+      gl.stencilOpSeparate(gl[face], gl[fail], gl[zfail], gl[zpass]);
     }
   }
 
