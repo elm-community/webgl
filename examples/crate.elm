@@ -36,7 +36,7 @@ update action model =
 init : (Model, Cmd Action)
 init =
   ( {texture = Nothing, theta = 0}
-  , loadTexture "/texture/woodCrate.jpg"
+  , loadTexture "texture/woodCrate.jpg"
     |> Task.perform TextureError TextureLoaded
   )
 

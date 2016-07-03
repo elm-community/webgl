@@ -90,7 +90,7 @@ init =
     , size = Window.Size 0 0
     }
   , Cmd.batch
-      [ loadTexture "/texture/woodCrate.jpg"
+      [ loadTexture "texture/woodCrate.jpg"
         |> Task.perform TextureError TextureLoaded
       , Window.size |> Task.perform (always Resize (0, 0)) Resize
       ]

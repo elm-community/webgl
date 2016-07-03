@@ -73,8 +73,8 @@ main =
 
 fetchTextures : Task Error (Maybe Texture, Maybe Texture)
 fetchTextures =
-  loadTexture "/texture/thwomp_face.jpg" `Task.andThen` \faceTexture ->
-  loadTexture "/texture/thwomp_side.jpg" `Task.andThen` \sideTexture ->
+  loadTexture "texture/thwomp_face.jpg" `Task.andThen` \faceTexture ->
+  loadTexture "texture/thwomp_side.jpg" `Task.andThen` \sideTexture ->
   Task.succeed (Just faceTexture, Just sideTexture)
 
 

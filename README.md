@@ -5,15 +5,14 @@ for rendering with WebGL. This is useful for both 2D and 3D
 rendering because it lets you take advantage of hardware acceleration with the
 GPU, meaning you can render things more quickly.
 
-Here are some examples so you can get a feel for the API, but make sure you
+[Here are some examples](https://github.com/elm-community/elm-webgl/tree/master/examples) so you can get a feel for the API, but make sure you
 read on to learn how WebGL and the GPU really work!
 
-[![Triangle](http://elm-lang.org/screenshot/WebGL/Triangle.jpg)](http://elm-lang.org/examples/triangle)
-[![Cube](http://elm-lang.org/screenshot/WebGL/Cube.jpg)](http://elm-lang.org/examples/cube)
-[![Crate](http://elm-lang.org/screenshot/WebGL/Crate.jpg)](http://elm-lang.org/examples/crate)
-[![Thwomp](http://elm-lang.org/screenshot/WebGL/Thwomp.jpg)](http://elm-lang.org/examples/thwomp)
-[![FirstPerson](http://elm-lang.org/screenshot/WebGL/FirstPerson.jpg)](http://elm-lang.org/examples/first-person)
-
+[![Triangle](http://webgl.elm-community.org/examples/screenshots/triangle.jpg)](http://webgl.elm-community.org/examples/triangle.html)
+[![Cube](http://webgl.elm-community.org/examples/screenshots/cube.jpg)](http://webgl.elm-community.org/examples/cube.html)
+[![Crate](http://webgl.elm-community.org/examples/screenshots/crate.jpg)](http://webgl.elm-community.org/examples/crate.html)
+[![Thwomp](http://webgl.elm-community.org/examples/screenshots/thwomp.jpg)](http://webgl.elm-community.org/examples/thwomp.html)
+[![FirstPerson](http://webgl.elm-community.org/examples/screenshots/first-person.jpg)](http://webgl.elm-community.org/examples/first-person.html)
 
 ## Understanding WebGL
 
@@ -60,7 +59,7 @@ be and all of the meshes loaded onto the GPU will be transformed accordingly.
 The following diagram illustrates the entire pipeline. Keep reading past the
 diagram, all the terms will be explained!
 
-![WebGL Pipeline](https://raw.githubusercontent.com/johnpmayer/elm-webgl/master/pipeline.png)
+![WebGL Pipeline](https://raw.githubusercontent.com/elm-community/elm-webgl/master/pipeline.png)
 
 We start with a mesh. It's a bunch of raw data points that we want to render on
 screen. From there, the data flows through two types of shaders:
