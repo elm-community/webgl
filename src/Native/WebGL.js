@@ -275,7 +275,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
 
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     LOG('Drawing');
 
     function drawEntity(render) {
@@ -495,6 +495,10 @@ var _elm_community$webgl$Native_WebGL = function () {
     };
   }
 
+  function depthMask(mask) {
+    return function (gl) { gl.depthMask(mask); };
+  }
+
   function sampleCoverage(value, invert) {
     return function (gl) {
       gl.sampleCoverage(value, invert);
@@ -522,6 +526,24 @@ var _elm_community$webgl$Native_WebGL = function () {
   function stencilOperationSeparate(face, fail, zfail, zpass) {
     return function (gl) {
       gl.stencilOpSeparate(gl[face], gl[fail], gl[zfail], gl[zpass]);
+    };
+  }
+
+  function stencilMask(mask) {
+    return function (gl) {
+      gl.stencilMask(mask);
+    };
+  }
+
+  function colorMask(r, g, b, a) {
+    return function (gl) {
+      gl.colorMask(r, g, b, a);
+    };
+  }
+
+  function scissor(x, y, w, h) {
+    return function (gl) {
+      gl.scissor(x, y, w, h);
     };
   }
 
@@ -607,11 +629,15 @@ var _elm_community$webgl$Native_WebGL = function () {
     blendEquationSeparate: F2(blendEquationSeparate),
     blendFunc: F2(blendFunc),
     depthFunc: depthFunc,
+    depthMask: depthMask,
     sampleCoverage: F2(sampleCoverage),
     stencilFunc: F3(stencilFunc),
     stencilFuncSeparate: F4(stencilFuncSeparate),
     stencilOperation: F3(stencilOperation),
-    stencilOperationSeparate: F4(stencilOperationSeparate)
+    stencilOperationSeparate: F4(stencilOperationSeparate),
+    stencilMask: stencilMask,
+    colorMask: F4(colorMask),
+    scissor: F4(scissor)
   };
 
 }();
