@@ -8,5 +8,6 @@ Any contribution should:
 * Be recognized as a PATCH change using `elm package diff`
 * Not introduce mutable variables
 * Justify why the change is needed and why it won't break anything already here
+* JavaScript code should be validated using `eslint src`
 
 Documentation improvements are welcome.

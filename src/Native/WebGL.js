@@ -1,45 +1,42 @@
-var _elm_community$elm_webgl$Native_WebGL = function() {
+// eslint-disable-next-line no-unused-vars
+var _elm_community$elm_webgl$Native_WebGL = function () {
 
   // setup logging
+  // eslint-disable-next-line no-unused-vars
   function LOG(msg) {
     // console.log(msg);
   }
 
-  var List   =
-    { map: _elm_lang$core$List$map
-    , length: _elm_lang$core$List$length
-    };
-  var Utils  = _elm_lang$core$Native_Utils;
+  var Utils = _elm_lang$core$Native_Utils;
 
   var rAF = typeof requestAnimationFrame !== 'undefined' ?
     requestAnimationFrame :
-    function(cb) { setTimeout(cb, 1000 / 60); };
+    function (cb) { setTimeout(cb, 1000 / 60); };
 
   function unsafeCoerceGLSL(src) {
-    return { src : src };
+    return { src: src };
   }
 
   function loadTexture(source) {
-
-    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback){
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
       var img = new Image();
-      img.onload = function() {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({ctor:'Texture', img:img}));
+      img.onload = function () {
+        return callback(_elm_lang$core$Native_Scheduler.succeed({ ctor: 'Texture', img: img }));
       };
-      img.onerror = function(e) {
+      img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
       img.src = source;
     });
   }
 
-  function loadTextureRaw(filter,source) {
-    return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback){
+  function loadTextureRaw(filter, source) {
+    return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
       var img = new Image();
-      img.onload = function() {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({ctor:'RawTexture', img:img}));
+      img.onload = function () {
+        return callback(_elm_lang$core$Native_Scheduler.succeed({ ctor: 'RawTexture', img: img }));
       };
-      img.onerror = function(e) {
+      img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
       img.src = source;
@@ -47,9 +44,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
   }
 
   function textureSize(texture) {
-
     return Utils.Tuple2(texture.img.width, texture.img.height);
-
   }
 
   function render(vert, frag, buffer, uniforms, functionCalls) {
@@ -63,15 +58,16 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
       frag: frag,
       buffer: buffer,
       uniforms: uniforms,
-      functionCalls : functionCalls
+      functionCalls: functionCalls
     };
 
   }
 
-  function do_texture (gl, texture) {
+  function do_texture(gl, texture) {
 
     var tex = gl.createTexture();
-    LOG("Created texture");
+    LOG('Created texture');
+
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img);
@@ -84,22 +80,22 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         break;
-    };
+    }
     gl.generateMipmap(gl.TEXTURE_2D);
     //gl.bindTexture(gl.TEXTURE0, null);
     return tex;
 
   }
 
-  function do_compile (gl, src, tipe) {
+  function do_compile(gl, src, tipe) {
 
     var shader = gl.createShader(tipe);
-    LOG("Created shader");
+    LOG('Created shader');
 
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
     var compile = gl.COMPILE_STATUS;
-    if (!gl.getShaderParameter(shader,compile)) {
+    if (!gl.getShaderParameter(shader, compile)) {
       throw gl.getShaderInfoLog(shader);
     }
 
@@ -107,10 +103,10 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   }
 
-  function do_link (gl, vshader, fshader) {
+  function do_link(gl, vshader, fshader) {
 
     var program = gl.createProgram();
-    LOG("Created program");
+    LOG('Created program');
 
     gl.attachShader(program, vshader);
     gl.attachShader(program, fshader);
@@ -121,32 +117,47 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
     return program;
 
-	}
+  }
 
   function get_render_info(gl, render_type) {
-	switch(render_type) {
-		case 'Triangle': return { mode: gl.TRIANGLES, elemSize: 3 };
-		case 'LineStrip' : return { mode: gl.LINE_STRIP, elemSize: 1 };
-		case 'LineLoop' : return { mode: gl.LINE_LOOP, elemSize: 1 };
-		case 'Points' : return { mode: gl.POINTS, elemSize: 1 };
-		case 'Lines': return { mode: gl.LINES, elemSize: 2 };
-		case 'TriangleStrip': return { mode: gl.TRIANGLE_STRIP, elemSize: 1 };
-		case 'TriangleFan': return { mode: gl.TRIANGLE_FAN, elemSize: 1 };
-	}
-  };
+    switch (render_type) {
+      case 'Triangle':
+        return { mode: gl.TRIANGLES, elemSize: 3 };
+      case 'LineStrip':
+        return { mode: gl.LINE_STRIP, elemSize: 1 };
+      case 'LineLoop':
+        return { mode: gl.LINE_LOOP, elemSize: 1 };
+      case 'Points':
+        return { mode: gl.POINTS, elemSize: 1 };
+      case 'Lines':
+        return { mode: gl.LINES, elemSize: 2 };
+      case 'TriangleStrip':
+        return { mode: gl.TRIANGLE_STRIP, elemSize: 1 };
+      case 'TriangleFan':
+        return { mode: gl.TRIANGLE_FAN, elemSize: 1 };
+    }
+  }
 
   function get_attribute_info(gl, type) {
-		switch(type) {
-			case gl.FLOAT:      return { size: 1, type: Float32Array, baseType: gl.FLOAT };
-			case gl.FLOAT_VEC2: return { size: 2, type: Float32Array, baseType: gl.FLOAT };
-			case gl.FLOAT_VEC3: return { size: 3, type: Float32Array, baseType: gl.FLOAT };
-			case gl.FLOAT_VEC4: return { size: 4, type: Float32Array, baseType: gl.FLOAT };
-			case gl.INT: 		return { size: 1, type: Int32Array, baseType: gl.INT };
-			case gl.INT_VEC2: 	return { size: 2, type: Int32Array, baseType: gl.INT };
-			case gl.INT_VEC3: 	return { size: 3, type: Int32Array, baseType: gl.INT };
-			case gl.INT_VEC4: 	return { size: 4, type: Int32Array, baseType: gl.INT };
-		}
-	  };
+    switch (type) {
+      case gl.FLOAT:
+        return { size: 1, type: Float32Array, baseType: gl.FLOAT };
+      case gl.FLOAT_VEC2:
+        return { size: 2, type: Float32Array, baseType: gl.FLOAT };
+      case gl.FLOAT_VEC3:
+        return { size: 3, type: Float32Array, baseType: gl.FLOAT };
+      case gl.FLOAT_VEC4:
+        return { size: 4, type: Float32Array, baseType: gl.FLOAT };
+      case gl.INT:
+        return { size: 1, type: Int32Array, baseType: gl.INT };
+      case gl.INT_VEC2:
+        return { size: 2, type: Int32Array, baseType: gl.INT };
+      case gl.INT_VEC3:
+        return { size: 3, type: Int32Array, baseType: gl.INT };
+      case gl.INT_VEC4:
+        return { size: 4, type: Int32Array, baseType: gl.INT };
+    }
+  }
 
   /**
         Form the buffer for a given attribute.
@@ -158,41 +169,47 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
         @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
             ie, 2 for Lines, 3 for Triangles, etc.
   */
-  function do_bind_attribute (gl, attribute, bufferElems, elem_length) {
+  function do_bind_attribute(gl, attribute, bufferElems, elem_length) {
     var idxKeys = [];
-    for(var i = 0;i < elem_length;i++) idxKeys.push('_'+i);
+    for (var i = 0; i < elem_length; i++) {
+      idxKeys.push('_' + i);
+    }
 
     function dataFill(data, cnt, fillOffset, elem, key) {
-        if(elem_length == 1)
-            for(var i = 0;i < cnt;i++)
-                data[fillOffset++] = cnt === 1 ? elem[key] : elem[key][i];
-        else
-            idxKeys.forEach( function(idx) {
-                for(var i = 0;i < cnt;i++)
-                    data[fillOffset++] = (cnt === 1 ? elem[idx][key] : elem[idx][key][i]);
-            });
-    };
+      if (elem_length == 1) {
+        for (var i = 0; i < cnt; i++) {
+          data[fillOffset++] = cnt === 1 ? elem[key] : elem[key][i];
+        }
+      } else {
+        idxKeys.forEach(function (idx) {
+          for (var i = 0; i < cnt; i++) {
+            data[fillOffset++] = (cnt === 1 ? elem[idx][key] : elem[idx][key][i]);
+          }
+        });
+      }
+    }
 
     var attributeInfo = get_attribute_info(gl, attribute.type);
 
-    if(attributeInfo === undefined) {
-        throw error("No info available for: " + attribute.type);
+    if (attributeInfo === undefined) {
+      throw new Error('No info available for: ' + attribute.type);
     }
 
     var data_idx = 0;
-    var array = new attributeInfo.type( List.length(bufferElems) * attributeInfo.size * elem_length);
+    var array = new attributeInfo.type( _elm_lang$core$List$length(bufferElems) * attributeInfo.size * elem_length);
 
-    A2(List.map, function(elem) {
-        dataFill(array, attributeInfo.size, data_idx, elem, attribute.name);
-        data_idx += attributeInfo.size * elem_length;
+    A2(_elm_lang$core$List$map, function (elem) {
+      dataFill(array, attributeInfo.size, data_idx, elem, attribute.name);
+      data_idx += attributeInfo.size * elem_length;
     }, bufferElems);
 
     var buffer = gl.createBuffer();
-    LOG("Created attribute buffer " + attribute.name);
+    LOG('Created attribute buffer ' + attribute.name);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, array, gl.STATIC_DRAW);
     return buffer;
-  };
+  }
 
   /**
     This sets up the binding cacheing buffers.
@@ -207,16 +224,17 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
             ie, 2 for Lines, 3 for Triangles, etc.
   */
-  function do_bind_setup (gl, bufferElems, elem_length) {
-	var buffers = {};
+  function do_bind_setup(gl, bufferElems, elem_length) {
+    var buffers = {};
 
-    var numIndices = elem_length * List.length(bufferElems);
+    var numIndices = elem_length * _elm_lang$core$List$length(bufferElems);
     var indices = new Uint16Array(numIndices);
     for (var i = 0; i < numIndices; i += 1) {
       indices[i] = i;
     }
-    LOG("Created index buffer");
     var indexBuffer = gl.createBuffer();
+    LOG('Created index buffer');
+
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
@@ -230,7 +248,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
   }
 
-  function getProgID (vertID, fragID) {
+  function getProgID(vertID, fragID) {
     return vertID + '#' + fragID;
   }
 
@@ -239,17 +257,20 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
     var model = data.model;
     var gl = model.cache.gl;
 
-    if (!gl) return domNode;
+    if (!gl) {
+      return domNode;
+    }
 
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    LOG("Drawing");
+    LOG('Drawing');
 
     function drawEntity(render) {
-      if(List.length(render.buffer._0) === 0)
-          return;
+      if (_elm_lang$core$List$length(render.buffer._0) === 0) {
+        return;
+      }
 
-      var progid
+      var progid;
       var program;
       if (render.vert.id && render.frag.id) {
         progid = getProgID(render.vert.id, render.frag.id);
@@ -258,7 +279,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
       if (!program) {
 
-        var vshader = undefined;
+        var vshader;
         if (render.vert.id) {
           vshader = model.cache.shaders[render.vert.id];
         } else {
@@ -270,7 +291,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
           model.cache.shaders[render.vert.id] = vshader;
         }
 
-        var fshader = undefined;
+        var fshader;
         if (render.frag.id) {
           fshader = model.cache.shaders[render.frag.id];
         } else {
@@ -299,7 +320,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
       setUniforms(setters, render.uniforms);
 
-	  var renderType = get_render_info(gl, render.buffer.ctor);
+      var renderType = get_render_info(gl, render.buffer.ctor);
       var buffer = model.cache.buffers[render.buffer.guid];
 
       if (!buffer) {
@@ -319,13 +340,13 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
         var attribLocation = gl.getAttribLocation(program, attribute.name);
         gl.enableVertexAttribArray(attribLocation);
 
-        if(buffer.buffers[attribute.name] === undefined) {
-            buffer.buffers[attribute.name] = do_bind_attribute (gl, attribute, render.buffer._0, renderType.elemSize);
+        if (buffer.buffers[attribute.name] === undefined) {
+          buffer.buffers[attribute.name] = do_bind_attribute(gl, attribute, render.buffer._0, renderType.elemSize);
         }
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = get_attribute_info(gl, attribute.type);
 
-        A2(List.map, function(functionCall){
+        A2(_elm_lang$core$List$map, function (functionCall) {
           functionCall(gl);
         }, render.functionCalls);
 
@@ -336,7 +357,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
 
     }
 
-    A2(List.map, drawEntity, model.renderables);
+    A2(_elm_lang$core$List$map, drawEntity, model.renderables);
     return domNode;
   }
 
@@ -350,32 +371,26 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
           return function (value) {
             gl.uniform1i(uniformLocation, value);
           };
-          break;
         case gl.FLOAT:
           return function (value) {
             gl.uniform1f(uniformLocation, value);
           };
-          break;
         case gl.FLOAT_VEC2:
           return function (value) {
             gl.uniform2fv(uniformLocation, value);
           };
-          break;
         case gl.FLOAT_VEC3:
           return function (value) {
             gl.uniform3fv(uniformLocation, value);
           };
-          break;
         case gl.FLOAT_VEC4:
           return function (value) {
             gl.uniform4fv(uniformLocation, value);
           };
-          break;
         case gl.FLOAT_MAT4:
           return function (value) {
             gl.uniformMatrix4fv(uniformLocation, false, value);
           };
-          break;
         case gl.SAMPLER_2D:
           var currentTexture = textureCounter;
           var activeName = 'TEXTURE' + currentTexture;
@@ -393,14 +408,12 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
               model.cache.textures[texture.id] = tex;
             }
             gl.activeTexture(gl[activeName]);
-            gl.bindTexture(gl.TEXTURE_2D,tex);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
           };
-          break;
         default:
-          LOG("Unsupported uniform type: " + uniform.type);
+          LOG('Unsupported uniform type: ' + uniform.type);
           return function () {};
-          break;
       }
     }
 
@@ -415,7 +428,7 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
   }
 
   function setUniforms(setters, values) {
-    Object.keys(values).forEach(function(name) {
+    Object.keys(values).forEach(function (name) {
       var setter = setters[name];
       if (setter) {
         setter(values[name]);
@@ -424,92 +437,104 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
   }
 
   function enable(capability) {
-    return function(gl) { gl.enable(gl[capability]); };
+    return function (gl) {
+      gl.enable(gl[capability]);
+    };
   }
 
   function disable(capability) {
-    return function(gl) { gl.disable(gl[capability]); };
+    return function (gl) {
+      gl.disable(gl[capability]);
+    };
   }
 
   function blendColor(r, g, b, a) {
-    return function(gl) { gl.blendColor(r, g, b, a); };
+    return function (gl) {
+      gl.blendColor(r, g, b, a);
+    };
   }
 
   function blendEquation(mode) {
-    return function(gl) { gl.blendEquation(gl[mode]); };
+    return function (gl) {
+      gl.blendEquation(gl[mode]);
+    };
   }
 
   function blendEquationSeparate(modeRGB, modeAlpha) {
-    return function(gl) {
+    return function (gl) {
       gl.blendEquationSeparate(gl[modeRGB], gl[modeAlpha]);
     };
   }
 
   function blendFunc(src, dst) {
-    return function(gl) { gl.blendFunc(gl[src], gl[dst]); };
+    return function (gl) {
+      gl.blendFunc(gl[src], gl[dst]);
+    };
   }
 
   function depthFunc(mode) {
-    return function(gl) { gl.depthFunc(gl[mode]); };
+    return function (gl) {
+      gl.depthFunc(gl[mode]);
+    };
   }
 
   function sampleCoverage(value, invert) {
-    return function(gl) {
+    return function (gl) {
       gl.sampleCoverage(value, invert);
     };
   }
 
   function stencilFunc(func, ref, mask) {
-    return function(gl) {
+    return function (gl) {
       gl.stencilFunc(gl[func], ref, mask);
     };
   }
 
   function stencilFuncSeparate(face, func, ref, mask) {
-    return function(gl) {
+    return function (gl) {
       gl.stencilFuncSeparate(gl[face], gl[func], ref, mask);
     };
   }
 
   function stencilOperation(fail, zfail, zpass) {
-    return function(gl) {
+    return function (gl) {
       gl.stencilOp(gl[fail], gl[zfail], gl[zpass]);
-    }
+    };
   }
 
   function stencilOperationSeparate(face, fail, zfail, zpass) {
-    return function(gl) {
+    return function (gl) {
       gl.stencilOpSeparate(gl[face], gl[fail], gl[zfail], gl[zpass]);
-    }
+    };
   }
 
 
   // VIRTUAL-DOM WIDGETS
 
   function toHtml(functionCalls, factList, renderables) {
-  	var model = {
-  		functionCalls: functionCalls,
-  		renderables: renderables,
+    var model = {
+      functionCalls: functionCalls,
+      renderables: renderables,
       cache: {}
-  	};
-  	return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
+    };
+    return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
   }
 
   // WIDGET IMPLEMENTATION
   var implementation = {
-  	render: renderCanvas,
-  	diff: diff
+    render: renderCanvas,
+    diff: diff
   };
 
 
   function renderCanvas(model) {
 
-    LOG("Render canvas");
-	  var canvas = document.createElement('canvas');
+    LOG('Render canvas');
+    var canvas = document.createElement('canvas');
     var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
     if (gl) {
-      A2(List.map, function(functionCall){
+      A2(_elm_lang$core$List$map, function (functionCall) {
         functionCall(gl);
       }, model.functionCalls);
     } else {
@@ -540,30 +565,30 @@ var _elm_community$elm_webgl$Native_WebGL = function() {
   function diff(oldModel, newModel) {
     newModel.model.cache = oldModel.model.cache;
     return {
-  		applyPatch: drawGL,
-  		data: newModel
-  	};
+      applyPatch: drawGL,
+      data: newModel
+    };
   }
 
   return {
-    unsafeCoerceGLSL:unsafeCoerceGLSL,
-    textureSize:textureSize,
-    loadTexture:loadTexture,
-    render:F5(render),
-    toHtml:F3(toHtml),
-    enable:enable,
-    disable:disable,
-    blendColor:F4(blendColor),
-    blendEquation:blendEquation,
-    blendEquationSeparate:F2(blendEquationSeparate),
-    blendFunc:F2(blendFunc),
-    depthFunc:depthFunc,
-    sampleCoverage:F2(sampleCoverage),
-    stencilFunc:F3(stencilFunc),
-    stencilFuncSeparate:F4(stencilFuncSeparate),
-    stencilOperation:F3(stencilOperation),
-    stencilOperationSeparate:F4(stencilOperationSeparate),
-    loadTextureRaw:F2(loadTextureRaw),
+    unsafeCoerceGLSL: unsafeCoerceGLSL,
+    textureSize: textureSize,
+    loadTexture: loadTexture,
+    render: F5(render),
+    toHtml: F3(toHtml),
+    enable: enable,
+    disable: disable,
+    blendColor: F4(blendColor),
+    blendEquation: blendEquation,
+    blendEquationSeparate: F2(blendEquationSeparate),
+    blendFunc: F2(blendFunc),
+    depthFunc: depthFunc,
+    sampleCoverage: F2(sampleCoverage),
+    stencilFunc: F3(stencilFunc),
+    stencilFuncSeparate: F4(stencilFuncSeparate),
+    stencilOperation: F3(stencilOperation),
+    stencilOperationSeparate: F4(stencilOperationSeparate),
+    loadTextureRaw: F2(loadTextureRaw)
   };
 
 }();

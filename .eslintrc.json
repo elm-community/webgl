@@ -1,0 +1,41 @@
+{
+    "env": {
+        "browser": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+        "indent": [ "error", 2, { "SwitchCase": 1 } ],
+        "space-infix-ops": [ "error" ],
+        "linebreak-style": [ "error", "unix" ],
+        "comma-style": [ "error", "last" ],
+        "brace-style": [ "error", "1tbs", { "allowSingleLine": true } ],
+        "curly": "error",
+        "quotes": [ "error", "single" ],
+        "semi": [ "error", "always" ],
+        "space-before-function-paren": [ "error", {"anonymous": "always", "named": "never"} ],
+        "keyword-spacing": [ "error", { "before": true, "after": true } ],
+        "space-before-blocks": [ "error", "always" ],
+        "key-spacing": [ "error", { "beforeColon": false, "afterColon": true, "mode": "strict" } ],
+        "semi-spacing": [ "error", {"before": false, "after": true} ],
+        "comma-spacing": [ "error", { "before": false, "after": true } ],
+        "comma-dangle": ["error", "never"]
+    },
+    "globals" : {
+        "_elm_community$elm_webgl$Native_WebGL": true,
+
+        "_elm_lang$virtual_dom$Native_VirtualDom": false,
+        "_elm_lang$core$List$map": false,
+        "_elm_lang$core$List$length": false,
+        "_elm_lang$core$Native_Utils": false,
+        "_elm_lang$core$Native_Scheduler": false,
+
+        "A2": false,
+        "F2": false,
+        "F3": false,
+        "F4": false,
+        "F5": false,
+        "Float32Array": false,
+        "Int32Array": false,
+        "Uint16Array": false
+    }
+}
