@@ -26,6 +26,7 @@ var _elm_community$elm_webgl$Native_WebGL = function () {
       img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
+      img.crossOrigin = 'Anonymous';
       img.src = source;
     });
   }
@@ -39,6 +40,7 @@ var _elm_community$elm_webgl$Native_WebGL = function () {
       img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
       };
+      img.crossOrigin = 'Anonymous';
       img.src = source;
     });
   }
