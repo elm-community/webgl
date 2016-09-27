@@ -277,13 +277,16 @@ view { size, person, texture } =
                 , ( "position", "relative" )
                 ]
             ]
-            [ WebGL.toHtml
+            [ WebGL.toHtmlWithEvenMore
+                { defaultContextAttributes | alpha = False }
+                defaultConfiguration
                 [ width size.width, height size.height, style [ ( "display", "block" ) ] ]
                 entities
             , div
                 [ style
                     [ ( "position", "absolute" )
                     , ( "font-family", "monospace" )
+                    , ( "color", "white" )
                     , ( "text-align", "center" )
                     , ( "left", "20px" )
                     , ( "right", "20px" )
