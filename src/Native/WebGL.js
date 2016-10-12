@@ -413,6 +413,10 @@ var _elm_community$elm_webgl$Native_WebGL = function () {
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
           };
+        case gl.BOOL:
+          return function (value) {
+            gl.uniform1i(uniformLocation, value);
+          };
         default:
           LOG('Unsupported uniform type: ' + uniform.type);
           return function () {};
