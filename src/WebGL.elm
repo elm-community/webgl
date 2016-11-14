@@ -1,7 +1,7 @@
 module WebGL exposing (..)
 
 {-| The WebGL API is for high performance rendering. Definitely read about
-[how WebGL works](https://github.com/johnpmayer/elm-webgl/blob/master/README.md)
+[how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)
 and look at some examples before trying to do too much with just the
 documentation provided here.
 
@@ -68,7 +68,7 @@ type Shader attributes uniforms varyings = Shader
 {-| Shaders are programs for running many computations on the GPU in parallel.
 They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
-shaders [here](https://github.com/johnpmayer/elm-webgl/blob/master/README.md).
+shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
 Normally you specify a shader with a `shader` block. This is because shaders
 must be compiled before they are used, imposing an overhead that it is best to
@@ -117,7 +117,7 @@ type Renderable = Renderable
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
 as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
 You can read more about the pipeline
-[here](https://github.com/johnpmayer/elm-webgl/blob/master/README.md).
+[here](https://github.com/elm-community/webgl/blob/master/README.md).
 
 Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create

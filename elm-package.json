@@ -1,7 +1,7 @@
 {
     "version": "3.0.3",
     "summary": "A library for general 3D rendering with WebGL",
-    "repository": "https://github.com/elm-community/elm-webgl.git",
+    "repository": "https://github.com/elm-community/webgl.git",
     "license": "BSD3",
     "source-directories": [
         "src"

@@ -1,4 +1,4 @@
-# Contributing to elm-community/elm-webgl
+# Contributing to elm-community/webgl
 
 This repository is kept for maintenance and does not accept most feature requests. In particular, [#6](https://github.com/elm-community/elm-webgl/issues/6) requires that all
 changes be PATCH-level, meaning that the API cannot be modified.

@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Examples",
-    "repository": "https://github.com/elm-community/elm-webgl.git",
+    "repository": "https://github.com/elm-community/webgl.git",
     "license": "BSD3",
     "source-directories": [
         ".",

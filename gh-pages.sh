@@ -23,4 +23,4 @@ echo "webgl.elm-community.org" >> CNAME
 git init
 git add .
 git commit -m "Deploying to GH Pages"
-git push --force "git@github.com:elm-community/elm-webgl.git" master:gh-pages
+git push --force "git@github.com:elm-community/webgl.git" master:gh-pages

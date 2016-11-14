@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-var _elm_community$elm_webgl$Native_WebGL = function () {
+var _elm_community$webgl$Native_WebGL = function () {
 
   // setup logging
   // eslint-disable-next-line no-unused-vars

@@ -1,11 +1,11 @@
 # WebGL for Elm
 
-[A simple API](http://package.elm-lang.org/packages/elm-community/elm-webgl/latest/WebGL)
+[A simple API](http://package.elm-lang.org/packages/elm-community/webgl/latest/WebGL)
 for rendering with WebGL. This is useful for both 2D and 3D
 rendering because it lets you take advantage of hardware acceleration with the
 GPU, meaning you can render things more quickly.
 
-[Here are some examples](https://github.com/elm-community/elm-webgl/tree/master/examples) so you can get a feel for the API, but make sure you
+[Here are some examples](https://github.com/elm-community/webgl/tree/master/examples) so you can get a feel for the API, but make sure you
 read on to learn how WebGL and the GPU really work!
 
 [![Triangle](http://webgl.elm-community.org/examples/screenshots/triangle.jpg)](http://webgl.elm-community.org/examples/triangle.html)
@@ -59,7 +59,7 @@ be and all of the meshes loaded onto the GPU will be transformed accordingly.
 The following diagram illustrates the entire pipeline. Keep reading past the
 diagram, all the terms will be explained!
 
-![WebGL Pipeline](https://raw.githubusercontent.com/elm-community/elm-webgl/master/pipeline.png)
+![WebGL Pipeline](https://raw.githubusercontent.com/elm-community/webgl/master/pipeline.png)
 
 We start with a mesh. It's a bunch of raw data points that we want to render on
 screen. From there, the data flows through two types of shaders:
