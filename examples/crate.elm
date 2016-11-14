@@ -1,3 +1,5 @@
+module Main exposing (..)
+
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
@@ -5,123 +7,153 @@ import Task
 import Time exposing (Time)
 import WebGL exposing (..)
 import Html exposing (Html)
-import Html.App as Html
 import AnimationFrame
 import Html.Attributes exposing (width, height)
 
 
 type alias Model =
-  { texture : Maybe Texture
-  , theta : Float
-  }
+    { texture : Maybe Texture
+    , theta : Float
+    }
 
 
 type Action
-  = TextureError Error
-  | TextureLoaded Texture
-  | Animate Time
+    = TextureError Error
+    | TextureLoaded Texture
+    | Animate Time
 
 
-update : Action -> Model -> (Model, Cmd Action)
+update : Action -> Model -> ( Model, Cmd Action )
 update action model =
-  case action of
-    TextureError err ->
-      (model, Cmd.none)
-    TextureLoaded texture ->
-      ({model | texture = Just texture}, Cmd.none)
-    Animate dt ->
-      ({model | theta = model.theta + dt / 10000}, Cmd.none)
+    case action of
+        TextureError err ->
+            ( model, Cmd.none )
+
+        TextureLoaded texture ->
+            ( { model | texture = Just texture }, Cmd.none )
+
+        Animate dt ->
+            ( { model | theta = model.theta + dt / 10000 }, Cmd.none )
 
 
-init : (Model, Cmd Action)
+init : ( Model, Cmd Action )
 init =
-  ( {texture = Nothing, theta = 0}
-  , loadTexture "texture/woodCrate.jpg"
-    |> Task.perform TextureError TextureLoaded
-  )
+    ( { texture = Nothing, theta = 0 }
+    , loadTexture "texture/woodCrate.jpg"
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Err err ->
+                        TextureError err
+
+                    Ok val ->
+                        TextureLoaded val
+            )
+    )
 
 
-main : Program Never
+main : Program Never Model Action
 main =
-  Html.program
-    { init = init
-    , view = view
-    , subscriptions = (\model -> AnimationFrame.diffs Animate)
-    , update = update
-    }
+    Html.program
+        { init = init
+        , view = view
+        , subscriptions = (\model -> AnimationFrame.diffs Animate)
+        , update = update
+        }
+
 
 
 -- MESHES
 
-crate : Drawable { pos:Vec3, coord:Vec3 }
+
+crate : Drawable { pos : Vec3, coord : Vec3 }
 crate =
-  Triangle <|
-  List.concatMap rotatedFace [ (0,0), (90,0), (180,0), (270,0), (0,90), (0,-90) ]
+    Triangle <|
+        List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
 
 
-rotatedFace : (Float,Float) -> List ({ pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 })
-rotatedFace (angleX,angleY) =
-  let
-    x = makeRotate (degrees angleX) (vec3 1 0 0)
-    y = makeRotate (degrees angleY) (vec3 0 1 0)
-    t = x `mul` y `mul` makeTranslate (vec3 0 0 1)
-    each f (a,b,c) =
-      (f a, f b, f c)
-  in
-    List.map (each (\x -> {x | pos = transform t x.pos })) face
+rotatedFace : ( Float, Float ) -> List ( { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 } )
+rotatedFace ( angleX, angleY ) =
+    let
+        x =
+            makeRotate (degrees angleX) (vec3 1 0 0)
+
+        y =
+            makeRotate (degrees angleY) (vec3 0 1 0)
+
+        t =
+            mul (mul x y) (makeTranslate (vec3 0 0 1))
+
+        each f ( a, b, c ) =
+            ( f a, f b, f c )
+    in
+        List.map (each (\x -> { x | pos = transform t x.pos })) face
 
 
-face : List ({ pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 }, { pos:Vec3, coord:Vec3 })
+face : List ( { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 } )
 face =
-  let
-    topLeft     = { pos = vec3 -1  1 0, coord = vec3 0 1 0 }
-    topRight    = { pos = vec3  1  1 0, coord = vec3 1 1 0 }
-    bottomLeft  = { pos = vec3 -1 -1 0, coord = vec3 0 0 0 }
-    bottomRight = { pos = vec3  1 -1 0, coord = vec3 1 0 0 }
-  in
-    [ (topLeft,topRight,bottomLeft)
-    , (bottomLeft,topRight,bottomRight)
-    ]
+    let
+        topLeft =
+            { pos = vec3 -1 1 0, coord = vec3 0 1 0 }
+
+        topRight =
+            { pos = vec3 1 1 0, coord = vec3 1 1 0 }
+
+        bottomLeft =
+            { pos = vec3 -1 -1 0, coord = vec3 0 0 0 }
+
+        bottomRight =
+            { pos = vec3 1 -1 0, coord = vec3 1 0 0 }
+    in
+        [ ( topLeft, topRight, bottomLeft )
+        , ( bottomLeft, topRight, bottomRight )
+        ]
+
 
 
 -- VIEW
 
+
 perspective : Float -> Mat4
 perspective angle =
-  List.foldr mul Math.Matrix4.identity
-    [ perspectiveMatrix
-    , camera
-    , makeRotate (3*angle) (vec3 0 1 0)
-    , makeRotate (2*angle) (vec3 1 0 0)
-    ]
+    List.foldr mul
+        Math.Matrix4.identity
+        [ perspectiveMatrix
+        , camera
+        , makeRotate (3 * angle) (vec3 0 1 0)
+        , makeRotate (2 * angle) (vec3 1 0 0)
+        ]
 
 
 perspectiveMatrix : Mat4
 perspectiveMatrix =
-  makePerspective 45 1 0.01 100
+    makePerspective 45 1 0.01 100
 
 
 camera : Mat4
 camera =
-  makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
+    makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
 
 
 view : Model -> Html Action
-view {texture, theta} =
+view { texture, theta } =
+    (case texture of
+        Nothing ->
+            []
 
-  (case texture of
-    Nothing ->
-        []
-    Just tex ->
-        [render vertexShader fragmentShader crate { crate = tex, perspective = perspective theta }]
-  )
-  |> WebGL.toHtml [width 400, height 400]
+        Just tex ->
+            [ render vertexShader fragmentShader crate { crate = tex, perspective = perspective theta } ]
+    )
+        |> WebGL.toHtml [ width 400, height 400 ]
+
 
 
 -- SHADERS
 
-vertexShader : Shader { pos:Vec3, coord:Vec3 } { u | perspective:Mat4 } { vcoord:Vec2 }
-vertexShader = [glsl|
+
+vertexShader : Shader { pos : Vec3, coord : Vec3 } { u | perspective : Mat4 } { vcoord : Vec2 }
+vertexShader =
+    [glsl|
 
 attribute vec3 pos;
 attribute vec3 coord;
@@ -136,8 +168,9 @@ void main () {
 |]
 
 
-fragmentShader : Shader {} { u | crate:Texture } { vcoord:Vec2 }
-fragmentShader = [glsl|
+fragmentShader : Shader {} { u | crate : Texture } { vcoord : Vec2 }
+fragmentShader =
+    [glsl|
 
 precision mediump float;
 uniform sampler2D crate;

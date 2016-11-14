@@ -36,6 +36,7 @@ import Task exposing (Task)
 import List
 import Native.WebGL
 
+
 {-|
 WebGl has a number of rendering modes available. Each of the tagged union types
 maps to a separate rendering mode.
@@ -50,19 +51,20 @@ that describe the corners of a triangle.
 
 See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
 -}
-
 type Drawable attributes
-  = Triangle (List (attributes, attributes, attributes))
-  | Lines (List (attributes, attributes) )
-  | LineStrip (List attributes)
-  | LineLoop (List attributes)
-  | Points (List attributes)
-  | TriangleFan (List attributes)
-  | TriangleStrip (List attributes)
+    = Triangle (List ( attributes, attributes, attributes ))
+    | Lines (List ( attributes, attributes ))
+    | LineStrip (List attributes)
+    | LineLoop (List attributes)
+    | Points (List attributes)
+    | TriangleFan (List attributes)
+    | TriangleStrip (List attributes)
+
 
 {-| Shader is a phantom data type. Don't instantiate it yourself. See below.
 -}
-type Shader attributes uniforms varyings = Shader
+type Shader attributes uniforms varyings
+    = Shader
 
 
 {-| Shaders are programs for running many computations on the GPU in parallel.
@@ -78,41 +80,58 @@ combinators.
 -}
 unsafeShader : String -> Shader attribute uniform varying
 unsafeShader =
-  Native.WebGL.unsafeCoerceGLSL
+    Native.WebGL.unsafeCoerceGLSL
+
 
 {-| A `Texture` loads a texture with linear filtering enabled. If you do not
 want filtering, create a `RawTexture` with `loadTextureRaw`.
 -}
-type Texture = Texture
+type Texture
+    = Texture
+
 
 {-| Textures work in two ways when looking up a pixel value - Linear or Nearest
 -}
-type TextureFilter = Linear | Nearest
+type TextureFilter
+    = Linear
+    | Nearest
 
-{-| An error which occured in the graphics context -}
-type Error = Error
+
+{-| An error which occured in the graphics context
+-}
+type Error
+    = Error
+
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
 other formats have not been as well-tested yet.
 -}
 loadTexture : String -> Task Error Texture
-loadTexture = loadTextureWithFilter Linear
+loadTexture =
+    loadTextureWithFilter Linear
+
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
 other formats have not been as well-tested yet. Configurable filter.
 -}
 loadTextureWithFilter : TextureFilter -> String -> Task Error Texture
-loadTextureWithFilter filter url = Native.WebGL.loadTextureRaw Linear url
+loadTextureWithFilter filter url =
+    Native.WebGL.loadTextureRaw Linear url
+
 
 {-| Return the (width, height) size of a texture. Useful for sprite sheets
 or other times you may want to use only a potion of a texture image.
 -}
-textureSize : Texture -> (Int, Int)
+textureSize : Texture -> ( Int, Int )
 textureSize =
     Native.WebGL.textureSize
 
-{-| Conceptually, an encapsulataion of the instructions to render something -}
-type Renderable = Renderable
+
+{-| Conceptually, an encapsulataion of the instructions to render something
+-}
+type Renderable
+    = Renderable
+
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
 as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
@@ -123,17 +142,18 @@ Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
 new entities if you are reusing shaders and meshes that have been used before.
 -}
-renderWithConfig : List FunctionCall -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> (Drawable attributes) -> uniforms -> Renderable
+renderWithConfig : List FunctionCall -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
 renderWithConfig functionCalls vert frag buffer uniforms =
-  computeAPICalls functionCalls
-  |> Native.WebGL.render vert frag buffer uniforms
+    computeAPICalls functionCalls
+        |> Native.WebGL.render vert frag buffer uniforms
 
 
 {-| Same as `renderWithConfig` but without using
 custom per-render configurations.
 -}
-render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> (Drawable attributes) -> uniforms -> Renderable
-render = renderWithConfig []
+render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
+render =
+    renderWithConfig []
 
 
 {-| Default configuration that is used as
@@ -141,8 +161,8 @@ the implicit configurations for `webgl`.
 -}
 defaultConfiguration : List FunctionCall
 defaultConfiguration =
-  [ Enable DepthTest
-  ]
+    [ Enable DepthTest
+    ]
 
 
 {-| Same as toHtmlWith but with default configurations,
@@ -150,7 +170,7 @@ implicitly configured for you. See `defaultConfiguration` for more information.
 -}
 toHtml : List (Attribute msg) -> List Renderable -> Html msg
 toHtml =
-  toHtmlWith defaultConfiguration
+    toHtmlWith defaultConfiguration
 
 
 {-| Render a WebGL scene with the given dimensions and entities. Shaders and
@@ -159,74 +179,108 @@ relatively cheap to create new entities out of existing values.
 -}
 toHtmlWith : List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
 toHtmlWith functionCalls =
-  Native.WebGL.toHtml (computeAPICalls functionCalls)
+    Native.WebGL.toHtml (computeAPICalls functionCalls)
 
 
 {-| -}
 computeAPICalls : List FunctionCall -> List (a -> b)
 computeAPICalls functionCalls =
-  List.map
-    computeAPICall
-    functionCalls
+    List.map
+        computeAPICall
+        functionCalls
 
 
 {-| -}
 computeAPICall : FunctionCall -> (a -> b)
 computeAPICall function =
-  case function of
-    Enable capability ->
-      computeCapabilityString capability
-      |> Native.WebGL.enable
+    case function of
+        Enable capability ->
+            computeCapabilityString capability
+                |> Native.WebGL.enable
 
-    Disable capability ->
-      computeCapabilityString capability
-      |> Native.WebGL.disable
+        Disable capability ->
+            computeCapabilityString capability
+                |> Native.WebGL.disable
 
-    BlendColor (r, g, b, a) ->
-      Native.WebGL.blendColor r g b a
+        BlendColor ( r, g, b, a ) ->
+            Native.WebGL.blendColor r g b a
 
-    BlendEquation mode ->
-      computeBlendModeString mode
-      |> Native.WebGL.blendEquation
+        BlendEquation mode ->
+            computeBlendModeString mode
+                |> Native.WebGL.blendEquation
 
-    BlendEquationSeparate (modeRGB', modeAlpha') ->
-      let modeRGB = computeBlendModeString modeRGB'
-          modeAlpha = computeBlendModeString modeAlpha'
-      in Native.WebGL.blendEquationSeparate modeRGB modeAlpha
+        BlendEquationSeparate ( modeRGB_, modeAlpha_ ) ->
+            let
+                modeRGB =
+                    computeBlendModeString modeRGB_
 
-    BlendFunc (src', dst') ->
-      let src = computeBlendOperationString src'
-          dst = computeBlendOperationString dst'
-      in Native.WebGL.blendFunc src dst
+                modeAlpha =
+                    computeBlendModeString modeAlpha_
+            in
+                Native.WebGL.blendEquationSeparate modeRGB modeAlpha
 
-    DepthFunc mode ->
-      computeCompareModeString mode
-      |> Native.WebGL.depthFunc
+        BlendFunc ( src_, dst_ ) ->
+            let
+                src =
+                    computeBlendOperationString src_
 
-    SampleCoverageFunc (value, invert) ->
-      Native.WebGL.sampleCoverage value invert
+                dst =
+                    computeBlendOperationString dst_
+            in
+                Native.WebGL.blendFunc src dst
 
-    StencilFunc (func, ref, mask) ->
-      let mode = computeCompareModeString func
-      in Native.WebGL.stencilFunc mode ref mask
+        DepthFunc mode ->
+            computeCompareModeString mode
+                |> Native.WebGL.depthFunc
 
-    StencilFuncSeparate (face', func, ref, mask) ->
-      let face = computeFaceModeString face'
-          mode = computeCompareModeString func
-      in Native.WebGL.stencilFuncSeparate face mode ref mask
+        SampleCoverageFunc ( value, invert ) ->
+            Native.WebGL.sampleCoverage value invert
 
-    StencilOperation (fail', zfail', zpass') ->
-      let fail = computeZModeString fail'
-          zfail = computeZModeString zfail'
-          zpass = computeZModeString zpass'
-      in Native.WebGL.stencilOperation fail zfail zpass
+        StencilFunc ( func, ref, mask ) ->
+            let
+                mode =
+                    computeCompareModeString func
+            in
+                Native.WebGL.stencilFunc mode ref mask
 
-    StencilOperationSeparate (face', fail', zfail', zpass') ->
-      let face = computeFaceModeString face'
-          fail = computeZModeString fail'
-          zfail = computeZModeString zfail'
-          zpass = computeZModeString zpass'
-      in Native.WebGL.stencilOperationSeparate face fail zfail zpass
+        StencilFuncSeparate ( face_, func, ref, mask ) ->
+            let
+                face =
+                    computeFaceModeString face_
+
+                mode =
+                    computeCompareModeString func
+            in
+                Native.WebGL.stencilFuncSeparate face mode ref mask
+
+        StencilOperation ( fail_, zfail_, zpass_ ) ->
+            let
+                fail =
+                    computeZModeString fail_
+
+                zfail =
+                    computeZModeString zfail_
+
+                zpass =
+                    computeZModeString zpass_
+            in
+                Native.WebGL.stencilOperation fail zfail zpass
+
+        StencilOperationSeparate ( face_, fail_, zfail_, zpass_ ) ->
+            let
+                face =
+                    computeFaceModeString face_
+
+                fail =
+                    computeZModeString fail_
+
+                zfail =
+                    computeZModeString zfail_
+
+                zpass =
+                    computeZModeString zpass_
+            in
+                Native.WebGL.stencilOperationSeparate face fail zfail zpass
 
 
 {-| The `FunctionCall` provides a typesafe way to call
@@ -301,50 +355,50 @@ The initial value is `Keep`
 + See the description of `StencilOperation` for info about the other parameters.
 -}
 type FunctionCall
-  = Enable Capability
-  | Disable Capability
-  | BlendColor (Float, Float, Float, Float)
-  | BlendEquation BlendMode
-  | BlendEquationSeparate (BlendMode, BlendMode)
-  | BlendFunc (BlendOperation, BlendOperation)
-  | DepthFunc CompareMode
-  | SampleCoverageFunc (Float, Bool)
-  | StencilFunc (CompareMode, Int, Int)
-  | StencilFuncSeparate (FaceMode, CompareMode, Int, Int)
-  | StencilOperation (ZMode, ZMode, ZMode)
-  | StencilOperationSeparate (FaceMode, ZMode, ZMode, ZMode)
+    = Enable Capability
+    | Disable Capability
+    | BlendColor ( Float, Float, Float, Float )
+    | BlendEquation BlendMode
+    | BlendEquationSeparate ( BlendMode, BlendMode )
+    | BlendFunc ( BlendOperation, BlendOperation )
+    | DepthFunc CompareMode
+    | SampleCoverageFunc ( Float, Bool )
+    | StencilFunc ( CompareMode, Int, Int )
+    | StencilFuncSeparate ( FaceMode, CompareMode, Int, Int )
+    | StencilOperation ( ZMode, ZMode, ZMode )
+    | StencilOperationSeparate ( FaceMode, ZMode, ZMode, ZMode )
 
 
 {-| -}
 computeCapabilityString : Capability -> String
 computeCapabilityString capability =
-  case capability of
-    Blend ->
-      "BLEND"
+    case capability of
+        Blend ->
+            "BLEND"
 
-    CullFace ->
-      "CULL_FACE"
+        CullFace ->
+            "CULL_FACE"
 
-    DepthTest ->
-      "DEPTH_TEST"
+        DepthTest ->
+            "DEPTH_TEST"
 
-    Dither ->
-      "DITHER"
+        Dither ->
+            "DITHER"
 
-    PolygonOffsetFill ->
-      "POLYGON_OFFSET_FILL"
+        PolygonOffsetFill ->
+            "POLYGON_OFFSET_FILL"
 
-    SampleAlphaToCoverage ->
-      "SAMPLE_ALPHA_TO_COVERAGE"
+        SampleAlphaToCoverage ->
+            "SAMPLE_ALPHA_TO_COVERAGE"
 
-    SampleCoverage ->
-      "SAMPLE_COVERAGE"
+        SampleCoverage ->
+            "SAMPLE_COVERAGE"
 
-    ScissorTest ->
-      "SCISSOR_TEST"
+        ScissorTest ->
+            "SCISSOR_TEST"
 
-    StencilTest ->
-      "STENCIL_TEST"
+        StencilTest ->
+            "STENCIL_TEST"
 
 
 {-| The `Capability` type is used to enable/disable server-side GL capabilities.
@@ -366,200 +420,200 @@ is ANDed with the temporary coverage value.
 + `StencilTest`: If enabled, do stencil testing and update the stencil buffer.
 -}
 type Capability
-  = Blend
-  | CullFace
-  | DepthTest
-  | Dither
-  | PolygonOffsetFill
-  | SampleAlphaToCoverage
-  | SampleCoverage
-  | ScissorTest
-  | StencilTest
+    = Blend
+    | CullFace
+    | DepthTest
+    | Dither
+    | PolygonOffsetFill
+    | SampleAlphaToCoverage
+    | SampleCoverage
+    | ScissorTest
+    | StencilTest
 
 
 {-| -}
 computeBlendOperationString : BlendOperation -> String
 computeBlendOperationString operation =
-  case operation of
-    Zero ->
-      "ZERO"
+    case operation of
+        Zero ->
+            "ZERO"
 
-    One ->
-      "ONE"
+        One ->
+            "ONE"
 
-    SrcColor ->
-      "SRC_COLOR"
+        SrcColor ->
+            "SRC_COLOR"
 
-    OneMinusSrcColor ->
-      "ONE_MINUS_SRC_COLOR"
+        OneMinusSrcColor ->
+            "ONE_MINUS_SRC_COLOR"
 
-    DstColor ->
-      "DST_COLOR"
+        DstColor ->
+            "DST_COLOR"
 
-    OneMinusDstColor ->
-      "ONE_MINUS_DST_COLOR"
+        OneMinusDstColor ->
+            "ONE_MINUS_DST_COLOR"
 
-    SrcAlpha ->
-      "SRC_ALPHA"
+        SrcAlpha ->
+            "SRC_ALPHA"
 
-    OneMinusSrcAlpha ->
-      "ONE_MINUS_SRC_ALPHA"
+        OneMinusSrcAlpha ->
+            "ONE_MINUS_SRC_ALPHA"
 
-    DstAlpha ->
-      "DST_ALPHA"
+        DstAlpha ->
+            "DST_ALPHA"
 
-    OneMinusDstAlpha ->
-      "ONE_MINUS_DST_ALPHA"
+        OneMinusDstAlpha ->
+            "ONE_MINUS_DST_ALPHA"
 
-    ConstantColor ->
-      "CONSTANT_COLOR"
+        ConstantColor ->
+            "CONSTANT_COLOR"
 
-    OneMinusConstantColor ->
-      "ONE_MINUS_CONSTANT_COLOR"
+        OneMinusConstantColor ->
+            "ONE_MINUS_CONSTANT_COLOR"
 
-    ConstantAlpha ->
-      "CONSTANT_ALPHA"
+        ConstantAlpha ->
+            "CONSTANT_ALPHA"
 
-    OneMinusConstantAlpha ->
-      "ONE_MINUS_CONSTANT_ALPHA"
+        OneMinusConstantAlpha ->
+            "ONE_MINUS_CONSTANT_ALPHA"
 
-    SrcAlphaSaturate ->
-      "SRC_ALPHA_SATURATE"
+        SrcAlphaSaturate ->
+            "SRC_ALPHA_SATURATE"
 
 
 {-| The `BlendOperation` type allows you to define which blend operation to use.
 -}
 type BlendOperation
-  = Zero
-  | One
-  | SrcColor
-  | OneMinusSrcColor
-  | DstColor
-  | OneMinusDstColor
-  | SrcAlpha
-  | OneMinusSrcAlpha
-  | DstAlpha
-  | OneMinusDstAlpha
-  | ConstantColor
-  | OneMinusConstantColor
-  | ConstantAlpha
-  | OneMinusConstantAlpha
-  | SrcAlphaSaturate
+    = Zero
+    | One
+    | SrcColor
+    | OneMinusSrcColor
+    | DstColor
+    | OneMinusDstColor
+    | SrcAlpha
+    | OneMinusSrcAlpha
+    | DstAlpha
+    | OneMinusDstAlpha
+    | ConstantColor
+    | OneMinusConstantColor
+    | ConstantAlpha
+    | OneMinusConstantAlpha
+    | SrcAlphaSaturate
 
 
 {-| -}
 computeBlendModeString : BlendMode -> String
 computeBlendModeString mode =
-  case mode of
-    Add ->
-      "FUNC_ADD"
+    case mode of
+        Add ->
+            "FUNC_ADD"
 
-    Subtract ->
-      "FUNC_SUBTRACT"
+        Subtract ->
+            "FUNC_SUBTRACT"
 
-    ReverseSubtract ->
-      "FUNC_REVERSE_SUBTRACT"
+        ReverseSubtract ->
+            "FUNC_REVERSE_SUBTRACT"
 
 
 {-| The `BlendMode` type allows you to define which blend mode to use.
 -}
 type BlendMode
-  = Add
-  | Subtract
-  | ReverseSubtract
+    = Add
+    | Subtract
+    | ReverseSubtract
 
 
 {-| -}
 computeCompareModeString : CompareMode -> String
 computeCompareModeString mode =
-  case mode of
-    Never ->
-      "NEVER"
+    case mode of
+        Never ->
+            "NEVER"
 
-    Always ->
-      "ALWAYS"
+        Always ->
+            "ALWAYS"
 
-    Less ->
-      "LESS"
+        Less ->
+            "LESS"
 
-    LessOrEqual ->
-      "LEQUAL"
+        LessOrEqual ->
+            "LEQUAL"
 
-    Equal ->
-      "EQUAL"
+        Equal ->
+            "EQUAL"
 
-    GreaterOrEqual ->
-      "GEQUAL"
+        GreaterOrEqual ->
+            "GEQUAL"
 
-    Greater ->
-      "Greater"
+        Greater ->
+            "Greater"
 
-    NotEqual ->
-      "NOTEQUAL"
+        NotEqual ->
+            "NOTEQUAL"
 
 
 {-| The `CompareMode` type allows you to define how to compare values.
 -}
 type CompareMode
-  = Never
-  | Always
-  | Less
-  | LessOrEqual
-  | Equal
-  | GreaterOrEqual
-  | Greater
-  | NotEqual
+    = Never
+    | Always
+    | Less
+    | LessOrEqual
+    | Equal
+    | GreaterOrEqual
+    | Greater
+    | NotEqual
 
 
 {-| -}
 computeFaceModeString : FaceMode -> String
 computeFaceModeString mode =
-  case mode of
-    Front ->
-      "FRONT"
+    case mode of
+        Front ->
+            "FRONT"
 
-    Back ->
-      "BACK"
+        Back ->
+            "BACK"
 
-    FrontAndBack ->
-      "FRONT_AND_BACK"
+        FrontAndBack ->
+            "FRONT_AND_BACK"
 
 
 {-| The `FaceMode` type defines which face of the stencil state is updated.
 -}
 type FaceMode
-  = Front
-  | Back
-  | FrontAndBack
+    = Front
+    | Back
+    | FrontAndBack
 
 
 {-| -}
 computeZModeString : ZMode -> String
 computeZModeString mode =
-  case mode of
-    Keep ->
-      "KEEP"
+    case mode of
+        Keep ->
+            "KEEP"
 
-    None ->
-      "ZERO"
+        None ->
+            "ZERO"
 
-    Replace ->
-      "REPLACE"
+        Replace ->
+            "REPLACE"
 
-    Increment ->
-      "INCREMENT"
+        Increment ->
+            "INCREMENT"
 
-    Decrement ->
-      "DECREMENT"
+        Decrement ->
+            "DECREMENT"
 
-    Invert ->
-      "INVERT"
+        Invert ->
+            "INVERT"
 
-    IncrementWrap ->
-      "INCREMENT_WRAP"
+        IncrementWrap ->
+            "INCREMENT_WRAP"
 
-    DecrementWrap ->
-      "DECREMENT_WRAP"
+        DecrementWrap ->
+            "DECREMENT_WRAP"
 
 
 {-| The `ZMode` type allows you to define what to do with the stencil buffer value.
@@ -580,11 +634,11 @@ Wraps stencil buffer value to the maximum representable unsigned
 value when decrementing a stencil buffer value of zero.
 -}
 type ZMode
-  = Keep
-  | None
-  | Replace
-  | Increment
-  | Decrement
-  | Invert
-  | IncrementWrap
-  | DecrementWrap
+    = Keep
+    | None
+    | Replace
+    | Increment
+    | Decrement
+    | Invert
+    | IncrementWrap
+    | DecrementWrap

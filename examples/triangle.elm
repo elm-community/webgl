@@ -1,52 +1,61 @@
+module Main exposing (..)
+
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
 import Html exposing (Html)
-import Html.App as Html
 import Html.Attributes exposing (width, height)
 import AnimationFrame
+import Time exposing (Time)
+
 
 -- Create a mesh with two triangles
 
-type alias Vertex = { position : Vec3, color : Vec3 }
+
+type alias Vertex =
+    { position : Vec3, color : Vec3 }
 
 
 mesh : Drawable Vertex
-mesh = Triangle
-  [ ( Vertex (vec3 0  0 0) (vec3 1 0 0)
-    , Vertex (vec3 1  1 0) (vec3 0 1 0)
-    , Vertex (vec3 1 -1 0) (vec3 0 0 1)
-    )
-  ]
+mesh =
+    Triangle
+        [ ( Vertex (vec3 0 0 0) (vec3 1 0 0)
+          , Vertex (vec3 1 1 0) (vec3 0 1 0)
+          , Vertex (vec3 1 -1 0) (vec3 0 0 1)
+          )
+        ]
 
 
-main : Program Never
+main : Program Never Time Time
 main =
-  Html.program
-    { init = (0, Cmd.none)
-    , view = view
-    , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
-    , update = (\elapsed currentTime -> (elapsed + currentTime, Cmd.none))
-    }
+    Html.program
+        { init = ( 0, Cmd.none )
+        , view = view
+        , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
+        , update = (\elapsed currentTime -> ( elapsed + currentTime, Cmd.none ))
+        }
 
 
 view : Float -> Html msg
 view t =
-  WebGL.toHtml
-    [ width 400, height 400 ]
-    [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
+    WebGL.toHtml
+        [ width 400, height 400 ]
+        [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 
 
 perspective : Float -> Mat4
 perspective t =
-  mul (makePerspective 45 1 0.01 100)
-      (makeLookAt (vec3 (4 * cos t) 0 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
+    mul (makePerspective 45 1 0.01 100)
+        (makeLookAt (vec3 (4 * cos t) 0 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
+
 
 
 -- Shaders
 
-vertexShader : Shader { attr | position:Vec3, color:Vec3 } { unif | perspective:Mat4 } { vcolor:Vec3 }
-vertexShader = [glsl|
+
+vertexShader : Shader { attr | position : Vec3, color : Vec3 } { unif | perspective : Mat4 } { vcolor : Vec3 }
+vertexShader =
+    [glsl|
 
 attribute vec3 position;
 attribute vec3 color;
@@ -61,8 +70,9 @@ void main () {
 |]
 
 
-fragmentShader : Shader {} u { vcolor:Vec3 }
-fragmentShader = [glsl|
+fragmentShader : Shader {} u { vcolor : Vec3 }
+fragmentShader =
+    [glsl|
 
 precision mediump float;
 varying vec3 vcolor;
