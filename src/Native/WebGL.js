@@ -20,8 +20,17 @@ var _elm_community$webgl$Native_WebGL = function () {
   function loadTexture(source) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
       var img = new Image();
+      // prevent the debugger from serializing the image as a record
+      function getImage() {
+        return img;
+      }
       img.onload = function () {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({ ctor: 'Texture', img: img }));
+        return callback(_elm_lang$core$Native_Scheduler.succeed({
+          ctor: 'Texture',
+          img: getImage,
+          width: img.width,
+          height: img.height
+        }));
       };
       img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
@@ -34,8 +43,17 @@ var _elm_community$webgl$Native_WebGL = function () {
   function loadTextureRaw(filter, source) {
     return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
       var img = new Image();
+      // prevent the debugger from serializing the image as a record
+      function getImage() {
+        return img;
+      }
       img.onload = function () {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({ ctor: 'RawTexture', img: img }));
+        return callback(_elm_lang$core$Native_Scheduler.succeed({
+          ctor: 'RawTexture',
+          img: getImage,
+          width: img.width,
+          height: img.height
+        }));
       };
       img.onerror = function () {
         return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
@@ -46,7 +64,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function textureSize(texture) {
-    return Utils.Tuple2(texture.img.width, texture.img.height);
+    return Utils.Tuple2(texture.width, texture.height);
   }
 
   function render(vert, frag, buffer, uniforms, functionCalls) {
@@ -72,7 +90,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img());
     switch (texture.ctor) {
       case 'Texture':
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
