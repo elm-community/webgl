@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars, camelcase
 var _elm_community$webgl$Native_WebGL = function () {
 
   // setup logging
@@ -7,7 +7,13 @@ var _elm_community$webgl$Native_WebGL = function () {
     // console.log(msg);
   }
 
+  /* eslint-disable camelcase */
   var Utils = _elm_lang$core$Native_Utils;
+  var Scheduler = _elm_lang$core$Native_Scheduler;
+  var VirtualDom = _elm_lang$virtual_dom$Native_VirtualDom;
+  var listLength = _elm_lang$core$List$length;
+  var listMap = _elm_lang$core$List$map;
+  /* eslint-enable camelcase */
 
   var rAF = typeof requestAnimationFrame !== 'undefined' ?
     requestAnimationFrame :
@@ -18,14 +24,14 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function loadTexture(source) {
-    return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
+    return Scheduler.nativeBinding(function (callback) {
       var img = new Image();
       // prevent the debugger from serializing the image as a record
       function getImage() {
         return img;
       }
       img.onload = function () {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({
+        callback(Scheduler.succeed({
           ctor: 'Texture',
           img: getImage,
           width: img.width,
@@ -33,7 +39,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         }));
       };
       img.onerror = function () {
-        return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
+        callback(Scheduler.fail({ ctor: 'Error' }));
       };
       img.crossOrigin = 'Anonymous';
       img.src = source;
@@ -41,14 +47,14 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function loadTextureRaw(filter, source) {
-    return _elm_lang$core$Native_Scheduler.nativeBinding(function (callback) {
+    return Scheduler.nativeBinding(function (callback) {
       var img = new Image();
       // prevent the debugger from serializing the image as a record
       function getImage() {
         return img;
       }
       img.onload = function () {
-        return callback(_elm_lang$core$Native_Scheduler.succeed({
+        callback(Scheduler.succeed({
           ctor: 'RawTexture',
           img: getImage,
           width: img.width,
@@ -56,7 +62,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         }));
       };
       img.onerror = function () {
-        return callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'Error' }));
+        callback(Scheduler.fail({ ctor: 'Error' }));
       };
       img.crossOrigin = 'Anonymous';
       img.src = source;
@@ -83,7 +89,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   }
 
-  function do_texture(gl, texture) {
+  function doTexture(gl, texture) {
 
     var tex = gl.createTexture();
     LOG('Created texture');
@@ -102,20 +108,19 @@ var _elm_community$webgl$Native_WebGL = function () {
         break;
     }
     gl.generateMipmap(gl.TEXTURE_2D);
-    //gl.bindTexture(gl.TEXTURE0, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     return tex;
 
   }
 
-  function do_compile(gl, src, tipe) {
+  function doCompile(gl, src, type) {
 
-    var shader = gl.createShader(tipe);
+    var shader = gl.createShader(type);
     LOG('Created shader');
 
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
-    var compile = gl.COMPILE_STATUS;
-    if (!gl.getShaderParameter(shader, compile)) {
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       throw gl.getShaderInfoLog(shader);
     }
 
@@ -123,7 +128,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   }
 
-  function do_link(gl, vshader, fshader) {
+  function doLink(gl, vshader, fshader) {
 
     var program = gl.createProgram();
     LOG('Created program');
@@ -139,8 +144,8 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   }
 
-  function get_render_info(gl, render_type) {
-    switch (render_type) {
+  function getRenderInfo(gl, renderType) {
+    switch (renderType) {
       case 'Triangle':
         return { mode: gl.TRIANGLES, elemSize: 3 };
       case 'LineStrip':
@@ -158,7 +163,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
   }
 
-  function get_attribute_info(gl, type) {
+  function getAttributeInfo(gl, type) {
     switch (type) {
       case gl.FLOAT:
         return { size: 1, type: Float32Array, baseType: gl.FLOAT };
@@ -179,48 +184,51 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
   }
 
-  /**
-        Form the buffer for a given attribute.
-
-        @param gl gl context
-        @param attribute the attribute to bind to. We use its name to grab the record by name and also to know
-                how many elements we need to grab.
-        @param bufferElems The list coming in from elm.
-        @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
-            ie, 2 for Lines, 3 for Triangles, etc.
+ /**
+  *  Form the buffer for a given attribute.
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {WebGLActiveInfo} attribute the attribute to bind to.
+  *         We use its name to grab the record by name and also to know
+  *         how many elements we need to grab.
+  *  @param {List} bufferElems The list coming in from Elm.
+  *  @param {Number} elemSize The length of the number of vertices that
+  *         complete one 'thing' based on the drawing mode.
+  *         ie, 2 for Lines, 3 for Triangles, etc.
+  *  @return {WebGLBuffer}
   */
-  function do_bind_attribute(gl, attribute, bufferElems, elem_length) {
+  function doBindAttribute(gl, attribute, bufferElems, elemSize) {
     var idxKeys = [];
-    for (var i = 0; i < elem_length; i++) {
+    for (var i = 0; i < elemSize; i++) {
       idxKeys.push('_' + i);
     }
 
     function dataFill(data, cnt, fillOffset, elem, key) {
-      if (elem_length == 1) {
+      if (elemSize === 1) {
         for (var i = 0; i < cnt; i++) {
           data[fillOffset++] = cnt === 1 ? elem[key] : elem[key][i];
         }
       } else {
         idxKeys.forEach(function (idx) {
           for (var i = 0; i < cnt; i++) {
-            data[fillOffset++] = (cnt === 1 ? elem[idx][key] : elem[idx][key][i]);
+            data[fillOffset++] = cnt === 1 ? elem[idx][key] : elem[idx][key][i];
           }
         });
       }
     }
 
-    var attributeInfo = get_attribute_info(gl, attribute.type);
+    var attributeInfo = getAttributeInfo(gl, attribute.type);
 
     if (attributeInfo === undefined) {
       throw new Error('No info available for: ' + attribute.type);
     }
 
-    var data_idx = 0;
-    var array = new attributeInfo.type( _elm_lang$core$List$length(bufferElems) * attributeInfo.size * elem_length);
+    var dataIdx = 0;
+    var array = new attributeInfo.type(listLength(bufferElems) * attributeInfo.size * elemSize);
 
-    A2(_elm_lang$core$List$map, function (elem) {
-      dataFill(array, attributeInfo.size, data_idx, elem, attribute.name);
-      data_idx += attributeInfo.size * elem_length;
+    A2(listMap, function (elem) {
+      dataFill(array, attributeInfo.size, dataIdx, elem, attribute.name);
+      dataIdx += attributeInfo.size * elemSize;
     }, bufferElems);
 
     var buffer = gl.createBuffer();
@@ -231,23 +239,31 @@ var _elm_community$webgl$Native_WebGL = function () {
     return buffer;
   }
 
-  /**
-    This sets up the binding cacheing buffers.
-
-    We don't actually bind any buffers now except for the indices buffer, which we fill with 0..n. The problem
-    with filling the buffers here is that it is possible to have a buffer shared between two webgl shaders; which
-    could have different active attributes. If we bind it here against a particular program, we might not bind
-    them all. That final bind is now done right before drawing.
-
-    @param gl gl context
-    @param bufferElems The list coming in from elm.
-    @param elem_length The length of the number of vertices that complete one 'thing' based on the drawing mode.
-            ie, 2 for Lines, 3 for Triangles, etc.
+ /**
+  *  This sets up the binding cacheing buffers.
+  *
+  *  We don't actually bind any buffers now except for the indices buffer,
+  *  which we fill with 0..n. The problem with filling the buffers here is
+  *  that it is possible to have a buffer shared between two webgl shaders;
+  *  which could have different active attributes. If we bind it here against
+  *  a particular program, we might not bind them all. That final bind is now
+  *  done right before drawing.
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {List} bufferElems The list coming in from Elm.
+  *  @param {Number} elemSize The length of the number of vertices that
+  *         complete one 'thing' based on the drawing mode.
+  *         ie, 2 for Lines, 3 for Triangles, etc.
+  *
+  *  @return {Object} buffer - an object with the following properties
+  *  @return {Number} buffer.numIndices
+  *  @return {WebGLBuffer} buffer.indexBuffer
+  *  @return {Object} buffer.buffers
   */
-  function do_bind_setup(gl, bufferElems, elem_length) {
+  function doBindSetup(gl, bufferElems, elemSize) {
     var buffers = {};
 
-    var numIndices = elem_length * _elm_lang$core$List$length(bufferElems);
+    var numIndices = elemSize * listLength(bufferElems);
     var indices = new Uint16Array(numIndices);
     for (var i = 0; i < numIndices; i += 1) {
       indices[i] = i;
@@ -286,7 +302,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     LOG('Drawing');
 
     function drawEntity(render) {
-      if (_elm_lang$core$List$length(render.buffer._0) === 0) {
+      if (listLength(render.buffer._0) === 0) {
         return;
       }
 
@@ -307,7 +323,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         }
 
         if (!vshader) {
-          vshader = do_compile(gl, render.vert.src, gl.VERTEX_SHADER);
+          vshader = doCompile(gl, render.vert.src, gl.VERTEX_SHADER);
           model.cache.shaders[render.vert.id] = vshader;
         }
 
@@ -319,11 +335,11 @@ var _elm_community$webgl$Native_WebGL = function () {
         }
 
         if (!fshader) {
-          fshader = do_compile(gl, render.frag.src, gl.FRAGMENT_SHADER);
+          fshader = doCompile(gl, render.frag.src, gl.FRAGMENT_SHADER);
           model.cache.shaders[render.frag.id] = fshader;
         }
 
-        program = do_link(gl, vshader, fshader);
+        program = doLink(gl, vshader, fshader);
         progid = getProgID(render.vert.id, render.frag.id);
         model.cache.programs[progid] = program;
 
@@ -340,11 +356,11 @@ var _elm_community$webgl$Native_WebGL = function () {
 
       setUniforms(setters, render.uniforms);
 
-      var renderType = get_render_info(gl, render.buffer.ctor);
+      var renderType = getRenderInfo(gl, render.buffer.ctor);
       var buffer = model.cache.buffers[render.buffer.guid];
 
       if (!buffer) {
-        buffer = do_bind_setup(gl, render.buffer._0, renderType.elemSize);
+        buffer = doBindSetup(gl, render.buffer._0, renderType.elemSize);
         model.cache.buffers[render.buffer.guid] = buffer;
       }
 
@@ -361,12 +377,12 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.enableVertexAttribArray(attribLocation);
 
         if (buffer.buffers[attribute.name] === undefined) {
-          buffer.buffers[attribute.name] = do_bind_attribute(gl, attribute, render.buffer._0, renderType.elemSize);
+          buffer.buffers[attribute.name] = doBindAttribute(gl, attribute, render.buffer._0, renderType.elemSize);
         }
         var attributeBuffer = buffer.buffers[attribute.name];
-        var attributeInfo = get_attribute_info(gl, attribute.type);
+        var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        A2(_elm_lang$core$List$map, function (functionCall) {
+        A2(listMap, function (functionCall) {
           functionCall(gl);
         }, render.functionCalls);
 
@@ -377,7 +393,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     }
 
-    A2(_elm_lang$core$List$map, drawEntity, model.renderables);
+    A2(listMap, drawEntity, model.renderables);
     return domNode;
   }
 
@@ -424,7 +440,7 @@ var _elm_community$webgl$Native_WebGL = function () {
               texture.id = Utils.guid();
             }
             if (!tex) {
-              tex = do_texture(gl, texture);
+              tex = doTexture(gl, texture);
               model.cache.textures[texture.id] = tex;
             }
             gl.activeTexture(gl[activeName]);
@@ -533,7 +549,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
 
-  // VIRTUAL-DOM WIDGETS
+  // VIRTUAL-DOM WIDGET
 
   function toHtml(functionCalls, factList, renderables) {
     var model = {
@@ -541,16 +557,23 @@ var _elm_community$webgl$Native_WebGL = function () {
       renderables: renderables,
       cache: {}
     };
-    return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
+    return VirtualDom.custom(factList, model, implementation);
   }
 
-  // WIDGET IMPLEMENTATION
   var implementation = {
     render: renderCanvas,
     diff: diff
   };
 
-
+  /**
+   *  Creates canvas and schedules initial drawGL
+   *  @param {Object} model
+   *  @param {Object} model.cache that may contain the following properties:
+             gl, shaders, programs, uniformSetters, buffers, textures
+   *  @param {List} model.functionCalls
+   *  @param {List} model.renderables
+   *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
+   */
   function renderCanvas(model) {
 
     LOG('Render canvas');
@@ -558,7 +581,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
     if (gl) {
-      A2(_elm_lang$core$List$map, function (functionCall) {
+      A2(listMap, function (functionCall) {
         functionCall(gl);
       }, model.functionCalls);
     } else {
@@ -566,7 +589,6 @@ var _elm_community$webgl$Native_WebGL = function () {
       canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
     }
 
-    model.cache = model.cache || {};
     model.cache.gl = gl;
     model.cache.shaders = [];
     model.cache.programs = {};
