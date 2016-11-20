@@ -9,5 +9,6 @@ Any contribution should:
 * Not introduce mutable variables
 * Justify why the change is needed and why it won't break anything already here
 * JavaScript code should be validated using `eslint src`
+* Elm code should be formatted with `elm-format`
 
 Documentation improvements are welcome.
