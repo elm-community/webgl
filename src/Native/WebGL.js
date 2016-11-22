@@ -23,7 +23,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     return { src: src };
   }
 
-  function loadTexture(source) {
+  function loadTextureWithFilter(filter, source) {
     return Scheduler.nativeBinding(function (callback) {
       var img = new Image();
       // prevent the debugger from serializing the image as a record
@@ -34,29 +34,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         callback(Scheduler.succeed({
           ctor: 'Texture',
           img: getImage,
-          width: img.width,
-          height: img.height
-        }));
-      };
-      img.onerror = function () {
-        callback(Scheduler.fail({ ctor: 'Error' }));
-      };
-      img.crossOrigin = 'Anonymous';
-      img.src = source;
-    });
-  }
-
-  function loadTextureRaw(filter, source) {
-    return Scheduler.nativeBinding(function (callback) {
-      var img = new Image();
-      // prevent the debugger from serializing the image as a record
-      function getImage() {
-        return img;
-      }
-      img.onload = function () {
-        callback(Scheduler.succeed({
-          ctor: 'RawTexture',
-          img: getImage,
+          filter: filter,
           width: img.width,
           height: img.height
         }));
@@ -97,12 +75,12 @@ var _elm_community$webgl$Native_WebGL = function () {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img());
-    switch (texture.ctor) {
-      case 'Texture':
+    switch (texture.filter.ctor) {
+      case 'Linear':
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         break;
-      case 'RawTexture':
+      case 'Nearest':
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         break;
@@ -619,7 +597,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   return {
     unsafeCoerceGLSL: unsafeCoerceGLSL,
     textureSize: textureSize,
-    loadTexture: loadTexture,
+    loadTextureWithFilter: F2(loadTextureWithFilter),
     render: F5(render),
     toHtml: F3(toHtml),
     enable: enable,
@@ -633,8 +611,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     stencilFunc: F3(stencilFunc),
     stencilFuncSeparate: F4(stencilFuncSeparate),
     stencilOperation: F3(stencilOperation),
-    stencilOperationSeparate: F4(stencilOperationSeparate),
-    loadTextureRaw: F2(loadTextureRaw)
+    stencilOperationSeparate: F4(stencilOperationSeparate)
   };
 
 }();
