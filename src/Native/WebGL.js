@@ -10,7 +10,6 @@ var _elm_community$webgl$Native_WebGL = function () {
   /* eslint-disable camelcase */
   var Utils = _elm_lang$core$Native_Utils;
   var Scheduler = _elm_lang$core$Native_Scheduler;
-  var VirtualDom = _elm_lang$virtual_dom$Native_VirtualDom;
   var listLength = _elm_lang$core$List$length;
   var listMap = _elm_lang$core$List$map;
   /* eslint-enable camelcase */
@@ -535,7 +534,8 @@ var _elm_community$webgl$Native_WebGL = function () {
       renderables: renderables,
       cache: {}
     };
-    return VirtualDom.custom(factList, model, implementation);
+    // eslint-disable-next-line camelcase
+    return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
   }
 
   var implementation = {
