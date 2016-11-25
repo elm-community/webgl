@@ -8,10 +8,15 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   /* eslint-disable camelcase */
-  var Utils = _elm_lang$core$Native_Utils;
-  var Scheduler = _elm_lang$core$Native_Scheduler;
-  var listLength = _elm_lang$core$List$length;
-  var listMap = _elm_lang$core$List$map;
+  function guid() {
+    return _elm_lang$core$Native_Utils.guid();
+  }
+  function listLength(list) {
+    return _elm_lang$core$List$length(list);
+  }
+  function listMap(fn, list) {
+    return A2(_elm_lang$core$List$map, fn, list);
+  }
   /* eslint-enable camelcase */
 
   var rAF = typeof requestAnimationFrame !== 'undefined' ?
@@ -23,6 +28,8 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function loadTextureWithFilter(filter, source) {
+    // eslint-disable-next-line camelcase
+    var Scheduler = _elm_lang$core$Native_Scheduler;
     return Scheduler.nativeBinding(function (callback) {
       var img = new Image();
       // prevent the debugger from serializing the image as a record
@@ -47,13 +54,14 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function textureSize(texture) {
-    return Utils.Tuple2(texture.width, texture.height);
+    // eslint-disable-next-line camelcase
+    return _elm_lang$core$Native_Utils.Tuple2(texture.width, texture.height);
   }
 
   function render(vert, frag, buffer, uniforms, functionCalls) {
 
     if (!buffer.guid) {
-      buffer.guid = Utils.guid();
+      buffer.guid = guid();
     }
 
     return {
@@ -203,7 +211,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var dataIdx = 0;
     var array = new attributeInfo.type(listLength(bufferElems) * attributeInfo.size * elemSize);
 
-    A2(listMap, function (elem) {
+    listMap(function (elem) {
       dataFill(array, attributeInfo.size, dataIdx, elem, attribute.name);
       dataIdx += attributeInfo.size * elemSize;
     }, bufferElems);
@@ -296,7 +304,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         if (render.vert.id) {
           vshader = model.cache.shaders[render.vert.id];
         } else {
-          render.vert.id = Utils.guid();
+          render.vert.id = guid();
         }
 
         if (!vshader) {
@@ -308,7 +316,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         if (render.frag.id) {
           fshader = model.cache.shaders[render.frag.id];
         } else {
-          render.frag.id = Utils.guid();
+          render.frag.id = guid();
         }
 
         if (!fshader) {
@@ -359,7 +367,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        A2(listMap, function (functionCall) {
+        listMap(function (functionCall) {
           functionCall(gl);
         }, render.functionCalls);
 
@@ -370,7 +378,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     }
 
-    A2(listMap, drawEntity, model.renderables);
+    listMap(drawEntity, model.renderables);
     return domNode;
   }
 
@@ -414,7 +422,7 @@ var _elm_community$webgl$Native_WebGL = function () {
             if (texture.id) {
               tex = model.cache.textures[texture.id];
             } else {
-              texture.id = Utils.guid();
+              texture.id = guid();
             }
             if (!tex) {
               tex = doTexture(gl, texture);
@@ -559,7 +567,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
     if (gl) {
-      A2(listMap, function (functionCall) {
+      listMap(function (functionCall) {
         functionCall(gl);
       }, model.functionCalls);
     } else {
