@@ -564,7 +564,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     LOG('Render canvas');
     var canvas = document.createElement('canvas');
-    var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    var gl = canvas.getContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
 
     if (gl) {
       listMap(function (functionCall) {
