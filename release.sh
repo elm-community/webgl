@@ -20,6 +20,6 @@ git clone --reference . git@github.com:elm-community/webgl.git release
   git rm -rf --ignore-unmatch $cleanup
   git commit -m "Cleanup and release $version"
   git tag -a $version -m "Release $version"
-  git push --tags
+  git push origin $version
   elm-package publish
 )
