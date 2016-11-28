@@ -5,12 +5,12 @@ rm -rf release || exit 0;
 
 elm-package bump
 
-cleanup="examples gh-pages.sh pipeline.png CONTRIBUTING.md .eslintrc.json release.sh"
 version=$(grep -m1 version elm-package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
 
 git commit -a -m "Bump to $version"
 git push
 
+cleanup="examples gh-pages.sh pipeline.png CONTRIBUTING.md .eslintrc.json release.sh"
 last_commit=$(git rev-parse HEAD)
 
 git clone --reference . git@github.com:elm-community/webgl.git release
