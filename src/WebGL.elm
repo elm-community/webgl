@@ -272,6 +272,9 @@ computeAPICall function =
             computeCompareModeString mode
                 |> Native.WebGL.depthFunc
 
+        DepthMask mask ->
+            Native.WebGL.depthMask mask
+
         SampleCoverageFunc ( value, invert ) ->
             Native.WebGL.sampleCoverage value invert
 
@@ -321,6 +324,15 @@ computeAPICall function =
             in
                 Native.WebGL.stencilOperationSeparate face fail zfail zpass
 
+        StencilMask mask ->
+            Native.WebGL.stencilMask mask
+
+        ColorMask ( r, g, b, a ) ->
+            Native.WebGL.colorMask r g b a
+
+        Scissor ( x, y, w, h ) ->
+            Native.WebGL.scissor x y w h
+
 
 {-| The `FunctionCall` provides a typesafe way to call
 all pre-fragment operations and some special functions.
@@ -354,6 +366,11 @@ and alpha source blending factors are computed
 and alpha destination blending factors are computed
 + `SrcAlphaSaturate` should only be used for the srcFactor);
 + Both values may not reference a `ConstantColor` value;
+
+`DepthMask(mask: Int)`
++ set the mask for the depth buffer. Any value drawn to the
++ depth buffer will be ANDed with the mask. Usually used to
++ turn drawing to the depth buffer on or off.
 
 `SampleCoverageFunc(value: Float, invert: Bool)`
 + specify multisample coverage parameters
@@ -392,6 +409,21 @@ The initial value is `Keep`
 + set front and/or back stencil test actions
 + `face`: Specifies whether front and/or back stencil state is updated.
 + See the description of `StencilOperation` for info about the other parameters.
+
+`StencilMask(mask: Int)`
++ set the stencil mask. This value is ANDed with anything drawn to the
++ stencil buffer. Usually used to turn writing to the stencil buffer
++ on or off.
+
+`ColorMask(r: Int, g: Int, b: Int, a: Int)`
++ set mask to be applied to anything drawn to the color buffer.
++ Values drawn to each channel will be ANDed with their
++ color mask respectively.
+
+`Scissor(x: Int, y: Int, width: Int, height: Int)`
++ set the scissor box, which limits the drawing of fragments to the
++ screen to a specified rectangle.
+
 -}
 type FunctionCall
     = Enable Capability
@@ -401,11 +433,15 @@ type FunctionCall
     | BlendEquationSeparate ( BlendMode, BlendMode )
     | BlendFunc ( BlendOperation, BlendOperation )
     | DepthFunc CompareMode
+    | DepthMask Int
     | SampleCoverageFunc ( Float, Bool )
     | StencilFunc ( CompareMode, Int, Int )
     | StencilFuncSeparate ( FaceMode, CompareMode, Int, Int )
     | StencilOperation ( ZMode, ZMode, ZMode )
     | StencilOperationSeparate ( FaceMode, ZMode, ZMode, ZMode )
+    | StencilMask Int
+    | ColorMask ( Int, Int, Int, Int )
+    | Scissor ( Int, Int, Int, Int )
 
 
 {-| -}
