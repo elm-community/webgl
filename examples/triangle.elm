@@ -38,7 +38,8 @@ main =
 
 view : Float -> Html msg
 view t =
-    WebGL.toHtml
+    WebGL.toHtmlWith
+        [ Enable DepthTest, ClearColor ( 0, 0, 0, 1 ) ]
         [ width 400, height 400 ]
         [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 

@@ -289,6 +289,9 @@ computeAPICall function =
             in
                 Native.WebGL.blendFunc src dst
 
+        ClearColor ( r, g, b, a ) ->
+            Native.WebGL.clearColor r g b a
+
         DepthFunc mode ->
             computeCompareModeString mode
                 |> Native.WebGL.depthFunc
@@ -393,6 +396,13 @@ and alpha destination blending factors are computed
 + depth buffer will be ANDed with the mask. Usually used to
 + turn drawing to the depth buffer on or off.
 
+`ClearColor(red: Float, green: Float, blue: Float, alpha: Float)`
++ set the clear/background color
+
+`DepthFunc(func : CompareMode)`
++ specify the value used for depth buffer comparisons
++ `func`: Specifies the depth comparison function
+
 `SampleCoverageFunc(value: Float, invert: Bool)`
 + specify multisample coverage parameters
 + `value`: Specify a single floating-point sample coverage value.
@@ -453,6 +463,7 @@ type FunctionCall
     | BlendEquation BlendMode
     | BlendEquationSeparate ( BlendMode, BlendMode )
     | BlendFunc ( BlendOperation, BlendOperation )
+    | ClearColor ( Float, Float, Float, Float )
     | DepthFunc CompareMode
     | DepthMask Int
     | SampleCoverageFunc ( Float, Bool )

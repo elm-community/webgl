@@ -497,6 +497,12 @@ var _elm_community$webgl$Native_WebGL = function () {
     };
   }
 
+  function clearColor(r, g, b, a) {
+    return function (gl) {
+      gl.clearColor(r, g, b, a);
+    };
+  }
+
   function depthFunc(mode) {
     return function (gl) {
       gl.depthFunc(gl[mode]);
@@ -637,6 +643,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     blendEquation: blendEquation,
     blendEquationSeparate: F2(blendEquationSeparate),
     blendFunc: F2(blendFunc),
+    clearColor: F4(clearColor),
     depthFunc: depthFunc,
     depthMask: depthMask,
     sampleCoverage: F2(sampleCoverage),
