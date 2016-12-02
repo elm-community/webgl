@@ -11,11 +11,19 @@ var _elm_community$webgl$Native_WebGL = function () {
   function guid() {
     return _elm_lang$core$Native_Utils.guid();
   }
-  function listLength(list) {
-    return _elm_lang$core$List$length(list);
+  function listEach(fn, list) {
+    while (list.ctor !== '[]') {
+      fn(list._0);
+      list = list._1;
+    }
   }
-  function listMap(fn, list) {
-    return A2(_elm_lang$core$List$map, fn, list);
+  function listLength(list) {
+    var length = 0;
+    while (list.ctor !== '[]') {
+      length++;
+      list = list._1;
+    }
+    return length;
   }
   /* eslint-enable camelcase */
 
@@ -132,19 +140,21 @@ var _elm_community$webgl$Native_WebGL = function () {
   function getRenderInfo(gl, renderType) {
     switch (renderType) {
       case 'Triangle':
-        return { mode: gl.TRIANGLES, elemSize: 3 };
+        return { mode: gl.TRIANGLES, elemSize: 3, indexSize: 0 };
       case 'LineStrip':
-        return { mode: gl.LINE_STRIP, elemSize: 1 };
+        return { mode: gl.LINE_STRIP, elemSize: 1, indexSize: 0 };
       case 'LineLoop':
-        return { mode: gl.LINE_LOOP, elemSize: 1 };
+        return { mode: gl.LINE_LOOP, elemSize: 1, indexSize: 0 };
       case 'Points':
-        return { mode: gl.POINTS, elemSize: 1 };
+        return { mode: gl.POINTS, elemSize: 1, indexSize: 0 };
       case 'Lines':
-        return { mode: gl.LINES, elemSize: 2 };
+        return { mode: gl.LINES, elemSize: 2, indexSize: 0 };
       case 'TriangleStrip':
-        return { mode: gl.TRIANGLE_STRIP, elemSize: 1 };
+        return { mode: gl.TRIANGLE_STRIP, elemSize: 1, indexSize: 0 };
       case 'TriangleFan':
-        return { mode: gl.TRIANGLE_FAN, elemSize: 1 };
+        return { mode: gl.TRIANGLE_FAN, elemSize: 1, indexSize: 0 };
+      case 'IndexedTriangle':
+        return { mode: gl.TRIANGLES, elemSize: 1, indexSize: 3 };
     }
   }
 
@@ -211,7 +221,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var dataIdx = 0;
     var array = new attributeInfo.type(listLength(bufferElems) * attributeInfo.size * elemSize);
 
-    listMap(function (elem) {
+    listEach(function (elem) {
       dataFill(array, attributeInfo.size, dataIdx, elem, attribute.name);
       dataIdx += attributeInfo.size * elemSize;
     }, bufferElems);
@@ -227,46 +237,77 @@ var _elm_community$webgl$Native_WebGL = function () {
  /**
   *  This sets up the binding cacheing buffers.
   *
-  *  We don't actually bind any buffers now except for the indices buffer,
-  *  which we fill with 0..n. The problem with filling the buffers here is
-  *  that it is possible to have a buffer shared between two webgl shaders;
+  *  We don't actually bind any buffers now except for the indices buffer.
+  *  The problem with filling the buffers here is that it is possible to
+  *  have a buffer shared between two webgl shaders;
   *  which could have different active attributes. If we bind it here against
   *  a particular program, we might not bind them all. That final bind is now
   *  done right before drawing.
   *
   *  @param {WebGLRenderingContext} gl context
-  *  @param {List} bufferElems The list coming in from Elm.
-  *  @param {Number} elemSize The length of the number of vertices that
-  *         complete one 'thing' based on the drawing mode.
-  *         ie, 2 for Lines, 3 for Triangles, etc.
-  *
+  *  @param {Object} renderType
+  *  @param {Number} renderType.indexSize size of the index
+  *  @param {Number} renderType.elemSize size of the element
+  *  @param {Drawable} drawable a drawable object from Elm
+  *         that contains elements and optionally indices
   *  @return {Object} buffer - an object with the following properties
   *  @return {Number} buffer.numIndices
   *  @return {WebGLBuffer} buffer.indexBuffer
-  *  @return {Object} buffer.buffers
+  *  @return {Object} buffer.buffers - will be used to buffer attributes
   */
-  function doBindSetup(gl, bufferElems, elemSize) {
-    var buffers = {};
-
-    var numIndices = elemSize * listLength(bufferElems);
-    var indices = new Uint16Array(numIndices);
-    for (var i = 0; i < numIndices; i += 1) {
-      indices[i] = i;
-    }
-    var indexBuffer = gl.createBuffer();
+  function doBindSetup(gl, renderType, drawable) {
     LOG('Created index buffer');
+    var indexBuffer = gl.createBuffer();
+    var indices = (renderType.indexSize === 0)
+      ? makeSequentialBuffer(renderType.elemSize * listLength(drawable._0))
+      : makeIndexedBuffer(drawable._1, renderType.indexSize);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    var bufferObject = {
-      numIndices: numIndices,
+    return {
+      numIndices: indices.length,
       indexBuffer: indexBuffer,
-      buffers: buffers
+      buffers: {}
     };
+  }
 
-    return bufferObject;
+ /**
+  *  Create an indices array and fill it with 0..n
+  *
+  *  @param {Number} numIndices The number of indices
+  *  @return {Uint16Array} indices
+  */
+  function makeSequentialBuffer(numIndices) {
+    var indices = new Uint16Array(numIndices);
+    for (var i = 0; i < numIndices; i += 1) {
+      indices[i] = i;
+    }
+    return indices;
+  }
 
+ /**
+  *  Create an indices array and fill it from indices
+  *  based on the size of the index
+  *
+  *  @param {List} indicesList the list of indices
+  *  @param {Number} indexSize the size of the index
+  *  @return {Uint16Array} indices
+  */
+  function makeIndexedBuffer(indicesList, indexSize) {
+    var indices = new Uint16Array(listLength(indicesList) * indexSize);
+    var fillOffset = 0;
+    var i;
+    listEach(function (elem) {
+      if (indexSize === 1) {
+        indices[fillOffset++] = elem;
+      } else {
+        for (i = 0; i < indexSize; i++) {
+          indices[fillOffset++] = elem['_' + i.toString()];
+        }
+      }
+    }, indicesList);
+    return indices;
   }
 
   function getProgID(vertID, fragID) {
@@ -345,13 +386,11 @@ var _elm_community$webgl$Native_WebGL = function () {
       var buffer = model.cache.buffers[render.buffer.guid];
 
       if (!buffer) {
-        buffer = doBindSetup(gl, render.buffer._0, renderType.elemSize);
+        buffer = doBindSetup(gl, renderType, render.buffer);
         model.cache.buffers[render.buffer.guid] = buffer;
       }
 
-      var numIndices = buffer.numIndices;
-      var indexBuffer = buffer.indexBuffer;
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
 
       var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
 
@@ -367,18 +406,18 @@ var _elm_community$webgl$Native_WebGL = function () {
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        listMap(function (functionCall) {
+        listEach(function (functionCall) {
           functionCall(gl);
         }, render.functionCalls);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, attributeBuffer);
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
-      gl.drawElements(renderType.mode, numIndices, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(renderType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
     }
 
-    listMap(drawEntity, model.renderables);
+    listEach(drawEntity, model.renderables);
     return domNode;
   }
 
@@ -596,7 +635,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var gl = canvas.getContext && (canvas.getContext('webgl', model.contextAttributes) || canvas.getContext('experimental-webgl', model.contextAttributes));
 
     if (gl) {
-      listMap(function (functionCall) {
+      listEach(function (functionCall) {
         functionCall(gl);
       }, model.functionCalls);
     } else {

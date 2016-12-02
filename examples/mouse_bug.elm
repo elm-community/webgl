@@ -25,16 +25,13 @@ type alias Vertex =
 
 mesh : GL.Drawable Vertex
 mesh =
-    GL.Triangle <|
-        [ ( Vertex (vec2 0 0) (vec3 1 0 0)
-          , Vertex (vec2 1 1) (vec3 0 1 0)
-          , Vertex (vec2 1 0) (vec3 0 0 1)
-          )
-        , ( Vertex (vec2 0 0) (vec3 1 0 0)
-          , Vertex (vec2 0 1) (vec3 0 0 1)
-          , Vertex (vec2 1 1) (vec3 0 1 0)
-          )
+    GL.IndexedTriangle
+        [ Vertex (vec2 0 0) (vec3 1 0 0)
+        , Vertex (vec2 1 1) (vec3 0 1 0)
+        , Vertex (vec2 1 0) (vec3 0 0 1)
+        , Vertex (vec2 0 1) (vec3 0 0 1)
         ]
+        [ ( 0, 1, 2 ), ( 0, 3, 1 ) ]
 
 
 ortho2D : Float -> Float -> Mat4.Mat4
