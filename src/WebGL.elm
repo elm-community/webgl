@@ -12,7 +12,7 @@ documentation provided here.
 @docs render, renderWithConfig
 
 # WebGL Html
-@docs toHtml, toHtmlWith, defaultConfiguration
+@docs toHtml, toHtmlWith, defaultConfiguration, WebGLContextAttributes, toHtmlWithEvenMore, defaultContextAttributes
 
 # WebGL API Calls
 @docs FunctionCall
@@ -178,8 +178,47 @@ meshes are cached so that they do not get resent to the GPU, so it should be
 relatively cheap to create new entities out of existing values.
 -}
 toHtmlWith : List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWith functionCalls =
-    Native.WebGL.toHtml (computeAPICalls functionCalls)
+toHtmlWith =
+    toHtmlWithEvenMore defaultContextAttributes
+
+
+{-|
+All possible options that you can specify when creating the WebGL context.
+See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
+or [the WebGL specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
+-}
+type alias WebGLContextAttributes =
+    { alpha : Bool
+    , depth : Bool
+    , stencil : Bool
+    , antialias : Bool
+    , premultipliedAlpha : Bool
+    }
+
+
+{-|
+The default WebGL context attributes.
+These are the same as [in the specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
+-}
+defaultContextAttributes : WebGLContextAttributes
+defaultContextAttributes =
+    { alpha = True
+    , depth = True
+    , stencil = False
+    , antialias = True
+    , premultipliedAlpha = True
+    }
+
+
+{-|
+The same as toHtmlWith, but with this version you can also specify attributes for the WebGL context.
+This is needed if you need specific features, e.g. the stencil buffer.
+See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
+or [the WebGL specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
+-}
+toHtmlWithEvenMore : WebGLContextAttributes -> List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
+toHtmlWithEvenMore contextAttributes functionCalls =
+    Native.WebGL.toHtml contextAttributes (computeAPICalls functionCalls)
 
 
 {-| -}

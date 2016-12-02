@@ -536,11 +536,12 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(functionCalls, factList, renderables) {
+  function toHtml(contextAttributes, functionCalls, factList, renderables) {
     var model = {
       functionCalls: functionCalls,
       renderables: renderables,
-      cache: {}
+      cache: {},
+      contextAttributes: contextAttributes
     };
     // eslint-disable-next-line camelcase
     return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
@@ -564,7 +565,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     LOG('Render canvas');
     var canvas = document.createElement('canvas');
-    var gl = canvas.getContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+    var gl = canvas.getContext && (canvas.getContext('webgl', model.contextAttributes) || canvas.getContext('experimental-webgl', model.contextAttributes));
 
     if (gl) {
       listMap(function (functionCall) {
@@ -607,7 +608,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     textureSize: textureSize,
     loadTextureWithFilter: F2(loadTextureWithFilter),
     render: F5(render),
-    toHtml: F3(toHtml),
+    toHtml: F4(toHtml),
     enable: enable,
     disable: disable,
     blendColor: F4(blendColor),
