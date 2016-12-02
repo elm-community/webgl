@@ -1,4 +1,28 @@
-module WebGL exposing (..)
+module WebGL
+    exposing
+        ( Texture
+        , TextureFilter(..)
+        , Shader
+        , Renderable
+        , Error
+        , Drawable(..)
+        , render
+        , renderWithConfig
+        , toHtml
+        , toHtmlWith
+        , defaultConfiguration
+        , FunctionCall(..)
+        , Capability(..)
+        , BlendOperation(..)
+        , BlendMode(..)
+        , CompareMode(..)
+        , FaceMode(..)
+        , ZMode(..)
+        , unsafeShader
+        , loadTexture
+        , loadTextureWithFilter
+        , textureSize
+        )
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)
@@ -25,9 +49,6 @@ documentation provided here.
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
-
-# Functions
-@docs computeAPICall, computeAPICalls, computeBlendModeString, computeBlendOperationString, computeCapabilityString, computeCompareModeString, computeFaceModeString, computeZModeString
 
 -}
 
@@ -61,7 +82,7 @@ type Drawable attributes
     | TriangleStrip (List attributes)
 
 
-{-| Shader is a phantom data type. Don't instantiate it yourself. See below.
+{-| `Shader` is a phantom data type.
 -}
 type Shader attributes uniforms varyings
     = Shader
@@ -83,8 +104,8 @@ unsafeShader =
     Native.WebGL.unsafeCoerceGLSL
 
 
-{-| A `Texture` loads a texture with linear filtering enabled. If you do not
-want filtering, create a `RawTexture` with `loadTextureRaw`.
+{-| `Texture` is a phantom data type, can be
+created with `loadTexture` or `loadTextureWithFilter`
 -}
 type Texture
     = Texture
@@ -103,8 +124,8 @@ type Error
     = Error
 
 
-{-| Loads a texture from the given url. PNG and JPEG are known to work, but
-other formats have not been as well-tested yet.
+{-| Loads a texture from the given url with Linear filtering.
+PNG and JPEG are known to work, but other formats have not been as well-tested yet.
 -}
 loadTexture : String -> Task Error Texture
 loadTexture =
@@ -444,7 +465,6 @@ type FunctionCall
     | Scissor ( Int, Int, Int, Int )
 
 
-{-| -}
 computeCapabilityString : Capability -> String
 computeCapabilityString capability =
     case capability of
@@ -506,7 +526,6 @@ type Capability
     | StencilTest
 
 
-{-| -}
 computeBlendOperationString : BlendOperation -> String
 computeBlendOperationString operation =
     case operation of
@@ -576,7 +595,6 @@ type BlendOperation
     | SrcAlphaSaturate
 
 
-{-| -}
 computeBlendModeString : BlendMode -> String
 computeBlendModeString mode =
     case mode of
@@ -598,7 +616,6 @@ type BlendMode
     | ReverseSubtract
 
 
-{-| -}
 computeCompareModeString : CompareMode -> String
 computeCompareModeString mode =
     case mode of
@@ -640,7 +657,6 @@ type CompareMode
     | NotEqual
 
 
-{-| -}
 computeFaceModeString : FaceMode -> String
 computeFaceModeString mode =
     case mode of
@@ -662,7 +678,6 @@ type FaceMode
     | FrontAndBack
 
 
-{-| -}
 computeZModeString : ZMode -> String
 computeZModeString mode =
     case mode of
