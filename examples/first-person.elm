@@ -315,7 +315,7 @@ type alias Vertex =
 
 crate : Drawable Vertex
 crate =
-    Triangle (List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ])
+    Triangles (List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ])
 
 
 rotatedFace : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )

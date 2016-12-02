@@ -59,7 +59,7 @@ cube =
         lbb =
             vec3 -1 -1 -1
     in
-        Triangle
+        Triangles
             << List.concat
         <|
             [ face green rft rfb rbb rbt

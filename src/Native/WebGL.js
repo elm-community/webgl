@@ -139,7 +139,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   function getRenderInfo(gl, renderType) {
     switch (renderType) {
-      case 'Triangle':
+      case 'Triangles':
         return { mode: gl.TRIANGLES, elemSize: 3, indexSize: 0 };
       case 'LineStrip':
         return { mode: gl.LINE_STRIP, elemSize: 1, indexSize: 0 };
@@ -153,7 +153,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         return { mode: gl.TRIANGLE_STRIP, elemSize: 1, indexSize: 0 };
       case 'TriangleFan':
         return { mode: gl.TRIANGLE_FAN, elemSize: 1, indexSize: 0 };
-      case 'IndexedTriangle':
+      case 'IndexedTriangles':
         return { mode: gl.TRIANGLES, elemSize: 1, indexSize: 3 };
     }
   }

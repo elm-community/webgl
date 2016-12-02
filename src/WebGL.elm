@@ -22,6 +22,9 @@ module WebGL
         , loadTexture
         , loadTextureWithFilter
         , textureSize
+        , WebGLContextAttributes
+        , defaultContextAttributes
+        , toHtmlWithEvenMore
         )
 
 {-| The WebGL API is for high performance rendering. Definitely read about
@@ -67,23 +70,23 @@ to form any shape. Each corner of a triangle is called a *vertex* and contains a
 bunch of *attributes* that describe that particular corner. These attributes can
 be things like position and color.
 
-IndexedTriangle is a special mode in which you provide a list of attributes that describe the vertexes and and a list of indices,
+IndexedTriangles is a special mode in which you provide a list of attributes that describe the vertexes and and a list of indices,
 that are grouped in groups of three that refer to the vertexes that form each triangle.
 
-So when you create a `Triangle` you are really providing three sets of attributes
-that describe the corners of a triangle.
+So when you create `Triangles` you are really providing three sets of attributes
+that describe the corners of each triangle.
 
 See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
 -}
 type Drawable attributes
-    = Triangle (List ( attributes, attributes, attributes ))
+    = Triangles (List ( attributes, attributes, attributes ))
     | Lines (List ( attributes, attributes ))
     | LineStrip (List attributes)
     | LineLoop (List attributes)
     | Points (List attributes)
     | TriangleFan (List attributes)
     | TriangleStrip (List attributes)
-    | IndexedTriangle (List attributes) (List ( Int, Int, Int ))
+    | IndexedTriangles (List attributes) (List ( Int, Int, Int ))
 
 
 {-| `Shader` is a phantom data type.
