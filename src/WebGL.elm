@@ -13,14 +13,12 @@ module WebGL
         , triangleFan
         , triangleStrip
         , render
-        , renderWithConfig
+        , renderWithSettings
         , toHtml
         , toHtmlWith
-        , defaultConfiguration
+        , Options
+        , defaultOptions
         , unsafeShader
-        , WebGLContextAttributes
-        , defaultContextAttributes
-        , toHtmlWithEvenMore
         )
 
 {-| The WebGL API is for high performance rendering. Definitely read about
@@ -36,10 +34,10 @@ documentation provided here.
 @docs Drawable, triangles, indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan, triangleStrip
 
 # Entities
-@docs render, renderWithConfig
+@docs render, renderWithSettings
 
 # WebGL Html
-@docs toHtml, toHtmlWith, defaultConfiguration, WebGLContextAttributes, toHtmlWithEvenMore, defaultContextAttributes
+@docs toHtml, toHtmlWith, defaultOptions, Options
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
@@ -170,8 +168,8 @@ Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
 new entities if you are reusing shaders and meshes that have been used before.
 -}
-renderWithConfig : List Setting -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
-renderWithConfig settings =
+renderWithSettings : List Setting -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
+renderWithSettings settings =
     Native.WebGL.render (List.map computeAPICall settings)
 
 
@@ -180,69 +178,55 @@ custom per-render configurations.
 -}
 render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
 render =
-    renderWithConfig []
-
-
-{-| Default configuration that is used as
-the implicit configurations for `webgl`.
--}
-defaultConfiguration : List Setting
-defaultConfiguration =
-    [ Settings.enable Constants.depthTest
-    ]
+    renderWithSettings []
 
 
 {-| Same as toHtmlWith but with default configurations,
-implicitly configured for you. See `defaultConfiguration` for more information.
+implicitly configured for you. See `defaultOptions` for more information.
 -}
 toHtml : List (Attribute msg) -> List Renderable -> Html msg
 toHtml =
-    toHtmlWith defaultConfiguration
-
-
-{-| Render a WebGL scene with the given dimensions and entities. Shaders and
-meshes are cached so that they do not get resent to the GPU, so it should be
-relatively cheap to create new entities out of existing values.
--}
-toHtmlWith : List Setting -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWith =
-    toHtmlWithEvenMore defaultContextAttributes
+    toHtmlWith defaultOptions
 
 
 {-|
 All possible options that you can specify when creating the WebGL context.
 See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
 or [the WebGL specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
+
+This is needed if you need specific features, e.g. the stencil buffer.
+
+This also includes the list of settings that you may want to apply.
 -}
-type alias WebGLContextAttributes =
+type alias Options =
     { alpha : Bool
     , depth : Bool
     , stencil : Bool
     , antialias : Bool
     , premultipliedAlpha : Bool
+    , settings : List Setting
     }
 
 
 {-|
-The default WebGL context attributes.
+The default options for the WebGL context.
 These are the same as [in the specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
 -}
-defaultContextAttributes : WebGLContextAttributes
-defaultContextAttributes =
+defaultOptions : Options
+defaultOptions =
     { alpha = True
     , depth = True
     , stencil = False
     , antialias = True
     , premultipliedAlpha = True
+    , settings = [ Settings.enable Constants.depthTest ]
     }
 
 
-{-|
-The same as toHtmlWith, but with this version you can also specify attributes for the WebGL context.
-This is needed if you need specific features, e.g. the stencil buffer.
-See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
-or [the WebGL specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
+{-| Render a WebGL scene with the given options, html attributes, and entities.
+Shaders and meshes are cached so that they do not get resent to the GPU,
+so it should be relatively cheap to create new entities out of existing values.
 -}
-toHtmlWithEvenMore : WebGLContextAttributes -> List Setting -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWithEvenMore contextAttributes settings =
-    Native.WebGL.toHtml contextAttributes (List.map computeAPICall settings)
+toHtmlWith : Options -> List (Attribute msg) -> List Renderable -> Html msg
+toHtmlWith ({ settings } as options) =
+    Native.WebGL.toHtml options (List.map computeAPICall settings)
