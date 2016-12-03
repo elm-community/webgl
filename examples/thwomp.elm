@@ -10,6 +10,7 @@ import Math.Matrix4 exposing (..)
 import Mouse
 import Task exposing (Task)
 import WebGL exposing (..)
+import WebGL.Texture as Texture exposing (Error)
 import Window
 import Html exposing (Html)
 import Html.Attributes exposing (width, height)
@@ -87,10 +88,10 @@ main =
 
 fetchTextures : Task Error ( Maybe Texture, Maybe Texture )
 fetchTextures =
-    loadTextureWithFilter Nearest "texture/thwomp_face.jpg"
+    Texture.loadWith Texture.Nearest "texture/thwomp_face.jpg"
         |> Task.andThen
             (\faceTexture ->
-                loadTextureWithFilter Nearest "texture/thwomp_side.jpg"
+                Texture.loadWith Texture.Nearest "texture/thwomp_side.jpg"
                     |> Task.andThen
                         (\sideTexture ->
                             Task.succeed ( Just faceTexture, Just sideTexture )
