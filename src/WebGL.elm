@@ -1,10 +1,8 @@
 module WebGL
     exposing
         ( Texture
-        , TextureFilter(..)
         , Shader
         , Renderable
-        , Error
         , Drawable(..)
         , render
         , renderWithConfig
@@ -19,9 +17,6 @@ module WebGL
         , FaceMode(..)
         , ZMode(..)
         , unsafeShader
-        , loadTexture
-        , loadTextureWithFilter
-        , textureSize
         , WebGLContextAttributes
         , defaultContextAttributes
         , toHtmlWithEvenMore
@@ -33,7 +28,7 @@ and look at some examples before trying to do too much with just the
 documentation provided here.
 
 # Main Types
-@docs Texture, TextureFilter, Shader, Renderable, Error, Drawable
+@docs Shader, Renderable, Drawable, Texture
 
 # Entities
 @docs render, renderWithConfig
@@ -47,16 +42,12 @@ documentation provided here.
 # WebGL API Types
 @docs Capability, BlendOperation, BlendMode, CompareMode, FaceMode, ZMode
 
-# Loading Textures
-@docs loadTexture, loadTextureWithFilter, textureSize
-
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
 
 -}
 
 import Html exposing (Html, Attribute)
-import Task exposing (Task)
 import List
 import Native.WebGL
 
@@ -112,47 +103,10 @@ unsafeShader =
 
 
 {-| `Texture` is a phantom data type, can be
-created with `loadTexture` or `loadTextureWithFilter`
+created with `Texture.load` or `Texture.loadWith`
 -}
 type Texture
     = Texture
-
-
-{-| Textures work in two ways when looking up a pixel value - Linear or Nearest
--}
-type TextureFilter
-    = Linear
-    | Nearest
-
-
-{-| An error which occured in the graphics context
--}
-type Error
-    = Error
-
-
-{-| Loads a texture from the given url with Linear filtering.
-PNG and JPEG are known to work, but other formats have not been as well-tested yet.
--}
-loadTexture : String -> Task Error Texture
-loadTexture =
-    loadTextureWithFilter Linear
-
-
-{-| Loads a texture from the given url. PNG and JPEG are known to work, but
-other formats have not been as well-tested yet. Configurable filter.
--}
-loadTextureWithFilter : TextureFilter -> String -> Task Error Texture
-loadTextureWithFilter =
-    Native.WebGL.loadTextureWithFilter
-
-
-{-| Return the (width, height) size of a texture. Useful for sprite sheets
-or other times you may want to use only a potion of a texture image.
--}
-textureSize : Texture -> ( Int, Int )
-textureSize =
-    Native.WebGL.textureSize
 
 
 {-| Conceptually, an encapsulataion of the instructions to render something

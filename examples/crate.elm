@@ -6,6 +6,7 @@ import Math.Matrix4 exposing (..)
 import Task
 import Time exposing (Time)
 import WebGL exposing (..)
+import WebGL.Texture as Texture exposing (Error)
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -39,7 +40,7 @@ update action model =
 init : ( Model, Cmd Action )
 init =
     ( { texture = Nothing, theta = 0 }
-    , loadTexture "texture/woodCrate.jpg"
+    , Texture.load "texture/woodCrate.jpg"
         |> Task.attempt
             (\result ->
                 case result of

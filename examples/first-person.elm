@@ -11,6 +11,7 @@ import Math.Matrix4 exposing (..)
 import Task exposing (Task)
 import Time exposing (..)
 import WebGL exposing (..)
+import WebGL.Texture as Texture exposing (Error)
 import Html exposing (Html, text, div)
 import Html
 import Html.Attributes exposing (width, height, style)
@@ -100,7 +101,7 @@ init =
       , size = Window.Size 0 0
       }
     , Cmd.batch
-        [ loadTexture "texture/woodCrate.jpg"
+        [ Texture.load "texture/woodCrate.jpg"
             |> Task.attempt
                 (\result ->
                     case result of
