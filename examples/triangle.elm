@@ -3,6 +3,8 @@ module Main exposing (..)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
+import WebGL.Settings as Settings
+import WebGL.Constants as Constants
 import Html exposing (Html)
 import Html.Attributes exposing (width, height)
 import AnimationFrame
@@ -18,7 +20,7 @@ type alias Vertex =
 
 mesh : Drawable Vertex
 mesh =
-    Triangles
+    triangles
         [ ( Vertex (vec3 0 0 0) (vec3 1 0 0)
           , Vertex (vec3 1 1 0) (vec3 0 1 0)
           , Vertex (vec3 1 -1 0) (vec3 0 0 1)
@@ -39,7 +41,9 @@ main =
 view : Float -> Html msg
 view t =
     WebGL.toHtmlWith
-        [ Enable DepthTest, ClearColor ( 0, 0, 0, 1 ) ]
+        [ Settings.enable Constants.depthTest
+        , Settings.clearColor 0 0 0 1
+        ]
         [ width 400, height 400 ]
         [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 

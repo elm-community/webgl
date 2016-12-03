@@ -25,6 +25,7 @@
     "globals" : {
         "_elm_community$webgl$Native_Texture": true,
         "_elm_community$webgl$Native_WebGL": true,
+        "_elm_community$webgl$Native_Settings": true,
         "_elm_lang$virtual_dom$Native_VirtualDom": false,
         "_elm_lang$core$Native_Utils": false,
         "_elm_lang$core$Native_Scheduler": false,

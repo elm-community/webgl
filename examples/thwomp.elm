@@ -215,7 +215,7 @@ toEntity mesh response perspective =
     response
         |> Maybe.map
             (\texture ->
-                [ render vertexShader fragmentShader (Triangles mesh) { texture = texture, perspective = perspective } ]
+                [ render vertexShader fragmentShader (triangles mesh) { texture = texture, perspective = perspective } ]
             )
         |> Maybe.withDefault []
 

@@ -24,7 +24,7 @@ type alias Vertex =
 
 heroVertices : WebGL.Drawable Vertex
 heroVertices =
-    WebGL.Triangles
+    WebGL.triangles
         [ ( { pos = Vec3.vec3 0 0 0 }
           , { pos = Vec3.vec3 1 1 0 }
           , { pos = Vec3.vec3 1 -1 0 }
