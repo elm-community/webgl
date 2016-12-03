@@ -472,12 +472,19 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(contextAttributes, functionCalls, factList, renderables) {
+  function toHtml(options, functionCalls, factList, renderables) {
     var model = {
       functionCalls: functionCalls,
       renderables: renderables,
       cache: {},
-      contextAttributes: contextAttributes
+      // filter out context attributes from options 
+      contextAttributes: {
+        alpha: options.alpha,
+        depth: options.depth,
+        stencil: options.stencil,
+        antialias: options.antialias,
+        premultipliedAlpha: options.premultipliedAlpha
+      }
     };
     // eslint-disable-next-line camelcase
     return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);

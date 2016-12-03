@@ -4,7 +4,6 @@ import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
 import WebGL.Settings as Settings
-import WebGL.Constants as Constants
 import Html exposing (Html)
 import Html.Attributes exposing (width, height)
 import AnimationFrame
@@ -41,9 +40,9 @@ main =
 view : Float -> Html msg
 view t =
     WebGL.toHtmlWith
-        [ Settings.enable Constants.depthTest
-        , Settings.clearColor 0 0 0 1
-        ]
+        { defaultOptions
+            | settings = Settings.clearColor 0 0 0 1 :: defaultOptions.settings
+        }
         [ width 400, height 400 ]
         [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 

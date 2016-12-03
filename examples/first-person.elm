@@ -278,10 +278,12 @@ view { size, person, texture } =
                 , ( "position", "relative" )
                 ]
             ]
-            [ WebGL.toHtmlWithEvenMore
-                { defaultContextAttributes | alpha = False }
-                defaultConfiguration
-                [ width size.width, height size.height, style [ ( "display", "block" ) ] ]
+            [ WebGL.toHtmlWith
+                { defaultOptions | alpha = False }
+                [ width size.width
+                , height size.height
+                , style [ ( "display", "block" ) ]
+                ]
                 entities
             , div
                 [ style
