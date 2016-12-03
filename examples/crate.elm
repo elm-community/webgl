@@ -69,7 +69,7 @@ main =
 
 crate : Drawable { pos : Vec3, coord : Vec3 }
 crate =
-    Triangles <|
+    triangles <|
         List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
 
 

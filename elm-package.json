@@ -8,7 +8,9 @@
     ],
     "exposed-modules": [
         "WebGL",
-        "WebGL.Texture"
+        "WebGL.Texture",
+        "WebGL.Settings",
+        "WebGL.Constants"
     ],
     "native-modules": true,
     "dependencies": {
