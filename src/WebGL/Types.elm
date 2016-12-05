@@ -34,14 +34,14 @@ type Setting
     | BlendFunc BlendOperation BlendOperation
     | ClearColor Float Float Float Float
     | DepthFunc CompareMode
-    | DepthMask Int
+    | DepthMask Bool
     | SampleCoverageFunc Float Bool
     | StencilFunc CompareMode Int Int
     | StencilFuncSeparate FaceMode CompareMode Int Int
     | StencilOperation ZMode ZMode ZMode
     | StencilOperationSeparate FaceMode ZMode ZMode ZMode
     | StencilMask Int
-    | ColorMask Int Int Int Int
+    | ColorMask Bool Bool Bool Bool
     | Scissor Int Int Int Int
 
 

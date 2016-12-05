@@ -55,6 +55,9 @@ disable =
 
 {-| `blendColor red green blue alpha`
 set the blend color
+
+Requires blend to be enabled.
+
 -}
 blendColor : Float -> Float -> Float -> Float -> Setting
 blendColor =
@@ -65,6 +68,8 @@ blendColor =
 specify the equation used for both the
 RGB blend equation and the Alpha blend equation
 
+Requires blend to be enabled.
+
 + `mode`: specifies how source and destination colors are combined
 -}
 blendEquation : BlendMode -> Setting
@@ -74,6 +79,8 @@ blendEquation =
 
 {-| `blendEquationSeparate modeRGB modeAlpha`
 set the RGB blend equation and the alpha blend equation separately
+
+Requires blend to be enabled.
 
 + `modeRGB`: specifies the RGB blend equation, how the red, green,
 and blue components of the source and destination colors are combined
@@ -87,6 +94,8 @@ blendEquationSeparate =
 
 {-| `blendFunc srcFactor dstFactor`
 specify pixel arithmetic
+
+Requires blend to be enabled.
 
 + `srcFactor`: Specifies how the red, green, blue,
 and alpha source blending factors are computed
@@ -103,7 +112,8 @@ blendFunc =
 
 
 {-| `clearColor red green blue alpha`
-set the clear/background color
+set the clear/background color,
+should be set before clearing the scene
 -}
 clearColor : Float -> Float -> Float -> Float -> Setting
 clearColor =
@@ -113,6 +123,8 @@ clearColor =
 {-| `depthFunc func`
 specify the value used for depth buffer comparisons
 
+Requires depthTest to be enabled.
+
 + `func`: Specifies the depth comparison function
 -}
 depthFunc : CompareMode -> Setting
@@ -121,17 +133,21 @@ depthFunc =
 
 
 {-| `depthMask mask`
-set the mask for the depth buffer. Any value drawn to the
-depth buffer will be ANDed with the mask. Usually used to
-turn drawing to the depth buffer on or off.
+
+Turns drawing to the depth buffer on or off.
+
+Requires depthTest to be enabled.
+
 -}
-depthMask : Int -> Setting
+depthMask : Bool -> Setting
 depthMask =
     DepthMask
 
 
 {-| `sampleCoverageFunc value invert`
 specify multisample coverage parameters
+
+Requires sampleAlphaToCoverage or sampleCoverage to be enabled.
 
 + `value`: Specify a single floating-point sample coverage value.
 The value is clamped to the range 0 1. The initial value is `1`
@@ -145,6 +161,8 @@ sampleCoverageFunc =
 
 {-| `stencilFunc func ref mask`
 set front and back function and reference value for stencil testing
+
+Requires stencilTest to be enabled.
 
 + `func`: Specifies the test function.  The initial value is `Always`
 + `ref`: Specifies the reference value for the stencil test. ref is
@@ -162,6 +180,8 @@ stencilFunc =
 {-| `stencilFuncSeparate face func ref mask`
 set front and/or back function and reference value for stencil testing
 
+Requires stencilTest to be enabled.
+
 + `face`: Specifies whether front and/or back stencil state is updated
 
 See the description of `stencilFunc` for info about the other parameters
@@ -173,6 +193,8 @@ stencilFuncSeparate =
 
 {-| `stencilOperation fail zfail pass`
 set front and back stencil test actions
+
+Requires stencilTest to be enabled.
 
 + `fail`: Specifies the action to take when the stencil test fails.
 The initial value is `Keep`
@@ -191,6 +213,8 @@ stencilOperation =
 {-| stencilOperationSeparate face fail zfail pass`
 set front and/or back stencil test actions
 
+Requires stencilTest to be enabled.
+
 + `face`: Specifies whether front and/or back stencil state is updated.
 
 See the description of `StencilOperation` for info about the other parameters.
@@ -204,6 +228,9 @@ stencilOperationSeparate =
 set the stencil `mask`. This value is ANDed with anything drawn to the
 stencil buffer. Usually used to turn writing to the stencil buffer
 on or off.
+
+Requires stencilTest to be enabled.
+
 -}
 stencilMask : Int -> Setting
 stencilMask =
@@ -211,11 +238,11 @@ stencilMask =
 
 
 {-| `colorMask red green blue alpha`
-set mask to be applied to anything drawn to the color buffer.
-Values drawn to each channel will be ANDed with their
-color mask respectively.
+
+Specify whether or not each channel should be written into the frame buffer.
+
 -}
-colorMask : Int -> Int -> Int -> Int -> Setting
+colorMask : Bool -> Bool -> Bool -> Bool -> Setting
 colorMask =
     ColorMask
 
@@ -223,6 +250,9 @@ colorMask =
 {-| `scissor x y width height`
 set the scissor box, which limits the drawing of fragments to the
 screen to a specified rectangle.
+
+Requires scissorTest to be enabled.
+
 -}
 scissor : Int -> Int -> Int -> Int -> Setting
 scissor =

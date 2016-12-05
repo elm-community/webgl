@@ -185,13 +185,13 @@ view { texture, theta } =
                     , stencilFunc WebGL.Constants.always 1 255
                     , stencilOperation keep keep replace
                     , stencilMask 1
-                    , depthMask 0
+                    , depthMask False
                     ]
                     camera
                 , renderBox
                     [ stencilFunc equal 1 255
                     , stencilMask 0
-                    , depthMask 1
+                    , depthMask True
                     ]
                     (makeScale (vec3 1 -1 1))
                     (vec3 0.6 0.6 0.6)
