@@ -37,7 +37,7 @@ type TextureFilter
     | Nearest
 
 
-{-| An error which occured while loading a texture
+{-| An error which occurred while loading a texture
 -}
 type Error
     = Error
