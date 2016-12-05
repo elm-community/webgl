@@ -1,5 +1,10 @@
 module Main exposing (..)
 
+{-|
+    This example was inspired by https://open.gl/depthstencils
+    It demonstrates how to use the stencil buffer.
+-}
+
 import Math.Vector2 exposing (Vec2)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
@@ -7,6 +12,8 @@ import Task
 import Time exposing (Time)
 import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
+import WebGL.Settings exposing (..)
+import WebGL.Constants exposing (..)
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -88,7 +95,7 @@ rotatedFace ( angleX, angleY ) =
         each f ( a, b, c ) =
             ( f a, f b, f c )
     in
-        List.map (each (\x -> { x | pos = transform t x.pos })) face
+        List.map (each (\x -> { x | pos = Math.Vector3.add (vec3 0 1 0) (transform t x.pos) })) face
 
 
 face : List ( { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 } )
@@ -111,6 +118,27 @@ face =
         ]
 
 
+floor : Drawable { pos : Vec3 }
+floor =
+    let
+        topLeft =
+            { pos = vec3 -2 0 -2 }
+
+        topRight =
+            { pos = vec3 2 0 -2 }
+
+        bottomLeft =
+            { pos = vec3 -2 0 2 }
+
+        bottomRight =
+            { pos = vec3 2 0 2 }
+    in
+        triangles
+            [ ( topLeft, topRight, bottomLeft )
+            , ( bottomLeft, topRight, bottomRight )
+            ]
+
+
 
 -- VIEW
 
@@ -122,7 +150,6 @@ perspective angle =
         [ perspectiveMatrix
         , camera
         , makeRotate (3 * angle) (vec3 0 1 0)
-        , makeRotate (2 * angle) (vec3 1 0 0)
         ]
 
 
@@ -133,7 +160,7 @@ perspectiveMatrix =
 
 camera : Mat4
 camera =
-    makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
+    makeLookAt (vec3 0 3 8) (vec3 0 0 0) (vec3 0 1 0)
 
 
 view : Model -> Html Action
@@ -143,42 +170,120 @@ view { texture, theta } =
             []
 
         Just tex ->
-            [ render vertexShader fragmentShader crate { crate = tex, perspective = perspective theta } ]
+            let
+                camera =
+                    perspective theta
+            in
+                [ renderBox
+                    [ disable stencilTest ]
+                    Math.Matrix4.identity
+                    (vec3 1 1 1)
+                    tex
+                    camera
+                , renderFloor
+                    [ enable stencilTest
+                    , stencilFunc WebGL.Constants.always 1 255
+                    , stencilOperation keep keep replace
+                    , stencilMask 1
+                    , depthMask 0
+                    ]
+                    camera
+                , renderBox
+                    [ stencilFunc equal 1 255
+                    , stencilMask 0
+                    , depthMask 1
+                    ]
+                    (makeScale (vec3 1 -1 1))
+                    (vec3 0.6 0.6 0.6)
+                    tex
+                    camera
+                ]
     )
-        |> WebGL.toHtml [ width 400, height 400 ]
+        |> WebGL.toHtmlWith { defaultOptions | stencil = True } [ width 400, height 400 ]
+
+
+renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Renderable
+renderBox settings worldTransform overrideColor tex camera =
+    renderWithSettings settings
+        boxVert
+        boxFrag
+        crate
+        { texture = tex
+        , overrideColor = overrideColor
+        , modelViewMatrix = worldTransform
+        , perspective = camera
+        }
+
+
+renderFloor : List Setting -> Mat4 -> Renderable
+renderFloor settings camera =
+    renderWithSettings settings
+        floorVert
+        floorFrag
+        floor
+        { perspective = camera }
 
 
 
 -- SHADERS
 
 
-vertexShader : Shader { pos : Vec3, coord : Vec3 } { u | perspective : Mat4 } { vcoord : Vec2 }
-vertexShader =
+boxVert : Shader { pos : Vec3, coord : Vec3 } { u | modelViewMatrix : Mat4, perspective : Mat4 } { vcoord : Vec2 }
+boxVert =
     [glsl|
 
 attribute vec3 pos;
 attribute vec3 coord;
 uniform mat4 perspective;
+uniform mat4 modelViewMatrix;
 varying vec2 vcoord;
 
 void main () {
-  gl_Position = perspective * vec4(pos, 1.0);
+  gl_Position = perspective * modelViewMatrix * vec4(pos, 1.0);
   vcoord = coord.xy;
 }
 
 |]
 
 
-fragmentShader : Shader {} { u | crate : Texture } { vcoord : Vec2 }
-fragmentShader =
+boxFrag : Shader {} { u | texture : Texture, overrideColor : Vec3 } { vcoord : Vec2 }
+boxFrag =
     [glsl|
 
 precision mediump float;
-uniform sampler2D crate;
+uniform sampler2D texture;
+uniform vec3 overrideColor;
 varying vec2 vcoord;
 
 void main () {
-  gl_FragColor = texture2D(crate, vcoord);
+  gl_FragColor = vec4(overrideColor, 1.0) * texture2D(texture, vcoord);
+}
+
+|]
+
+
+floorVert : Shader { pos : Vec3 } { u | perspective : Mat4 } {}
+floorVert =
+    [glsl|
+
+attribute vec3 pos;
+uniform mat4 perspective;
+
+void main () {
+  gl_Position = perspective * vec4(pos, 1.0);
+}
+
+|]
+
+
+floorFrag : Shader attributes uniforms {}
+floorFrag =
+    [glsl|
+
+precision mediump float;
+
+void main () {
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 |]

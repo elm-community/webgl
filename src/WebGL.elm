@@ -135,10 +135,9 @@ They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
 shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Normally you specify a shader with a `shader` block. This is because shaders
-must be compiled before they are used, imposing an overhead that it is best to
-avoid in general. This function lets you create a shader with a raw string of
-GLSL. It is intended specifically for libary writers who want to create shader
+Normally you specify a shader with a `glsl` block. This is because shaders
+must be compiled before they are used, imposing an overhead that is best avoided in general. This function lets you create a shader with a raw string of
+GLSL. It is intended specifically for library writers who want to create shader
 combinators.
 -}
 unsafeShader : String -> Shader attribute uniform varying
@@ -153,14 +152,14 @@ type Texture
     = Texture
 
 
-{-| Conceptually, an encapsulataion of the instructions to render something
+{-| Conceptually, an encapsulation of the instructions to render something
 -}
 type Renderable
     = Renderable
 
 
-{-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
-as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
+{-| Packages a vertex shader, a fragment shader, a mesh, and uniforms
+as a `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
 You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 

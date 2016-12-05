@@ -205,7 +205,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
  /**
-  *  This sets up the binding cacheing buffers.
+  *  This sets up the binding caching buffers.
   *
   *  We don't actually bind any buffers now except for the indices buffer.
   *  The problem with filling the buffers here is that it is possible to
