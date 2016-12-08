@@ -28,29 +28,45 @@ all pre-fragment operations and some special functions.
 
 -}
 
-import WebGL.Types as Types exposing (..)
+import WebGL.Constants exposing (..)
 
 
 {-| To initiate a `Setting` please use one of the following functions
 -}
-type alias Setting =
-    Types.Setting
+type Setting
+    = Enable Int
+    | Disable Int
+    | BlendColor Float Float Float Float
+    | BlendEquation Int
+    | BlendEquationSeparate Int Int
+    | BlendFunc Int Int
+    | ClearColor Float Float Float Float
+    | DepthFunc Int
+    | DepthMask Bool
+    | SampleCoverageFunc Float Bool
+    | StencilFunc Int Int Int
+    | StencilFuncSeparate Int Int Int Int
+    | StencilOperation Int Int Int
+    | StencilOperationSeparate Int Int Int Int
+    | StencilMask Int
+    | ColorMask Bool Bool Bool Bool
+    | Scissor Int Int Int Int
 
 
 {-| `enable capability`
 enable server-side GL capabilities
 -}
 enable : Capability -> Setting
-enable =
-    Enable
+enable (Capability capability) =
+    Enable capability
 
 
 {-| `disable capability`
 disable server-side GL capabilities
 -}
 disable : Capability -> Setting
-disable =
-    Disable
+disable (Capability capability) =
+    Disable capability
 
 
 {-| `blendColor red green blue alpha`
@@ -73,8 +89,8 @@ Requires blend to be enabled.
 + `mode`: specifies how source and destination colors are combined
 -}
 blendEquation : BlendMode -> Setting
-blendEquation =
-    BlendEquation
+blendEquation (BlendMode blendMode) =
+    BlendEquation blendMode
 
 
 {-| `blendEquationSeparate modeRGB modeAlpha`
@@ -88,8 +104,8 @@ and blue components of the source and destination colors are combined
 of the source and destination colors are combined
 -}
 blendEquationSeparate : BlendMode -> BlendMode -> Setting
-blendEquationSeparate =
-    BlendEquationSeparate
+blendEquationSeparate (BlendMode modeRGB) (BlendMode modeAlpha) =
+    BlendEquationSeparate modeRGB modeAlpha
 
 
 {-| `blendFunc srcFactor dstFactor`
@@ -107,8 +123,8 @@ and alpha destination blending factors are computed
 Both values may not reference a `ConstantColor` value.
 -}
 blendFunc : BlendOperation -> BlendOperation -> Setting
-blendFunc =
-    BlendFunc
+blendFunc (BlendOperation srcFactor) (BlendOperation dstFactor) =
+    BlendFunc srcFactor dstFactor
 
 
 {-| `clearColor red green blue alpha`
@@ -128,8 +144,8 @@ Requires depthTest to be enabled.
 + `func`: Specifies the depth comparison function
 -}
 depthFunc : CompareMode -> Setting
-depthFunc =
-    DepthFunc
+depthFunc (CompareMode func) =
+    DepthFunc func
 
 
 {-| `depthMask mask`
@@ -173,8 +189,8 @@ and the stored stencil value when the test is done.
 The initial value is all `1`'s.
 -}
 stencilFunc : CompareMode -> Int -> Int -> Setting
-stencilFunc =
-    StencilFunc
+stencilFunc (CompareMode func) =
+    StencilFunc func
 
 
 {-| `stencilFuncSeparate face func ref mask`
@@ -187,8 +203,8 @@ Requires stencilTest to be enabled.
 See the description of `stencilFunc` for info about the other parameters
 -}
 stencilFuncSeparate : FaceMode -> CompareMode -> Int -> Int -> Setting
-stencilFuncSeparate =
-    StencilFuncSeparate
+stencilFuncSeparate (FaceMode face) (CompareMode func) =
+    StencilFuncSeparate face func
 
 
 {-| `stencilOperation fail zfail pass`
@@ -206,8 +222,8 @@ there is no depth buffer or depth testing is not enabled.
 The initial value is `Keep`
 -}
 stencilOperation : ZMode -> ZMode -> ZMode -> Setting
-stencilOperation =
-    StencilOperation
+stencilOperation (ZMode fail) (ZMode zfail) (ZMode pass) =
+    StencilOperation fail zfail pass
 
 
 {-| stencilOperationSeparate face fail zfail pass`
@@ -220,8 +236,8 @@ Requires stencilTest to be enabled.
 See the description of `StencilOperation` for info about the other parameters.
 -}
 stencilOperationSeparate : FaceMode -> ZMode -> ZMode -> ZMode -> Setting
-stencilOperationSeparate =
-    StencilOperationSeparate
+stencilOperationSeparate (FaceMode face) (ZMode fail) (ZMode zfail) (ZMode pass) =
+    StencilOperationSeparate face fail zfail pass
 
 
 {-| `stencilMask mask`

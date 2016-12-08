@@ -45,8 +45,6 @@ documentation provided here.
 -}
 
 import Html exposing (Html, Attribute)
-import List
-import WebGL.Types as Types exposing (computeAPICall)
 import WebGL.Settings as Settings exposing (Setting)
 import WebGL.Constants as Constants
 import Native.WebGL
@@ -56,8 +54,15 @@ import Native.WebGL
 WebGL has a number of rendering modes available.
 See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
 -}
-type alias Drawable attributes =
-    Types.Drawable attributes
+type Drawable attributes
+    = Triangles (List ( attributes, attributes, attributes ))
+    | Lines (List ( attributes, attributes ))
+    | LineStrip (List attributes)
+    | LineLoop (List attributes)
+    | Points (List attributes)
+    | TriangleFan (List attributes)
+    | TriangleStrip (List attributes)
+    | IndexedTriangles (List attributes) (List ( Int, Int, Int ))
 
 
 {-| Triangles are the basic building blocks of a mesh. You can put them together
@@ -70,21 +75,21 @@ that describe the corners of each triangle.
 -}
 triangles : List ( attributes, attributes, attributes ) -> Drawable attributes
 triangles =
-    Types.Triangles
+    Triangles
 
 
 {-|
 -}
 triangleFan : List attributes -> Drawable attributes
 triangleFan =
-    Types.TriangleFan
+    TriangleFan
 
 
 {-|
 -}
 triangleStrip : List attributes -> Drawable attributes
 triangleStrip =
-    Types.TriangleStrip
+    TriangleStrip
 
 
 {-| IndexedTriangles is a special mode in which you provide a list of attributes
@@ -93,35 +98,35 @@ of three that refer to the vertexes that form each triangle.
 -}
 indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Drawable attributes
 indexedTriangles =
-    Types.IndexedTriangles
+    IndexedTriangles
 
 
 {-|
 -}
 lines : List ( attributes, attributes ) -> Drawable attributes
 lines =
-    Types.Lines
+    Lines
 
 
 {-|
 -}
 lineStrip : List attributes -> Drawable attributes
 lineStrip =
-    Types.LineStrip
+    LineStrip
 
 
 {-|
 -}
 lineLoop : List attributes -> Drawable attributes
 lineLoop =
-    Types.LineLoop
+    LineLoop
 
 
 {-|
 -}
 points : List attributes -> Drawable attributes
 points =
-    Types.Points
+    Points
 
 
 {-| `Shader` is a phantom data type.
@@ -168,8 +173,8 @@ mesh to the GPU, it will not be resent. This means it is fairly cheap to create
 new entities if you are reusing shaders and meshes that have been used before.
 -}
 renderWithSettings : List Setting -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
-renderWithSettings settings =
-    Native.WebGL.render (List.map computeAPICall settings)
+renderWithSettings =
+    Native.WebGL.render
 
 
 {-| Same as `renderWithConfig` but without using
@@ -228,4 +233,4 @@ so it should be relatively cheap to create new entities out of existing values.
 -}
 toHtmlWith : Options -> List (Attribute msg) -> List Renderable -> Html msg
 toHtmlWith ({ settings } as options) =
-    Native.WebGL.toHtml options (List.map computeAPICall settings)
+    Native.WebGL.toHtml options settings

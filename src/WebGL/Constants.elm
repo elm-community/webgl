@@ -26,14 +26,12 @@ module WebGL.Constants exposing (..)
 @docs ZMode, keep, none, replace, increment, decrement, invert, incrementWrap, decrementWrap
 -}
 
-import WebGL.Types as Types exposing (..)
-
 
 {-| The `Capability` is used to enable/disable
 server-side GL capabilities.
 -}
-type alias Capability =
-    Types.Capability
+type Capability
+    = Capability Int
 
 
 {-| Blend the computed fragment color values
@@ -41,21 +39,21 @@ with the values in the color buffers.
 -}
 blend : Capability
 blend =
-    Blend
+    Capability 3042
 
 
 {-| Cull polygons based on their winding in window coordinates.
 -}
 cullFace : Capability
 cullFace =
-    CullFace
+    Capability 2884
 
 
 {-| Do depth comparisons and update the depth buffer.
 -}
 depthTest : Capability
 depthTest =
-    DepthTest
+    Capability 2929
 
 
 {-| Dither color components or indices before they
@@ -63,7 +61,7 @@ are written to the color buffer.
 -}
 dither : Capability
 dither =
-    Dither
+    Capability 3024
 
 
 {-| Add an offset to depth values of a polygon's fragments
@@ -71,7 +69,7 @@ produced by rasterization.
 -}
 polygonOffsetFill : Capability
 polygonOffsetFill =
-    PolygonOffsetFill
+    Capability 32823
 
 
 {-| Compute a temporary coverage value
@@ -80,276 +78,277 @@ The temporary coverage value is then ANDed with the fragment coverage value.
 -}
 sampleAlphaToCoverage : Capability
 sampleAlphaToCoverage =
-    SampleAlphaToCoverage
+    Capability 32926
 
 
 {-| The fragment's coverage is ANDed with the temporary coverage value.
 -}
 sampleCoverage : Capability
 sampleCoverage =
-    SampleCoverage
+    Capability 32928
 
 
 {-| Discard fragments that are outside the scissor rectangle.
 -}
 scissorTest : Capability
 scissorTest =
-    ScissorTest
+    Capability 3089
 
 
 {-| Do stencil testing and update the stencil buffer.
 -}
 stencilTest : Capability
 stencilTest =
-    StencilTest
+    Capability 2960
 
 
 {-| The `BlendOperation` allows you to define which blend operation to use.
 -}
-type alias BlendOperation =
-    Types.BlendOperation
+type BlendOperation
+    = BlendOperation Int
 
 
 {-|
 -}
 zero : BlendOperation
 zero =
-    Zero
+    BlendOperation 0
 
 
 {-|
 -}
 one : BlendOperation
 one =
-    One
+    BlendOperation 1
 
 
 {-|
 -}
 srcColor : BlendOperation
 srcColor =
-    SrcColor
+    BlendOperation 768
 
 
 {-|
 -}
 oneMinusSrcColor : BlendOperation
 oneMinusSrcColor =
-    OneMinusSrcColor
+    BlendOperation 769
 
 
 {-|
 -}
 dstColor : BlendOperation
 dstColor =
-    DstColor
+    BlendOperation 774
 
 
 {-|
 -}
 oneMinusDstColor : BlendOperation
 oneMinusDstColor =
-    OneMinusDstColor
+    BlendOperation 775
 
 
 {-|
 -}
 srcAlpha : BlendOperation
 srcAlpha =
-    SrcAlpha
+    BlendOperation 770
 
 
 {-|
 -}
 oneMinusSrcAlpha : BlendOperation
 oneMinusSrcAlpha =
-    OneMinusSrcAlpha
+    BlendOperation 771
 
 
 {-|
 -}
 dstAlpha : BlendOperation
 dstAlpha =
-    DstAlpha
+    BlendOperation 772
 
 
 {-|
 -}
 oneMinusDstAlpha : BlendOperation
 oneMinusDstAlpha =
-    OneMinusDstAlpha
+    BlendOperation 773
 
 
 {-|
 -}
 constantColor : BlendOperation
 constantColor =
-    ConstantColor
+    BlendOperation 32769
 
 
 {-|
 -}
 oneMinusConstantColor : BlendOperation
 oneMinusConstantColor =
-    OneMinusConstantColor
+    BlendOperation 32770
 
 
 {-|
 -}
 constantAlpha : BlendOperation
 constantAlpha =
-    ConstantAlpha
+    BlendOperation 32771
 
 
 {-|
 -}
 oneMinusConstantAlpha : BlendOperation
 oneMinusConstantAlpha =
-    OneMinusConstantAlpha
+    BlendOperation 32772
 
 
 {-|
 -}
 srcAlphaSaturate : BlendOperation
 srcAlphaSaturate =
-    SrcAlphaSaturate
+    BlendOperation 776
 
 
 {-| The `BlendMode` allows you to define which blend mode to use.
 -}
-type alias BlendMode =
-    Types.BlendMode
+type BlendMode
+    = BlendMode Int
 
 
 {-|
 -}
 add : BlendMode
 add =
-    Add
+    BlendMode 32774
 
 
 {-|
 -}
 subtract : BlendMode
 subtract =
-    Subtract
+    BlendMode 32778
 
 
 {-|
 -}
 reverseSubtract : BlendMode
 reverseSubtract =
-    ReverseSubtract
+    BlendMode 32779
 
 
 {-| The `CompareMode` allows you to define how to compare values.
 -}
-type alias CompareMode =
-    Types.CompareMode
+type CompareMode
+    = CompareMode Int
 
 
 {-|
 -}
 never : CompareMode
 never =
-    Never
+    CompareMode 512
 
 
 {-|
 -}
 always : CompareMode
 always =
-    Always
+    CompareMode 519
 
 
 {-|
 -}
 less : CompareMode
 less =
-    Less
+    CompareMode 513
 
 
 {-|
 -}
 lessOrEqual : CompareMode
 lessOrEqual =
-    LessOrEqual
+    CompareMode 515
 
 
 {-|
 -}
 equal : CompareMode
 equal =
-    Equal
+    CompareMode 514
 
 
 {-|
 -}
 greaterOrEqual : CompareMode
 greaterOrEqual =
-    GreaterOrEqual
+    CompareMode 518
 
 
 {-|
 -}
 greater : CompareMode
 greater =
-    Greater
+    CompareMode 516
 
 
 {-|
 -}
 notEqual : CompareMode
 notEqual =
-    NotEqual
+    CompareMode 517
 
 
 {-| The `FaceMode` defines which face of the stencil state is updated.
 -}
-type alias FaceMode =
-    Types.FaceMode
+type FaceMode
+    = FaceMode Int
 
 
 {-|
 -}
 front : FaceMode
 front =
-    Front
+    FaceMode 1028
 
 
 {-|
 -}
 back : FaceMode
 back =
-    Back
+    FaceMode 1029
 
 
 {-|
 -}
 frontAndBack : FaceMode
 frontAndBack =
-    FrontAndBack
+    FaceMode 1032
 
 
 {-| The `ZMode` type allows you to define what to do
 with the stencil buffer value.
 -}
-type alias ZMode =
-    Types.ZMode
+type ZMode
+    = ZMode Int
 
 
 {-| Keeps the current value
 -}
 keep : ZMode
 keep =
-    Keep
+    ZMode 7680
 
 
-{-| Sets the stencil buffer value to 0
+{-| Sets the stencil buffer value to 0.
+Should be named `zero`, but it is taken.
 -}
 none : ZMode
 none =
-    None
+    ZMode 0
 
 
 {-| Sets the stencil buffer value to `ref`,
@@ -357,7 +356,7 @@ see `Settings.stencilFunc` for more information.
 -}
 replace : ZMode
 replace =
-    Replace
+    ZMode 7681
 
 
 {-| Increments the current stencil buffer value.
@@ -365,21 +364,21 @@ Clamps to the maximum representable unsigned value.
 -}
 increment : ZMode
 increment =
-    Increment
+    ZMode 7682
 
 
 {-| Decrements the current stencil buffer value. Clamps to 0.
 -}
 decrement : ZMode
 decrement =
-    Decrement
+    ZMode 7683
 
 
 {-| Bitwise inverts the current stencil buffer value.
 -}
 invert : ZMode
 invert =
-    Invert
+    ZMode 5386
 
 
 {-| Increments the current stencil buffer value.
@@ -388,7 +387,7 @@ the maximum representable unsigned value.
 -}
 incrementWrap : ZMode
 incrementWrap =
-    IncrementWrap
+    ZMode 34055
 
 
 {-| Decrements the current stencil buffer value.
@@ -397,4 +396,4 @@ value when decrementing a stencil buffer value of zero.
 -}
 decrementWrap : ZMode
 decrementWrap =
-    DecrementWrap
+    ZMode 34056

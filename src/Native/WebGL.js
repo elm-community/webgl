@@ -35,7 +35,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     return { src: src };
   }
 
-  function render(functionCalls, vert, frag, buffer, uniforms) {
+  function render(settings, vert, frag, buffer, uniforms) {
 
     if (!buffer.guid) {
       buffer.guid = guid();
@@ -47,9 +47,71 @@ var _elm_community$webgl$Native_WebGL = function () {
       frag: frag,
       buffer: buffer,
       uniforms: uniforms,
-      functionCalls: functionCalls
+      settings: settings
     };
 
+  }
+
+  function doSettings(gl, settings) {
+    listEach(function (setting) {
+      doSetting(gl, setting);
+    }, settings);
+  }
+
+  function doSetting(gl, setting) {
+    switch (setting.ctor) {
+      case 'Enable':
+        gl.enable(setting._0);
+        break;
+      case 'Disable':
+        gl.disable(setting._0);
+        break;
+      case 'BlendColor':
+        gl.blendColor(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'BlendEquation':
+        gl.blendEquation(setting._0);
+        break;
+      case 'BlendEquationSeparate':
+        gl.blendEquationSeparate(setting._0, setting._1);
+        break;
+      case 'BlendFunc':
+        gl.blendFunc(setting._0, setting._1);
+        break;
+      case 'ClearColor':
+        gl.clearColor(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'DepthFunc':
+        gl.depthFunc(setting._0);
+        break;
+      case 'DepthMask':
+        gl.depthMask(setting._0);
+        break;
+      case 'SampleCoverage':
+        gl.sampleCoverage(setting._0, setting._1);
+        break;
+      case 'StencilFunc':
+        gl.stencilFunc(setting._0, setting._1, setting._2);
+        break;
+      case 'StencilFuncSeparate':
+        gl.stencilFuncSeparate(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'StencilOperation':
+        gl.stencilOp(setting._0, setting._1, setting._2);
+        break;
+      case 'StencilOperationSeparate':
+        gl.stencilOpSeparate(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'StencilMask':
+        gl.stencilMask(setting._0);
+        break;
+      case 'ColorMask':
+        gl.colorMask(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'Scissor':
+        gl.scissor(setting._0, setting._1, setting._2, setting._3);
+        break;
+    }
   }
 
   function doTexture(gl, texture) {
@@ -376,9 +438,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        listEach(function (functionCall) {
-          functionCall(gl);
-        }, render.functionCalls);
+        doSettings(gl, render.settings);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, attributeBuffer);
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
@@ -472,12 +532,12 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(options, functionCalls, factList, renderables) {
+  function toHtml(options, settings, factList, renderables) {
     var model = {
-      functionCalls: functionCalls,
+      settings: settings,
       renderables: renderables,
       cache: {},
-      // filter out context attributes from options 
+      // filter out context attributes from options
       contextAttributes: {
         alpha: options.alpha,
         depth: options.depth,
@@ -500,7 +560,7 @@ var _elm_community$webgl$Native_WebGL = function () {
    *  @param {Object} model
    *  @param {Object} model.cache that may contain the following properties:
              gl, shaders, programs, uniformSetters, buffers, textures
-   *  @param {List} model.functionCalls
+   *  @param {List} model.settings
    *  @param {List} model.renderables
    *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
    */
@@ -511,9 +571,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var gl = canvas.getContext && (canvas.getContext('webgl', model.contextAttributes) || canvas.getContext('experimental-webgl', model.contextAttributes));
 
     if (gl) {
-      listEach(function (functionCall) {
-        functionCall(gl);
-      }, model.functionCalls);
+      doSettings(gl, model.settings);
     } else {
       canvas = document.createElement('div');
       canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
