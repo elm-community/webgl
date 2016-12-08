@@ -7,8 +7,8 @@ var _elm_community$webgl$Native_WebGL = function () {
     // console.log(msg);
   }
 
-  /* eslint-disable camelcase */
   function guid() {
+    // eslint-disable-next-line camelcase
     return _elm_lang$core$Native_Utils.guid();
   }
   function listEach(fn, list) {
@@ -25,7 +25,6 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
     return length;
   }
-  /* eslint-enable camelcase */
 
   var rAF = typeof requestAnimationFrame !== 'undefined' ?
     requestAnimationFrame :
