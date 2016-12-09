@@ -51,8 +51,16 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   }
 
+ /**
+  *  Apply settings to the gl context
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {List} settings the list of settings coming in from Elm
+  *  @return {Array<GLenum>} the list of enabled capabilities, caused by
+  *          applying the settings
+  */
   function doSettings(gl, settings) {
-    var disable = [];
+    var enabledCapabilities = [];
     var s1;
     var s2;
     listEach(function (setting) {
@@ -60,35 +68,35 @@ var _elm_community$webgl$Native_WebGL = function () {
       s2 = setting._1;
       switch (setting.ctor) {
         case 'Blend':
-          disable.push(gl.BLEND);
+          enabledCapabilities.push(gl.BLEND);
           gl.enable(gl.BLEND);
           gl.blendColor(setting._1, setting._2, setting._3, setting._4);
           gl.blendFunc(s1.source._0, s1.destination._0);
           gl.blendEquation(s1.equation._0);
           break;
         case 'BlendSeparate':
-          disable.push(gl.BLEND);
+          enabledCapabilities.push(gl.BLEND);
           gl.enable(gl.BLEND);
           gl.blendColor(setting._2, setting._3, setting._4, setting._5);
           gl.blendFuncSeparate(s1.source._0, s1.destination._0, s2.source._0, s2.destination._0);
           gl.blendEquationSeparate(s1.equation._0, s2.equation._0);
           break;
         case 'Depth':
-          disable.push(gl.DEPTH_TEST);
+          enabledCapabilities.push(gl.DEPTH_TEST);
           gl.enable(gl.DEPTH_TEST);
           gl.depthFunc(s1.func._0);
           gl.depthMask(s1.mask);
           gl.depthRange(s1.near, s1.far);
           break;
         case 'Stencil':
-          disable.push(gl.STENCIL_TEST);
+          enabledCapabilities.push(gl.STENCIL_TEST);
           gl.enable(gl.STENCIL_TEST);
           gl.stencilFunc(s1.func._0, s1.ref, s1.valueMask);
           gl.stencilOp(s1.fail._0, s1.zfail._0, s1.zpass._0);
           gl.stencilMask(s1.writeMask);
           break;
         case 'StencilFuncSeparate':
-          disable.push(gl.STENCIL_TEST);
+          enabledCapabilities.push(gl.STENCIL_TEST);
           gl.enable(gl.STENCIL_TEST);
           gl.stencilFuncSeparate(gl.FRONT, s1.func._0, s1.ref, s1.valueMask);
           gl.stencilOpSeparate(gl.FRONT, s1.fail._0, s1.zfail._0, s1.zpass._0);
@@ -110,12 +118,12 @@ var _elm_community$webgl$Native_WebGL = function () {
           gl.clearColor(setting._0, setting._1, setting._2, setting._3);
           break;
         case 'Enable':
-          disable.push(setting._0);
+          enabledCapabilities.push(setting._0);
           gl.enable(setting._0);
           break;
       }
     }, settings);
-    return disable;
+    return enabledCapabilities;
   }
 
 
@@ -447,11 +455,11 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
 
-      var disable = doSettings(gl, render.settings);
+      var enabledCapabilities = doSettings(gl, render.settings);
 
       gl.drawElements(renderType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
-      disable.forEach(function (capability) {
+      enabledCapabilities.forEach(function (capability) {
         gl.disable(capability);
       });
 
