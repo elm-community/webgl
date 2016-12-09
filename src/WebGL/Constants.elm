@@ -3,23 +3,19 @@ module WebGL.Constants exposing (..)
 {-|
 # Capabilities
 
-@docs Capability, blend, cullFace, depthTest, dither, polygonOffsetFill, sampleAlphaToCoverage, sampleCoverage, scissorTest, stencilTest
+@docs Capability, cullFace, dither, polygonOffsetFill, sampleAlphaToCoverage, sampleCoverage, scissorTest
 
-# Blend Operations
+# Blend Factors
 
-@docs BlendOperation, zero, one, srcColor, oneMinusSrcColor, dstColor, oneMinusDstColor, srcAlpha, oneMinusSrcAlpha, dstAlpha, oneMinusDstAlpha, constantColor, oneMinusConstantColor, constantAlpha, oneMinusConstantAlpha, srcAlphaSaturate
+@docs BlendFactor, zero, one, srcColor, oneMinusSrcColor, dstColor, oneMinusDstColor, srcAlpha, oneMinusSrcAlpha, dstAlpha, oneMinusDstAlpha, constantColor, oneMinusConstantColor, constantAlpha, oneMinusConstantAlpha, srcAlphaSaturate
 
-# Blend Modes
+# Blend Equations
 
-@docs BlendMode, add, subtract, reverseSubtract
+@docs BlendEquation, add, subtract, reverseSubtract
 
 # Compare Modes
 
 @docs CompareMode, never, always, less, lessOrEqual, equal, greaterOrEqual, greater, notEqual
-
-# Face Modes
-
-@docs FaceMode, front, back, frontAndBack
 
 # ZModes
 
@@ -34,26 +30,11 @@ type Capability
     = Capability Int
 
 
-{-| Blend the computed fragment color values
-with the values in the color buffers.
--}
-blend : Capability
-blend =
-    Capability 3042
-
-
 {-| Cull polygons based on their winding in window coordinates.
 -}
 cullFace : Capability
 cullFace =
     Capability 2884
-
-
-{-| Do depth comparisons and update the depth buffer.
--}
-depthTest : Capability
-depthTest =
-    Capability 2929
 
 
 {-| Dither color components or indices before they
@@ -95,149 +76,142 @@ scissorTest =
     Capability 3089
 
 
-{-| Do stencil testing and update the stencil buffer.
+{-| Allows you to define which blend factor to use.
 -}
-stencilTest : Capability
-stencilTest =
-    Capability 2960
-
-
-{-| The `BlendOperation` allows you to define which blend operation to use.
--}
-type BlendOperation
-    = BlendOperation Int
+type BlendFactor
+    = BlendFactor Int
 
 
 {-|
 -}
-zero : BlendOperation
+zero : BlendFactor
 zero =
-    BlendOperation 0
+    BlendFactor 0
 
 
 {-|
 -}
-one : BlendOperation
+one : BlendFactor
 one =
-    BlendOperation 1
+    BlendFactor 1
 
 
 {-|
 -}
-srcColor : BlendOperation
+srcColor : BlendFactor
 srcColor =
-    BlendOperation 768
+    BlendFactor 768
 
 
 {-|
 -}
-oneMinusSrcColor : BlendOperation
+oneMinusSrcColor : BlendFactor
 oneMinusSrcColor =
-    BlendOperation 769
+    BlendFactor 769
 
 
 {-|
 -}
-dstColor : BlendOperation
+dstColor : BlendFactor
 dstColor =
-    BlendOperation 774
+    BlendFactor 774
 
 
 {-|
 -}
-oneMinusDstColor : BlendOperation
+oneMinusDstColor : BlendFactor
 oneMinusDstColor =
-    BlendOperation 775
+    BlendFactor 775
 
 
 {-|
 -}
-srcAlpha : BlendOperation
+srcAlpha : BlendFactor
 srcAlpha =
-    BlendOperation 770
+    BlendFactor 770
 
 
 {-|
 -}
-oneMinusSrcAlpha : BlendOperation
+oneMinusSrcAlpha : BlendFactor
 oneMinusSrcAlpha =
-    BlendOperation 771
+    BlendFactor 771
 
 
 {-|
 -}
-dstAlpha : BlendOperation
+dstAlpha : BlendFactor
 dstAlpha =
-    BlendOperation 772
+    BlendFactor 772
 
 
 {-|
 -}
-oneMinusDstAlpha : BlendOperation
+oneMinusDstAlpha : BlendFactor
 oneMinusDstAlpha =
-    BlendOperation 773
+    BlendFactor 773
 
 
 {-|
 -}
-constantColor : BlendOperation
+constantColor : BlendFactor
 constantColor =
-    BlendOperation 32769
+    BlendFactor 32769
 
 
 {-|
 -}
-oneMinusConstantColor : BlendOperation
+oneMinusConstantColor : BlendFactor
 oneMinusConstantColor =
-    BlendOperation 32770
+    BlendFactor 32770
 
 
 {-|
 -}
-constantAlpha : BlendOperation
+constantAlpha : BlendFactor
 constantAlpha =
-    BlendOperation 32771
+    BlendFactor 32771
 
 
 {-|
 -}
-oneMinusConstantAlpha : BlendOperation
+oneMinusConstantAlpha : BlendFactor
 oneMinusConstantAlpha =
-    BlendOperation 32772
+    BlendFactor 32772
 
 
 {-|
 -}
-srcAlphaSaturate : BlendOperation
+srcAlphaSaturate : BlendFactor
 srcAlphaSaturate =
-    BlendOperation 776
+    BlendFactor 776
 
 
-{-| The `BlendMode` allows you to define which blend mode to use.
+{-| The `BlendEquation` allows you to define which blend mode to use.
 -}
-type BlendMode
-    = BlendMode Int
+type BlendEquation
+    = BlendEquation Int
 
 
 {-|
 -}
-add : BlendMode
+add : BlendEquation
 add =
-    BlendMode 32774
+    BlendEquation 32774
 
 
 {-|
 -}
-subtract : BlendMode
+subtract : BlendEquation
 subtract =
-    BlendMode 32778
+    BlendEquation 32778
 
 
 {-|
 -}
-reverseSubtract : BlendMode
+reverseSubtract : BlendEquation
 reverseSubtract =
-    BlendMode 32779
+    BlendEquation 32779
 
 
 {-| The `CompareMode` allows you to define how to compare values.
@@ -300,33 +274,6 @@ greater =
 notEqual : CompareMode
 notEqual =
     CompareMode 517
-
-
-{-| The `FaceMode` defines which face of the stencil state is updated.
--}
-type FaceMode
-    = FaceMode Int
-
-
-{-|
--}
-front : FaceMode
-front =
-    FaceMode 1028
-
-
-{-|
--}
-back : FaceMode
-back =
-    FaceMode 1029
-
-
-{-|
--}
-frontAndBack : FaceMode
-frontAndBack =
-    FaceMode 1032
 
 
 {-| The `ZMode` type allows you to define what to do

@@ -46,7 +46,6 @@ documentation provided here.
 
 import Html exposing (Html, Attribute)
 import WebGL.Settings as Settings exposing (Setting)
-import WebGL.Constants as Constants
 import Native.WebGL
 
 
@@ -182,7 +181,7 @@ custom per-render configurations.
 -}
 render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
 render =
-    renderWithSettings []
+    renderWithSettings [ Settings.depth Settings.depthOptions ]
 
 
 {-| Same as toHtmlWith but with default configurations,
@@ -208,7 +207,6 @@ type alias Options =
     , stencil : Bool
     , antialias : Bool
     , premultipliedAlpha : Bool
-    , settings : List Setting
     }
 
 
@@ -223,7 +221,6 @@ defaultOptions =
     , stencil = False
     , antialias = True
     , premultipliedAlpha = True
-    , settings = [ Settings.enable Constants.depthTest ]
     }
 
 
@@ -232,5 +229,5 @@ Shaders and meshes are cached so that they do not get resent to the GPU,
 so it should be relatively cheap to create new entities out of existing values.
 -}
 toHtmlWith : Options -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWith ({ settings } as options) =
-    Native.WebGL.toHtml options settings
+toHtmlWith options attributes renderables =
+    Native.WebGL.toHtml options attributes renderables

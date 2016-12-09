@@ -39,12 +39,15 @@ main =
 
 view : Float -> Html msg
 view t =
-    WebGL.toHtmlWith
-        { defaultOptions
-            | settings = Settings.clearColor 0 0 0 1 :: defaultOptions.settings
-        }
+    WebGL.toHtml
         [ width 400, height 400 ]
-        [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
+        [ renderWithSettings
+            [ Settings.clearColor 0 0 0 1 ]
+            vertexShader
+            fragmentShader
+            mesh
+            { perspective = perspective (t / 1000) }
+        ]
 
 
 perspective : Float -> Mat4

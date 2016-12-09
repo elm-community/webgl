@@ -1,163 +1,191 @@
 module WebGL.Settings
     exposing
         ( Setting
-        , enable
-        , disable
-        , blendColor
-        , blendEquation
-        , blendEquationSeparate
-        , blendFunc
-        , clearColor
-        , depthFunc
-        , depthMask
+        , blend
+        , BlendOptions
+        , blendOptions
+        , blendSeparate
+        , depth
+        , DepthOptions
+        , depthOptions
+        , stencil
+        , StencilOptions
+        , stencilOptions
+        , stencilSeparate
+          -- todo:
         , sampleCoverageFunc
-        , stencilFunc
-        , stencilFuncSeparate
-        , stencilOperation
-        , stencilOperationSeparate
-        , stencilMask
         , colorMask
         , scissor
+        , enable
+        , clearColor
         )
 
 {-| The `WebGL.Setting` provides a typesafe way to call
 all pre-fragment operations and some special functions.
 
 # Settings
-@docs Setting, enable, disable, blendColor, blendEquation, blendEquationSeparate, blendFunc, clearColor, depthFunc, depthMask, sampleCoverageFunc, stencilFunc, stencilFuncSeparate, stencilOperation, stencilOperationSeparate, stencilMask, colorMask, scissor
+@docs Setting, enable, clearColor, sampleCoverageFunc, colorMask, scissor
+
+# Blending
+
+@docs blend, blendSeparate, BlendOptions, blendOptions
+
+# Depth Test
+
+@docs depth, DepthOptions, depthOptions
+
+# Stencil Test
+
+@docs stencil, StencilOptions, stencilOptions, stencilSeparate
 
 -}
 
-import WebGL.Constants exposing (..)
+import WebGL.Constants
 
 
 {-| To initiate a `Setting` please use one of the following functions
 -}
 type Setting
-    = Enable Int
-    | Disable Int
-    | BlendColor Float Float Float Float
-    | BlendEquation Int
-    | BlendEquationSeparate Int Int
-    | BlendFunc Int Int
-    | ClearColor Float Float Float Float
-    | DepthFunc Int
-    | DepthMask Bool
+    = Blend BlendOptions Float Float Float Float
+    | BlendSeparate BlendOptions BlendOptions Float Float Float Float
+    | Depth DepthOptions
+    | Stencil StencilOptions
+    | StencilSeparate StencilOptions StencilOptions
     | SampleCoverageFunc Float Bool
-    | StencilFunc Int Int Int
-    | StencilFuncSeparate Int Int Int Int
-    | StencilOperation Int Int Int
-    | StencilOperationSeparate Int Int Int Int
-    | StencilMask Int
     | ColorMask Bool Bool Bool Bool
     | Scissor Int Int Int Int
+    | Enable Int
+    | ClearColor Float Float Float Float
 
 
-{-| `enable capability`
-enable server-side GL capabilities
+{-| Blend setting allows to control how the source and destination
+colors are blended. Initiate it with BlendOptions and
+red green blue alpha color components, that are from 0 to 1.
 -}
-enable : Capability -> Setting
-enable (Capability capability) =
-    Enable capability
+blend : BlendOptions -> Float -> Float -> Float -> Float -> Setting
+blend =
+    Blend
 
 
-{-| `disable capability`
-disable server-side GL capabilities
--}
-disable : Capability -> Setting
-disable (Capability capability) =
-    Disable capability
+{-| Defines options for the blend setting
 
+* `equation` specifies how source and destination color components are combined
+* `source` specifies how the source blending factors are computed
+* `destination` specifies how the destination blending factors are computed
 
-{-| `blendColor red green blue alpha`
-set the blend color
+srcAlphaSaturate should only be used for the source.
 
-Requires blend to be enabled.
-
--}
-blendColor : Float -> Float -> Float -> Float -> Setting
-blendColor =
-    BlendColor
-
-
-{-| `blendEquation mode`
-specify the equation used for both the
-RGB blend equation and the Alpha blend equation
-
-Requires blend to be enabled.
-
-+ `mode`: specifies how source and destination colors are combined
--}
-blendEquation : BlendMode -> Setting
-blendEquation (BlendMode blendMode) =
-    BlendEquation blendMode
-
-
-{-| `blendEquationSeparate modeRGB modeAlpha`
-set the RGB blend equation and the alpha blend equation separately
-
-Requires blend to be enabled.
-
-+ `modeRGB`: specifies the RGB blend equation, how the red, green,
-and blue components of the source and destination colors are combined
-+ `modeAlpha`: specifies the alpha blend equation, how the alpha component
-of the source and destination colors are combined
--}
-blendEquationSeparate : BlendMode -> BlendMode -> Setting
-blendEquationSeparate (BlendMode modeRGB) (BlendMode modeAlpha) =
-    BlendEquationSeparate modeRGB modeAlpha
-
-
-{-| `blendFunc srcFactor dstFactor`
-specify pixel arithmetic
-
-Requires blend to be enabled.
-
-+ `srcFactor`: Specifies how the red, green, blue,
-and alpha source blending factors are computed
-+ `dstFactor`: Specifies how the red, green, blue,
-and alpha destination blending factors are computed
-
-`SrcAlphaSaturate` should only be used for the srcFactor.
-
-Both values may not reference a `ConstantColor` value.
--}
-blendFunc : BlendOperation -> BlendOperation -> Setting
-blendFunc (BlendOperation srcFactor) (BlendOperation dstFactor) =
-    BlendFunc srcFactor dstFactor
-
-
-{-| `clearColor red green blue alpha`
-set the clear/background color,
-should be set before clearing the scene
--}
-clearColor : Float -> Float -> Float -> Float -> Setting
-clearColor =
-    ClearColor
-
-
-{-| `depthFunc func`
-specify the value used for depth buffer comparisons
-
-Requires depthTest to be enabled.
-
-+ `func`: Specifies the depth comparison function
--}
-depthFunc : CompareMode -> Setting
-depthFunc (CompareMode func) =
-    DepthFunc func
-
-
-{-| `depthMask mask`
-
-Turns drawing to the depth buffer on or off.
-
-Requires depthTest to be enabled.
+constantColor and constantAlpha values should not be used together
+as source and destination.
 
 -}
-depthMask : Bool -> Setting
-depthMask =
-    DepthMask
+type alias BlendOptions =
+    { equation : WebGL.Constants.BlendEquation
+    , source : WebGL.Constants.BlendFactor
+    , destination : WebGL.Constants.BlendFactor
+    }
+
+
+{-| Defaut options for the blend setting
+-}
+blendOptions : BlendOptions
+blendOptions =
+    { equation = WebGL.Constants.add
+    , source = WebGL.Constants.one
+    , destination = WebGL.Constants.zero
+    }
+
+
+{-| The same as blend setting, but allows to pass separate
+blend options for color channels and alpha channel
+-}
+blendSeparate : BlendOptions -> BlendOptions -> Float -> Float -> Float -> Float -> Setting
+blendSeparate =
+    BlendSeparate
+
+
+{-| Activates depth comparisons and updates to the depth buffer.
+Initiate it with DepthOptions.
+-}
+depth : DepthOptions -> Setting
+depth =
+    Depth
+
+
+{-| Defines options for the depth setting
+
+* `func` specifies a function that compares incoming pixel depth to the current depth buffer value
+* `mask` specifies whether the depth buffer is enabled for writing
+* `near` specifies the mapping of the near clipping plane to window coordinates
+* `far` specifies the mapping of the far clipping plane to window coordinates
+-}
+type alias DepthOptions =
+    { func : WebGL.Constants.CompareMode
+    , mask : Bool
+    , near : Float
+    , far : Float
+    }
+
+
+{-| Defaut options for the depth setting
+-}
+depthOptions : DepthOptions
+depthOptions =
+    { func = WebGL.Constants.less
+    , mask = True
+    , near = 0
+    , far = 1
+    }
+
+
+{-| Activates stencil testing and updates to the stencil buffer.
+Initiate it with StencilOptions.
+-}
+stencil : StencilOptions -> Setting
+stencil =
+    Stencil
+
+
+{-| Defines options for the stencil setting
+
+* `func` - the test function
+* `ref` - the reference value for the stencil test, clamped to the range 0 to 2^n - 1, n is the number of bitplanes in the stencil buffer
+* `valueMask` - bit-wise mask that is used to AND the reference value and the stored stencil value when the test is done
+* `fail` - the function to use when the stencil test fails
+* `zfail` - the function to use when the stencil test passes, but the depth test fails
+* `zpass` - the function to use when both the stencil test and the depth test pass, or when the stencil test passes and there is no depth buffer or depth testing is disabled
+* `writeMask` - a bit mask to enable or disable writing of individual bits in the stencil plane
+-}
+type alias StencilOptions =
+    { func : WebGL.Constants.CompareMode
+    , ref : Int
+    , valueMask : Int
+    , fail : WebGL.Constants.ZMode
+    , zfail : WebGL.Constants.ZMode
+    , zpass : WebGL.Constants.ZMode
+    , writeMask : Int
+    }
+
+
+{-| Defaut options for the stencil setting
+-}
+stencilOptions : StencilOptions
+stencilOptions =
+    { func = WebGL.Constants.always
+    , ref = 0
+    , valueMask = 4294967295
+    , fail = WebGL.Constants.keep
+    , zfail = WebGL.Constants.keep
+    , zpass = WebGL.Constants.keep
+    , writeMask = 4294967295
+    }
+
+
+{-| separate settings for front- and back-facing polygons
+-}
+stencilSeparate : StencilOptions -> StencilOptions -> Setting
+stencilSeparate =
+    StencilSeparate
 
 
 {-| `sampleCoverageFunc value invert`
@@ -173,84 +201,6 @@ if the coverage masks should be inverted. The initial value is `False`
 sampleCoverageFunc : Float -> Bool -> Setting
 sampleCoverageFunc =
     SampleCoverageFunc
-
-
-{-| `stencilFunc func ref mask`
-set front and back function and reference value for stencil testing
-
-Requires stencilTest to be enabled.
-
-+ `func`: Specifies the test function.  The initial value is `Always`
-+ `ref`: Specifies the reference value for the stencil test. ref is
-clamped to the range 0 2 n - 1 , n is the number of bitplanes
-in the stencil buffer. The initial value is `0`.
-+ `mask`: Specifies a mask that is ANDed with both the reference value
-and the stored stencil value when the test is done.
-The initial value is all `1`'s.
--}
-stencilFunc : CompareMode -> Int -> Int -> Setting
-stencilFunc (CompareMode func) =
-    StencilFunc func
-
-
-{-| `stencilFuncSeparate face func ref mask`
-set front and/or back function and reference value for stencil testing
-
-Requires stencilTest to be enabled.
-
-+ `face`: Specifies whether front and/or back stencil state is updated
-
-See the description of `stencilFunc` for info about the other parameters
--}
-stencilFuncSeparate : FaceMode -> CompareMode -> Int -> Int -> Setting
-stencilFuncSeparate (FaceMode face) (CompareMode func) =
-    StencilFuncSeparate face func
-
-
-{-| `stencilOperation fail zfail pass`
-set front and back stencil test actions
-
-Requires stencilTest to be enabled.
-
-+ `fail`: Specifies the action to take when the stencil test fails.
-The initial value is `Keep`
-+ `zfail`: Specifies the stencil action when the stencil test passes,
-but the depth test fails. The initial value is `Keep`
-+ `pass`: Specifies the stencil action when both the stencil test
-and the depth test pass, or when the stencil test passes and either
-there is no depth buffer or depth testing is not enabled.
-The initial value is `Keep`
--}
-stencilOperation : ZMode -> ZMode -> ZMode -> Setting
-stencilOperation (ZMode fail) (ZMode zfail) (ZMode pass) =
-    StencilOperation fail zfail pass
-
-
-{-| stencilOperationSeparate face fail zfail pass`
-set front and/or back stencil test actions
-
-Requires stencilTest to be enabled.
-
-+ `face`: Specifies whether front and/or back stencil state is updated.
-
-See the description of `StencilOperation` for info about the other parameters.
--}
-stencilOperationSeparate : FaceMode -> ZMode -> ZMode -> ZMode -> Setting
-stencilOperationSeparate (FaceMode face) (ZMode fail) (ZMode zfail) (ZMode pass) =
-    StencilOperationSeparate face fail zfail pass
-
-
-{-| `stencilMask mask`
-set the stencil `mask`. This value is ANDed with anything drawn to the
-stencil buffer. Usually used to turn writing to the stencil buffer
-on or off.
-
-Requires stencilTest to be enabled.
-
--}
-stencilMask : Int -> Setting
-stencilMask =
-    StencilMask
 
 
 {-| `colorMask red green blue alpha`
@@ -273,3 +223,20 @@ Requires scissorTest to be enabled.
 scissor : Int -> Int -> Int -> Int -> Setting
 scissor =
     Scissor
+
+
+{-| `enable capability`
+enable server-side GL capabilities
+-}
+enable : WebGL.Constants.Capability -> Setting
+enable (WebGL.Constants.Capability capability) =
+    Enable capability
+
+
+{-| `clearColor red green blue alpha`
+set the clear/background color,
+should be set before clearing the scene
+-}
+clearColor : Float -> Float -> Float -> Float -> Setting
+clearColor =
+    ClearColor
