@@ -51,67 +51,104 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   }
 
+ /**
+  *  Apply settings to the gl context
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {List} settings the list of settings coming in from Elm
+  *  @return {Array<Function>} array of functions, when invoked with gl,
+  *          will cleanup the context from changes, caused by the settings
+  */
   function doSettings(gl, settings) {
+    var cleanupOperations = [];
+    var s1;
+    var s2;
+    function disable(capability) {
+      return function (gl) {
+        gl.disable(capability);
+      };
+    }
     listEach(function (setting) {
-      doSetting(gl, setting);
+      s1 = setting._0;
+      s2 = setting._1;
+      switch (setting.ctor) {
+        case 'Blend':
+          cleanupOperations.push(disable(gl.BLEND));
+          gl.enable(gl.BLEND);
+          gl.blendColor(setting._1, setting._2, setting._3, setting._4);
+          gl.blendFunc(s1.source._0, s1.destination._0);
+          gl.blendEquation(s1.equation._0);
+          break;
+        case 'BlendSeparate':
+          cleanupOperations.push(disable(gl.BLEND));
+          gl.enable(gl.BLEND);
+          gl.blendColor(setting._2, setting._3, setting._4, setting._5);
+          gl.blendFuncSeparate(s1.source._0, s1.destination._0, s2.source._0, s2.destination._0);
+          gl.blendEquationSeparate(s1.equation._0, s2.equation._0);
+          break;
+        case 'Depth':
+          cleanupOperations.push(disable(gl.DEPTH_TEST));
+          gl.enable(gl.DEPTH_TEST);
+          gl.depthFunc(s1.func._0);
+          gl.depthMask(s1.mask);
+          gl.depthRange(s1.near, s1.far);
+          break;
+        case 'Stencil':
+          cleanupOperations.push(disable(gl.STENCIL_TEST));
+          gl.enable(gl.STENCIL_TEST);
+          gl.stencilFunc(s1.func._0, s1.ref, s1.valueMask);
+          gl.stencilOp(s1.fail._0, s1.zfail._0, s1.zpass._0);
+          gl.stencilMask(s1.writeMask);
+          break;
+        case 'StencilFuncSeparate':
+          cleanupOperations.push(disable(gl.STENCIL_TEST));
+          gl.enable(gl.STENCIL_TEST);
+          gl.stencilFuncSeparate(gl.FRONT, s1.func._0, s1.ref, s1.valueMask);
+          gl.stencilOpSeparate(gl.FRONT, s1.fail._0, s1.zfail._0, s1.zpass._0);
+          gl.stencilMaskSeparate(gl.FRONT, s1.writeMask);
+          gl.stencilFuncSeparate(gl.BACK, s2.func._0, s2.ref, s2.valueMask);
+          gl.stencilOpSeparate(gl.BACK, s2.fail._0, s2.zfail._0, s2.zpass._0);
+          gl.stencilMaskSeparate(gl.BACK, s2.writeMask);
+          break;
+        case 'Scissor':
+          cleanupOperations.push(disable(gl.SCISSOR_TEST));
+          gl.enable(gl.SCISSOR_TEST);
+          gl.scissor(setting._0, setting._1, setting._2, setting._3);
+          break;
+        case 'ColorMask':
+          cleanupOperations.push(function (gl) {
+            gl.colorMask(true, true, true, true);
+          });
+          gl.colorMask(setting._0, setting._1, setting._2, setting._3);
+          break;
+        case 'CullFace':
+          cleanupOperations.push(disable(gl.CULL_FACE));
+          gl.enable(gl.CULL_FACE);
+          gl.cullFace(s1);
+          break;
+        case 'Dither':
+          cleanupOperations.push(disable(gl.DITHER));
+          gl.enable(gl.DITHER);
+          break;
+        case 'PolygonOffset':
+          cleanupOperations.push(disable(gl.POLYGON_OFFSET_FILL));
+          gl.enable(gl.POLYGON_OFFSET_FILL);
+          gl.polygonOffset(s1, s2);
+          break;
+        case 'SampleCoverage':
+          cleanupOperations.push(disable(gl.SAMPLE_COVERAGE));
+          gl.enable(gl.SAMPLE_COVERAGE);
+          gl.sampleCoverage(s1, s2);
+          break;
+        case 'SampleAlphaToCoverage':
+          cleanupOperations.push(disable(gl.SAMPLE_ALPHA_TO_COVERAGE));
+          gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+          break;
+      }
     }, settings);
+    return cleanupOperations;
   }
 
-  function doSetting(gl, setting) {
-    switch (setting.ctor) {
-      case 'Enable':
-        gl.enable(setting._0);
-        break;
-      case 'Disable':
-        gl.disable(setting._0);
-        break;
-      case 'BlendColor':
-        gl.blendColor(setting._0, setting._1, setting._2, setting._3);
-        break;
-      case 'BlendEquation':
-        gl.blendEquation(setting._0);
-        break;
-      case 'BlendEquationSeparate':
-        gl.blendEquationSeparate(setting._0, setting._1);
-        break;
-      case 'BlendFunc':
-        gl.blendFunc(setting._0, setting._1);
-        break;
-      case 'ClearColor':
-        gl.clearColor(setting._0, setting._1, setting._2, setting._3);
-        break;
-      case 'DepthFunc':
-        gl.depthFunc(setting._0);
-        break;
-      case 'DepthMask':
-        gl.depthMask(setting._0);
-        break;
-      case 'SampleCoverage':
-        gl.sampleCoverage(setting._0, setting._1);
-        break;
-      case 'StencilFunc':
-        gl.stencilFunc(setting._0, setting._1, setting._2);
-        break;
-      case 'StencilFuncSeparate':
-        gl.stencilFuncSeparate(setting._0, setting._1, setting._2, setting._3);
-        break;
-      case 'StencilOperation':
-        gl.stencilOp(setting._0, setting._1, setting._2);
-        break;
-      case 'StencilOperationSeparate':
-        gl.stencilOpSeparate(setting._0, setting._1, setting._2, setting._3);
-        break;
-      case 'StencilMask':
-        gl.stencilMask(setting._0);
-        break;
-      case 'ColorMask':
-        gl.colorMask(setting._0, setting._1, setting._2, setting._3);
-        break;
-      case 'Scissor':
-        gl.scissor(setting._0, setting._1, setting._2, setting._3);
-        break;
-    }
-  }
 
   function doTexture(gl, texture) {
 
@@ -437,12 +474,17 @@ var _elm_community$webgl$Native_WebGL = function () {
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        doSettings(gl, render.settings);
-
         gl.bindBuffer(gl.ARRAY_BUFFER, attributeBuffer);
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
+
+      var cleanupOperations = doSettings(gl, render.settings);
+
       gl.drawElements(renderType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
+
+      cleanupOperations.forEach(function (operation) {
+        operation(gl);
+      });
 
     }
 
@@ -531,9 +573,8 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(options, settings, factList, renderables) {
+  function toHtml(options, factList, renderables) {
     var model = {
-      settings: settings,
       renderables: renderables,
       cache: {},
       // filter out context attributes from options
@@ -559,7 +600,7 @@ var _elm_community$webgl$Native_WebGL = function () {
    *  @param {Object} model
    *  @param {Object} model.cache that may contain the following properties:
              gl, shaders, programs, uniformSetters, buffers, textures
-   *  @param {List} model.settings
+   *  @param {Object} model.contextAttributes
    *  @param {List} model.renderables
    *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
    */
@@ -569,9 +610,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var canvas = document.createElement('canvas');
     var gl = canvas.getContext && (canvas.getContext('webgl', model.contextAttributes) || canvas.getContext('experimental-webgl', model.contextAttributes));
 
-    if (gl) {
-      doSettings(gl, model.settings);
-    } else {
+    if (!gl) {
       canvas = document.createElement('div');
       canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
     }
@@ -606,7 +645,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   return {
     unsafeCoerceGLSL: unsafeCoerceGLSL,
     render: F5(render),
-    toHtml: F4(toHtml)
+    toHtml: F3(toHtml)
   };
 
 }();

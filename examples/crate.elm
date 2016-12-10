@@ -175,23 +175,19 @@ view { texture, theta } =
                     perspective theta
             in
                 [ renderBox
-                    [ disable stencilTest ]
+                    [ depth depthOptions ]
                     Math.Matrix4.identity
                     (vec3 1 1 1)
                     tex
                     camera
                 , renderFloor
-                    [ enable stencilTest
-                    , stencilFunc WebGL.Constants.always 1 255
-                    , stencilOperation keep keep replace
-                    , stencilMask 1
-                    , depthMask False
+                    [ depth { depthOptions | mask = False }
+                    , stencil { stencilOptions | ref = 1, zpass = replace }
                     ]
                     camera
                 , renderBox
-                    [ stencilFunc equal 1 255
-                    , stencilMask 0
-                    , depthMask True
+                    [ stencil { stencilOptions | func = equal, ref = 1, writeMask = 0 }
+                    , depth depthOptions
                     ]
                     (makeScale (vec3 1 -1 1))
                     (vec3 0.6 0.6 0.6)
