@@ -12,10 +12,10 @@ module WebGL.Settings
         , StencilOptions
         , stencilOptions
         , stencilSeparate
+        , scissor
+        , colorMask
           -- todo:
         , sampleCoverageFunc
-        , colorMask
-        , scissor
         , enable
         , clearColor
         )
@@ -24,7 +24,8 @@ module WebGL.Settings
 all pre-fragment operations and some special functions.
 
 # Settings
-@docs Setting, enable, clearColor, sampleCoverageFunc, colorMask, scissor
+
+@docs Setting
 
 # Blending
 
@@ -37,6 +38,10 @@ all pre-fragment operations and some special functions.
 # Stencil Test
 
 @docs stencil, StencilOptions, stencilOptions, stencilSeparate
+
+# Other settings
+
+@docs scissor, colorMask, enable, clearColor, sampleCoverageFunc
 
 -}
 
@@ -51,9 +56,10 @@ type Setting
     | Depth DepthOptions
     | Stencil StencilOptions
     | StencilSeparate StencilOptions StencilOptions
-    | SampleCoverageFunc Float Bool
-    | ColorMask Bool Bool Bool Bool
     | Scissor Int Int Int Int
+    | ColorMask Bool Bool Bool Bool
+      -- todo:
+    | SampleCoverageFunc Float Bool
     | Enable Int
     | ClearColor Float Float Float Float
 
@@ -188,6 +194,25 @@ stencilSeparate =
     StencilSeparate
 
 
+{-| Set the scissor box, which limits the drawing of fragments to the
+screen to a specified rectangle.
+
+The arguments are the coordinates of the lower left corner, width and height.
+
+-}
+scissor : Int -> Int -> Int -> Int -> Setting
+scissor =
+    Scissor
+
+
+{-| Specify whether or not each channel (red, green, blue, alpha)
+should be written into the frame buffer.
+-}
+colorMask : Bool -> Bool -> Bool -> Bool -> Setting
+colorMask =
+    ColorMask
+
+
 {-| `sampleCoverageFunc value invert`
 specify multisample coverage parameters
 
@@ -201,28 +226,6 @@ if the coverage masks should be inverted. The initial value is `False`
 sampleCoverageFunc : Float -> Bool -> Setting
 sampleCoverageFunc =
     SampleCoverageFunc
-
-
-{-| `colorMask red green blue alpha`
-
-Specify whether or not each channel should be written into the frame buffer.
-
--}
-colorMask : Bool -> Bool -> Bool -> Bool -> Setting
-colorMask =
-    ColorMask
-
-
-{-| `scissor x y width height`
-set the scissor box, which limits the drawing of fragments to the
-screen to a specified rectangle.
-
-Requires scissorTest to be enabled.
-
--}
-scissor : Int -> Int -> Int -> Int -> Setting
-scissor =
-    Scissor
 
 
 {-| `enable capability`

@@ -3,7 +3,7 @@ module WebGL.Constants exposing (..)
 {-|
 # Capabilities
 
-@docs Capability, cullFace, dither, polygonOffsetFill, sampleAlphaToCoverage, sampleCoverage, scissorTest
+@docs Capability, cullFace, dither, polygonOffsetFill, sampleAlphaToCoverage, sampleCoverage
 
 # Blend Factors
 
@@ -67,13 +67,6 @@ sampleAlphaToCoverage =
 sampleCoverage : Capability
 sampleCoverage =
     Capability 32928
-
-
-{-| Discard fragments that are outside the scissor rectangle.
--}
-scissorTest : Capability
-scissorTest =
-    Capability 3089
 
 
 {-| Allows you to define which blend factor to use.

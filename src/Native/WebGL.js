@@ -56,47 +56,52 @@ var _elm_community$webgl$Native_WebGL = function () {
   *
   *  @param {WebGLRenderingContext} gl context
   *  @param {List} settings the list of settings coming in from Elm
-  *  @return {Array<GLenum>} the list of enabled capabilities, caused by
-  *          applying the settings
+  *  @return {Array<Function>} array of functions, when invoked with gl,
+  *          will cleanup the context from changes, caused by the settings
   */
   function doSettings(gl, settings) {
-    var enabledCapabilities = [];
+    var cleanupOperations = [];
     var s1;
     var s2;
+    function disable(capability) {
+      return function (gl) {
+        gl.disable(capability);
+      };
+    }
     listEach(function (setting) {
       s1 = setting._0;
       s2 = setting._1;
       switch (setting.ctor) {
         case 'Blend':
-          enabledCapabilities.push(gl.BLEND);
+          cleanupOperations.push(disable(gl.BLEND));
           gl.enable(gl.BLEND);
           gl.blendColor(setting._1, setting._2, setting._3, setting._4);
           gl.blendFunc(s1.source._0, s1.destination._0);
           gl.blendEquation(s1.equation._0);
           break;
         case 'BlendSeparate':
-          enabledCapabilities.push(gl.BLEND);
+          cleanupOperations.push(disable(gl.BLEND));
           gl.enable(gl.BLEND);
           gl.blendColor(setting._2, setting._3, setting._4, setting._5);
           gl.blendFuncSeparate(s1.source._0, s1.destination._0, s2.source._0, s2.destination._0);
           gl.blendEquationSeparate(s1.equation._0, s2.equation._0);
           break;
         case 'Depth':
-          enabledCapabilities.push(gl.DEPTH_TEST);
+          cleanupOperations.push(disable(gl.DEPTH_TEST));
           gl.enable(gl.DEPTH_TEST);
           gl.depthFunc(s1.func._0);
           gl.depthMask(s1.mask);
           gl.depthRange(s1.near, s1.far);
           break;
         case 'Stencil':
-          enabledCapabilities.push(gl.STENCIL_TEST);
+          cleanupOperations.push(disable(gl.STENCIL_TEST));
           gl.enable(gl.STENCIL_TEST);
           gl.stencilFunc(s1.func._0, s1.ref, s1.valueMask);
           gl.stencilOp(s1.fail._0, s1.zfail._0, s1.zpass._0);
           gl.stencilMask(s1.writeMask);
           break;
         case 'StencilFuncSeparate':
-          enabledCapabilities.push(gl.STENCIL_TEST);
+          cleanupOperations.push(disable(gl.STENCIL_TEST));
           gl.enable(gl.STENCIL_TEST);
           gl.stencilFuncSeparate(gl.FRONT, s1.func._0, s1.ref, s1.valueMask);
           gl.stencilOpSeparate(gl.FRONT, s1.fail._0, s1.zfail._0, s1.zpass._0);
@@ -105,25 +110,30 @@ var _elm_community$webgl$Native_WebGL = function () {
           gl.stencilOpSeparate(gl.BACK, s2.fail._0, s2.zfail._0, s2.zpass._0);
           gl.stencilMaskSeparate(gl.BACK, s2.writeMask);
           break;
-        case 'SampleCoverage':
-          gl.sampleCoverage(setting._0, setting._1);
+        case 'Scissor':
+          cleanupOperations.push(disable(gl.SCISSOR_TEST));
+          gl.enable(gl.SCISSOR_TEST);
+          gl.scissor(setting._0, setting._1, setting._2, setting._3);
           break;
         case 'ColorMask':
+          cleanupOperations.push(function (gl) {
+            gl.colorMask(true, true, true, true);
+          });
           gl.colorMask(setting._0, setting._1, setting._2, setting._3);
           break;
-        case 'Scissor':
-          gl.scissor(setting._0, setting._1, setting._2, setting._3);
+        case 'SampleCoverage':
+          gl.sampleCoverage(setting._0, setting._1);
           break;
         case 'ClearColor':
           gl.clearColor(setting._0, setting._1, setting._2, setting._3);
           break;
         case 'Enable':
-          enabledCapabilities.push(setting._0);
+          cleanupOperations.push(disable(setting._0));
           gl.enable(setting._0);
           break;
       }
     }, settings);
-    return enabledCapabilities;
+    return cleanupOperations;
   }
 
 
@@ -455,12 +465,12 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
 
-      var enabledCapabilities = doSettings(gl, render.settings);
+      var cleanupOperations = doSettings(gl, render.settings);
 
       gl.drawElements(renderType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
-      enabledCapabilities.forEach(function (capability) {
-        gl.disable(capability);
+      cleanupOperations.forEach(function (operation) {
+        operation(gl);
       });
 
     }
