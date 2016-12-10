@@ -136,11 +136,13 @@ var _elm_community$webgl$Native_WebGL = function () {
           gl.polygonOffset(s1, s2);
           break;
         case 'SampleCoverage':
-          gl.sampleCoverage(setting._0, setting._1);
+          cleanupOperations.push(disable(gl.SAMPLE_COVERAGE));
+          gl.enable(gl.SAMPLE_COVERAGE);
+          gl.sampleCoverage(s1, s2);
           break;
-        case 'Enable':
-          cleanupOperations.push(disable(setting._0));
-          gl.enable(setting._0);
+        case 'SampleAlphaToCoverage':
+          cleanupOperations.push(disable(gl.SAMPLE_ALPHA_TO_COVERAGE));
+          gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
           break;
       }
     }, settings);

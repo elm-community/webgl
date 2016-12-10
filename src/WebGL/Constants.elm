@@ -1,9 +1,6 @@
 module WebGL.Constants exposing (..)
 
 {-|
-# Capabilities
-
-@docs Capability, sampleAlphaToCoverage, sampleCoverage
 
 # Blend Factors
 
@@ -25,29 +22,6 @@ module WebGL.Constants exposing (..)
 
 @docs ZMode, keep, none, replace, increment, decrement, invert, incrementWrap, decrementWrap
 -}
-
-
-{-| The `Capability` is used to enable/disable
-server-side GL capabilities.
--}
-type Capability
-    = Capability Int
-
-
-{-| Compute a temporary coverage value
-where each bit is determined by the alpha value at the corresponding sample location.
-The temporary coverage value is then ANDed with the fragment coverage value.
--}
-sampleAlphaToCoverage : Capability
-sampleAlphaToCoverage =
-    Capability 32926
-
-
-{-| The fragment's coverage is ANDed with the temporary coverage value.
--}
-sampleCoverage : Capability
-sampleCoverage =
-    Capability 32928
 
 
 {-| Allows you to define which blend factor to use.

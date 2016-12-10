@@ -17,9 +17,8 @@ module WebGL.Settings
         , cullFace
         , dither
         , polygonOffset
-          -- todo:
-        , sampleCoverageFunc
-        , enable
+        , sampleCoverage
+        , sampleAlphaToCoverage
         )
 
 {-| The `WebGL.Setting` provides a typesafe way to call
@@ -43,7 +42,8 @@ all pre-fragment operations and some special functions.
 
 # Other settings
 
-@docs scissor, colorMask, cullFace, dither, polygonOffset, enable, sampleCoverageFunc
+@docs scissor, colorMask, cullFace, dither, polygonOffset,
+      sampleCoverage, sampleAlphaToCoverage
 
 -}
 
@@ -63,9 +63,8 @@ type Setting
     | CullFace Int
     | Dither
     | PolygonOffset Float Float
-    | SampleCoverageFunc Float Bool
-    | Enable Int
-    | ClearColor Float Float Float Float
+    | SampleCoverage Float Bool
+    | SampleAlphaToCoverage
 
 
 {-| Blend setting allows to control how the source and destination
@@ -239,34 +238,32 @@ dither =
 produced by rasterization. The offset is added before the depth
 test is performed and before the value is written into the depth buffer.
 
-* `factor` the first argument is the scale factor for the variable depth offset for each polygon.
-* `units` the second argument is the multiplier by which an implementation-specific value is multiplied
+* the first argument is the scale factor for the variable depth offset for each polygon.
+* the second argument is the multiplier by which an implementation-specific value is multiplied
   with to create a constant depth offset.
-
 -}
 polygonOffset : Float -> Float -> Setting
 polygonOffset =
     PolygonOffset
 
 
-{-| `sampleCoverageFunc value invert`
-specify multisample coverage parameters
+{-| Specify multisample coverage parameters.
 
-Requires sampleAlphaToCoverage or sampleCoverage to be enabled.
+The fragment's coverage is ANDed with the temporary coverage value.
 
-+ `value`: Specify a single floating-point sample coverage value.
-The value is clamped to the range 0 1. The initial value is `1`
-+ `invert`: Specify a single boolean value representing
-if the coverage masks should be inverted. The initial value is `False`
+* the first argument specifies sample coverage value, that is clamped to the range 0 1.
+* the second argument represents if the coverage masks should be inverted.
 -}
-sampleCoverageFunc : Float -> Bool -> Setting
-sampleCoverageFunc =
-    SampleCoverageFunc
+sampleCoverage : Float -> Bool -> Setting
+sampleCoverage =
+    SampleCoverage
 
 
-{-| `enable capability`
-enable server-side GL capabilities
+{-| Compute a temporary coverage value
+where each bit is determined by the alpha value at the corresponding sample location.
+
+The temporary coverage value is then ANDed with the fragment coverage value.
 -}
-enable : WebGL.Constants.Capability -> Setting
-enable (WebGL.Constants.Capability capability) =
-    Enable capability
+sampleAlphaToCoverage : Setting
+sampleAlphaToCoverage =
+    SampleAlphaToCoverage
