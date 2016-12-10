@@ -3,7 +3,7 @@ module WebGL.Constants exposing (..)
 {-|
 # Capabilities
 
-@docs Capability, cullFace, dither, polygonOffsetFill, sampleAlphaToCoverage, sampleCoverage
+@docs Capability, sampleAlphaToCoverage, sampleCoverage
 
 # Blend Factors
 
@@ -17,6 +17,10 @@ module WebGL.Constants exposing (..)
 
 @docs CompareMode, never, always, less, lessOrEqual, equal, greaterOrEqual, greater, notEqual
 
+# Face Modes
+
+@docs FaceMode, front, back, frontAndBack
+
 # ZModes
 
 @docs ZMode, keep, none, replace, increment, decrement, invert, incrementWrap, decrementWrap
@@ -28,29 +32,6 @@ server-side GL capabilities.
 -}
 type Capability
     = Capability Int
-
-
-{-| Cull polygons based on their winding in window coordinates.
--}
-cullFace : Capability
-cullFace =
-    Capability 2884
-
-
-{-| Dither color components or indices before they
-are written to the color buffer.
--}
-dither : Capability
-dither =
-    Capability 3024
-
-
-{-| Add an offset to depth values of a polygon's fragments
-produced by rasterization.
--}
-polygonOffsetFill : Capability
-polygonOffsetFill =
-    Capability 32823
 
 
 {-| Compute a temporary coverage value
@@ -267,6 +248,33 @@ greater =
 notEqual : CompareMode
 notEqual =
     CompareMode 517
+
+
+{-| The `FaceMode` defines the face of the polygon
+-}
+type FaceMode
+    = FaceMode Int
+
+
+{-| Targets the front-facing polygons
+-}
+front : FaceMode
+front =
+    FaceMode 1028
+
+
+{-| Targets the back-facing polygons
+-}
+back : FaceMode
+back =
+    FaceMode 1029
+
+
+{-| Targets both front- and back-facing polygons
+-}
+frontAndBack : FaceMode
+frontAndBack =
+    FaceMode 1032
 
 
 {-| The `ZMode` type allows you to define what to do

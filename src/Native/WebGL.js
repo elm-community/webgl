@@ -121,6 +121,20 @@ var _elm_community$webgl$Native_WebGL = function () {
           });
           gl.colorMask(setting._0, setting._1, setting._2, setting._3);
           break;
+        case 'CullFace':
+          cleanupOperations.push(disable(gl.CULL_FACE));
+          gl.enable(gl.CULL_FACE);
+          gl.cullFace(s1);
+          break;
+        case 'Dither':
+          cleanupOperations.push(disable(gl.DITHER));
+          gl.enable(gl.DITHER);
+          break;
+        case 'PolygonOffset':
+          cleanupOperations.push(disable(gl.POLYGON_OFFSET_FILL));
+          gl.enable(gl.POLYGON_OFFSET_FILL);
+          gl.polygonOffset(s1, s2);
+          break;
         case 'SampleCoverage':
           gl.sampleCoverage(setting._0, setting._1);
           break;

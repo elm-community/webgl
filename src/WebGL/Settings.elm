@@ -14,6 +14,9 @@ module WebGL.Settings
         , stencilSeparate
         , scissor
         , colorMask
+        , cullFace
+        , dither
+        , polygonOffset
           -- todo:
         , sampleCoverageFunc
         , enable
@@ -40,7 +43,7 @@ all pre-fragment operations and some special functions.
 
 # Other settings
 
-@docs scissor, colorMask, enable, sampleCoverageFunc
+@docs scissor, colorMask, cullFace, dither, polygonOffset, enable, sampleCoverageFunc
 
 -}
 
@@ -57,6 +60,9 @@ type Setting
     | StencilSeparate StencilOptions StencilOptions
     | Scissor Int Int Int Int
     | ColorMask Bool Bool Bool Bool
+    | CullFace Int
+    | Dither
+    | PolygonOffset Float Float
     | SampleCoverageFunc Float Bool
     | Enable Int
     | ClearColor Float Float Float Float
@@ -209,6 +215,38 @@ should be written into the frame buffer.
 colorMask : Bool -> Bool -> Bool -> Bool -> Setting
 colorMask =
     ColorMask
+
+
+{-| Cull polygons based on their winding in window coordinates.
+
+Polygons with counter-clock-wise winding are front-facing .
+
+-}
+cullFace : WebGL.Constants.FaceMode -> Setting
+cullFace (WebGL.Constants.FaceMode faceMode) =
+    CullFace faceMode
+
+
+{-| Dither color components or indices before they
+are written to the color buffer.
+-}
+dither : Setting
+dither =
+    Dither
+
+
+{-| Add an offset to depth values of a polygon's fragments
+produced by rasterization. The offset is added before the depth
+test is performed and before the value is written into the depth buffer.
+
+* `factor` the first argument is the scale factor for the variable depth offset for each polygon.
+* `units` the second argument is the multiplier by which an implementation-specific value is multiplied
+  with to create a constant depth offset.
+
+-}
+polygonOffset : Float -> Float -> Setting
+polygonOffset =
+    PolygonOffset
 
 
 {-| `sampleCoverageFunc value invert`
