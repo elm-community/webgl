@@ -67,8 +67,7 @@ module WebGL.Settings
         , frontAndBack
         )
 
-{-| The `WebGL.Setting` provides a typesafe way to call
-all pre-fragment operations and some special functions.
+{-|
 
 # Settings
 
@@ -119,7 +118,7 @@ all pre-fragment operations and some special functions.
 -}
 
 
-{-| To initiate a `Setting` please use one of the following functions
+{-| Provides a typesafe way to call all pre-fragment operations.
 -}
 type Setting
     = Blend BlendOptions Float Float Float Float

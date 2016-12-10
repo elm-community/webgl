@@ -55,7 +55,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   *  Apply settings to the gl context
   *
   *  @param {WebGLRenderingContext} gl context
-  *  @param {List} settings the list of settings coming in from Elm
+  *  @param {List<Setting>} settings the list of settings coming in from Elm
   *  @return {Array<Function>} array of functions, when invoked with gl,
   *          will cleanup the context from changes, caused by the settings
   */
@@ -577,14 +577,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var model = {
       renderables: renderables,
       cache: {},
-      // filter out context attributes from options
-      contextAttributes: {
-        alpha: options.alpha,
-        depth: options.depth,
-        stencil: options.stencil,
-        antialias: options.antialias,
-        premultipliedAlpha: options.premultipliedAlpha
-      }
+      options: options
     };
     // eslint-disable-next-line camelcase
     return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
@@ -600,17 +593,63 @@ var _elm_community$webgl$Native_WebGL = function () {
    *  @param {Object} model
    *  @param {Object} model.cache that may contain the following properties:
              gl, shaders, programs, uniformSetters, buffers, textures
-   *  @param {Object} model.contextAttributes
-   *  @param {List} model.renderables
+   *  @param {List<Option>} model.options list of options coming from Elm
+   *  @param {List<Renderable>} model.renderables list of renderables coming from Elm
    *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
    */
   function renderCanvas(model) {
 
+    var contextAttributes = {
+      alpha: false,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      premultipliedAlpha: false
+    };
+    var sceneSettings = [];
+
+    listEach(function (option) {
+      var s1 = option._0;
+      switch (option.ctor) {
+        case 'Alpha':
+          contextAttributes.alpha = true;
+          contextAttributes.premultipliedAlpha = s1;
+          break;
+        case 'Antialias':
+          contextAttributes.antialias = true;
+          break;
+        case 'Depth':
+          contextAttributes.depth = true;
+          sceneSettings.push(function (gl) {
+            gl.clearDepth(s1);
+          });
+          break;
+        case 'ClearColor':
+          sceneSettings.push(function (gl) {
+            gl.clearColor(option._0, option._1, option._2, option._3);
+          });
+          break;
+        case 'Stencil':
+          contextAttributes.stencil = true;
+          sceneSettings.push(function (gl) {
+            gl.clearStencil(s1);
+          });
+          break;
+      }
+    }, model.options);
+
     LOG('Render canvas');
     var canvas = document.createElement('canvas');
-    var gl = canvas.getContext && (canvas.getContext('webgl', model.contextAttributes) || canvas.getContext('experimental-webgl', model.contextAttributes));
+    var gl = canvas.getContext && (
+      canvas.getContext('webgl', contextAttributes) ||
+      canvas.getContext('experimental-webgl', contextAttributes)
+    );
 
-    if (!gl) {
+    if (gl) {
+      sceneSettings.forEach(function (sceneSetting) {
+        sceneSetting(gl);
+      });
+    } else {
       canvas = document.createElement('div');
       canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
     }

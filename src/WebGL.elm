@@ -16,8 +16,6 @@ module WebGL
         , renderWithSettings
         , toHtml
         , toHtmlWith
-        , Options
-        , defaultOptions
         , unsafeShader
         )
 
@@ -30,14 +28,13 @@ documentation provided here.
 @docs Shader, Renderable, Texture
 
 # Drawables
-
 @docs Drawable, triangles, indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan, triangleStrip
 
-# Entities
+# Renderables
 @docs render, renderWithSettings
 
 # WebGL Html
-@docs toHtml, toHtmlWith, defaultOptions, Options
+@docs toHtml, toHtmlWith
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
@@ -47,6 +44,7 @@ documentation provided here.
 import Html exposing (Html, Attribute)
 import WebGL.Settings as Settings exposing (Setting)
 import Native.WebGL
+import WebGL.Options as Options exposing (Option)
 
 
 {-|
@@ -184,50 +182,25 @@ render =
     renderWithSettings [ Settings.depth Settings.depthOptions ]
 
 
-{-| Same as toHtmlWith but with default configurations,
-implicitly configured for you. See `defaultOptions` for more information.
+{-| Render a WebGL scene with the given options, html attributes, and entities.
+
+Shaders and meshes are cached so that they do not get resent to the GPU,
+so it should be relatively cheap to create new entities out of existing values.
+
+By default, alpha channel with premultiplied alpha, antialias and depth buffer
+options are enabled. If you need more options, please check `toHtmlWith`.
 -}
 toHtml : List (Attribute msg) -> List Renderable -> Html msg
 toHtml =
-    toHtmlWith defaultOptions
-
-
-{-|
-All possible options that you can specify when creating the WebGL context.
-See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
-or [the WebGL specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
-
-This is needed if you need specific features, e.g. the stencil buffer.
-
-This also includes the list of settings that you may want to apply.
--}
-type alias Options =
-    { alpha : Bool
-    , depth : Bool
-    , stencil : Bool
-    , antialias : Bool
-    , premultipliedAlpha : Bool
-    }
-
-
-{-|
-The default options for the WebGL context.
-These are the same as [in the specs](https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2)
--}
-defaultOptions : Options
-defaultOptions =
-    { alpha = True
-    , depth = True
-    , stencil = False
-    , antialias = True
-    , premultipliedAlpha = True
-    }
+    toHtmlWith [ Options.alpha True, Options.antialias, Options.depth 1 ]
 
 
 {-| Render a WebGL scene with the given options, html attributes, and entities.
-Shaders and meshes are cached so that they do not get resent to the GPU,
-so it should be relatively cheap to create new entities out of existing values.
+
+Please note that due to browser limitations, options will be applied only once
+when the canvas is created for the first time.
+
 -}
-toHtmlWith : Options -> List (Attribute msg) -> List Renderable -> Html msg
+toHtmlWith : List Option -> List (Attribute msg) -> List Renderable -> Html msg
 toHtmlWith options attributes renderables =
     Native.WebGL.toHtml options attributes renderables
