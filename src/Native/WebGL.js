@@ -124,9 +124,6 @@ var _elm_community$webgl$Native_WebGL = function () {
         case 'SampleCoverage':
           gl.sampleCoverage(setting._0, setting._1);
           break;
-        case 'ClearColor':
-          gl.clearColor(setting._0, setting._1, setting._2, setting._3);
-          break;
         case 'Enable':
           cleanupOperations.push(disable(setting._0));
           gl.enable(setting._0);

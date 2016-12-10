@@ -3,7 +3,6 @@ module Main exposing (..)
 import Math.Vector3 exposing (..)
 import Math.Matrix4 exposing (..)
 import WebGL exposing (..)
-import WebGL.Settings as Settings
 import Html exposing (Html)
 import Html.Attributes exposing (width, height)
 import AnimationFrame
@@ -41,13 +40,7 @@ view : Float -> Html msg
 view t =
     WebGL.toHtml
         [ width 400, height 400 ]
-        [ renderWithSettings
-            [ Settings.clearColor 0 0 0 1 ]
-            vertexShader
-            fragmentShader
-            mesh
-            { perspective = perspective (t / 1000) }
-        ]
+        [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 
 
 perspective : Float -> Mat4

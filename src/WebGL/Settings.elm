@@ -17,7 +17,6 @@ module WebGL.Settings
           -- todo:
         , sampleCoverageFunc
         , enable
-        , clearColor
         )
 
 {-| The `WebGL.Setting` provides a typesafe way to call
@@ -41,7 +40,7 @@ all pre-fragment operations and some special functions.
 
 # Other settings
 
-@docs scissor, colorMask, enable, clearColor, sampleCoverageFunc
+@docs scissor, colorMask, enable, sampleCoverageFunc
 
 -}
 
@@ -58,7 +57,6 @@ type Setting
     | StencilSeparate StencilOptions StencilOptions
     | Scissor Int Int Int Int
     | ColorMask Bool Bool Bool Bool
-      -- todo:
     | SampleCoverageFunc Float Bool
     | Enable Int
     | ClearColor Float Float Float Float
@@ -234,12 +232,3 @@ enable server-side GL capabilities
 enable : WebGL.Constants.Capability -> Setting
 enable (WebGL.Constants.Capability capability) =
     Enable capability
-
-
-{-| `clearColor red green blue alpha`
-set the clear/background color,
-should be set before clearing the scene
--}
-clearColor : Float -> Float -> Float -> Float -> Setting
-clearColor =
-    ClearColor
