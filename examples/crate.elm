@@ -13,6 +13,7 @@ import Time exposing (Time)
 import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
 import WebGL.Settings exposing (..)
+import WebGL.Options as Options
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -164,37 +165,39 @@ camera =
 
 view : Model -> Html Action
 view { texture, theta } =
-    (case texture of
-        Nothing ->
-            []
+    WebGL.toHtmlWith
+        [ Options.alpha True, Options.antialias, Options.depth 1, Options.stencil 0 ]
+        [ width 400, height 400 ]
+        (case texture of
+            Nothing ->
+                []
 
-        Just tex ->
-            let
-                camera =
-                    perspective theta
-            in
-                [ renderBox
-                    [ depth depthOptions ]
-                    Math.Matrix4.identity
-                    (vec3 1 1 1)
-                    tex
-                    camera
-                , renderFloor
-                    [ depth { depthOptions | mask = False }
-                    , stencil { stencilOptions | ref = 1, zpass = replace }
+            Just tex ->
+                let
+                    camera =
+                        perspective theta
+                in
+                    [ renderBox
+                        [ depth depthOptions ]
+                        Math.Matrix4.identity
+                        (vec3 1 1 1)
+                        tex
+                        camera
+                    , renderFloor
+                        [ depth { depthOptions | mask = False }
+                        , stencil { stencilOptions | ref = 1, zpass = replace }
+                        ]
+                        camera
+                    , renderBox
+                        [ stencil { stencilOptions | func = equal, ref = 1, writeMask = 0 }
+                        , depth depthOptions
+                        ]
+                        (makeScale (vec3 1 -1 1))
+                        (vec3 0.6 0.6 0.6)
+                        tex
+                        camera
                     ]
-                    camera
-                , renderBox
-                    [ stencil { stencilOptions | func = equal, ref = 1, writeMask = 0 }
-                    , depth depthOptions
-                    ]
-                    (makeScale (vec3 1 -1 1))
-                    (vec3 0.6 0.6 0.6)
-                    tex
-                    camera
-                ]
-    )
-        |> WebGL.toHtmlWith { defaultOptions | stencil = True } [ width 400, height 400 ]
+        )
 
 
 renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Renderable

@@ -11,6 +11,7 @@ import Math.Matrix4 exposing (..)
 import Task exposing (Task)
 import Time exposing (..)
 import WebGL exposing (..)
+import WebGL.Options as Options
 import WebGL.Texture as Texture exposing (Error)
 import Html exposing (Html, text, div)
 import Html
@@ -279,7 +280,7 @@ view { size, person, texture } =
                 ]
             ]
             [ WebGL.toHtmlWith
-                { defaultOptions | alpha = False }
+                [ Options.depth 1, Options.antialias ]
                 [ width size.width
                 , height size.height
                 , style [ ( "display", "block" ) ]
