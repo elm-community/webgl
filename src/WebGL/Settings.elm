@@ -1,24 +1,70 @@
 module WebGL.Settings
     exposing
         ( Setting
+          -- blend
         , blend
+        , blendSeparate
         , BlendOptions
         , blendOptions
-        , blendSeparate
+        , BlendEquation
+        , add
+        , subtract
+        , reverseSubtract
+        , BlendFactor
+        , zero
+        , one
+        , srcColor
+        , oneMinusSrcColor
+        , dstColor
+        , oneMinusDstColor
+        , srcAlpha
+        , oneMinusSrcAlpha
+        , dstAlpha
+        , oneMinusDstAlpha
+        , constantColor
+        , oneMinusConstantColor
+        , constantAlpha
+        , oneMinusConstantAlpha
+        , srcAlphaSaturate
+          -- depth
         , depth
         , DepthOptions
         , depthOptions
+        , CompareMode
+        , never
+        , always
+        , less
+        , lessOrEqual
+        , equal
+        , greaterOrEqual
+        , greater
+        , notEqual
+          -- stencil
         , stencil
+        , stencilSeparate
         , StencilOptions
         , stencilOptions
-        , stencilSeparate
+        , ZMode
+        , keep
+        , none
+        , replace
+        , increment
+        , decrement
+        , invert
+        , incrementWrap
+        , decrementWrap
+          -- others
         , scissor
         , colorMask
-        , cullFace
         , dither
         , polygonOffset
         , sampleCoverage
         , sampleAlphaToCoverage
+        , cullFace
+        , FaceMode
+        , front
+        , back
+        , frontAndBack
         )
 
 {-| The `WebGL.Setting` provides a typesafe way to call
@@ -32,22 +78,45 @@ all pre-fragment operations and some special functions.
 
 @docs blend, blendSeparate, BlendOptions, blendOptions
 
+## Blend Factors
+
+@docs BlendFactor, zero, one, srcColor, oneMinusSrcColor, dstColor,
+      oneMinusDstColor, srcAlpha, oneMinusSrcAlpha, dstAlpha, oneMinusDstAlpha,
+      constantColor, oneMinusConstantColor, constantAlpha,
+      oneMinusConstantAlpha, srcAlphaSaturate
+
+## Blend Equations
+
+@docs BlendEquation, add, subtract, reverseSubtract
+
 # Depth Test
 
 @docs depth, DepthOptions, depthOptions
+
+## Compare Modes
+
+@docs CompareMode, never, always, less, lessOrEqual, equal, greaterOrEqual,
+      greater, notEqual
 
 # Stencil Test
 
 @docs stencil, StencilOptions, stencilOptions, stencilSeparate
 
+## ZModes
+
+@docs ZMode, keep, none, replace, increment, decrement, invert,
+      incrementWrap, decrementWrap
+
 # Other settings
 
-@docs scissor, colorMask, cullFace, dither, polygonOffset,
-      sampleCoverage, sampleAlphaToCoverage
+@docs scissor, colorMask, dither, polygonOffset, sampleCoverage,
+      sampleAlphaToCoverage, cullFace
+
+## Face Modes
+
+@docs FaceMode, front, back, frontAndBack
 
 -}
-
-import WebGL.Constants
 
 
 {-| To initiate a `Setting` please use one of the following functions
@@ -76,6 +145,14 @@ blend =
     Blend
 
 
+{-| The same as blend setting, but allows to pass separate
+blend options for color channels and alpha channel
+-}
+blendSeparate : BlendOptions -> BlendOptions -> Float -> Float -> Float -> Float -> Setting
+blendSeparate =
+    BlendSeparate
+
+
 {-| Defines options for the blend setting
 
 * `equation` specifies how source and destination color components are combined
@@ -89,9 +166,9 @@ as source and destination.
 
 -}
 type alias BlendOptions =
-    { equation : WebGL.Constants.BlendEquation
-    , source : WebGL.Constants.BlendFactor
-    , destination : WebGL.Constants.BlendFactor
+    { equation : BlendEquation
+    , source : BlendFactor
+    , destination : BlendFactor
     }
 
 
@@ -99,18 +176,148 @@ type alias BlendOptions =
 -}
 blendOptions : BlendOptions
 blendOptions =
-    { equation = WebGL.Constants.add
-    , source = WebGL.Constants.one
-    , destination = WebGL.Constants.zero
+    { equation = add
+    , source = one
+    , destination = zero
     }
 
 
-{-| The same as blend setting, but allows to pass separate
-blend options for color channels and alpha channel
+{-| Allows you to define which blend factor to use.
 -}
-blendSeparate : BlendOptions -> BlendOptions -> Float -> Float -> Float -> Float -> Setting
-blendSeparate =
-    BlendSeparate
+type BlendFactor
+    = BlendFactor Int
+
+
+{-|
+-}
+zero : BlendFactor
+zero =
+    BlendFactor 0
+
+
+{-|
+-}
+one : BlendFactor
+one =
+    BlendFactor 1
+
+
+{-|
+-}
+srcColor : BlendFactor
+srcColor =
+    BlendFactor 768
+
+
+{-|
+-}
+oneMinusSrcColor : BlendFactor
+oneMinusSrcColor =
+    BlendFactor 769
+
+
+{-|
+-}
+dstColor : BlendFactor
+dstColor =
+    BlendFactor 774
+
+
+{-|
+-}
+oneMinusDstColor : BlendFactor
+oneMinusDstColor =
+    BlendFactor 775
+
+
+{-|
+-}
+srcAlpha : BlendFactor
+srcAlpha =
+    BlendFactor 770
+
+
+{-|
+-}
+oneMinusSrcAlpha : BlendFactor
+oneMinusSrcAlpha =
+    BlendFactor 771
+
+
+{-|
+-}
+dstAlpha : BlendFactor
+dstAlpha =
+    BlendFactor 772
+
+
+{-|
+-}
+oneMinusDstAlpha : BlendFactor
+oneMinusDstAlpha =
+    BlendFactor 773
+
+
+{-|
+-}
+constantColor : BlendFactor
+constantColor =
+    BlendFactor 32769
+
+
+{-|
+-}
+oneMinusConstantColor : BlendFactor
+oneMinusConstantColor =
+    BlendFactor 32770
+
+
+{-|
+-}
+constantAlpha : BlendFactor
+constantAlpha =
+    BlendFactor 32771
+
+
+{-|
+-}
+oneMinusConstantAlpha : BlendFactor
+oneMinusConstantAlpha =
+    BlendFactor 32772
+
+
+{-|
+-}
+srcAlphaSaturate : BlendFactor
+srcAlphaSaturate =
+    BlendFactor 776
+
+
+{-| The `BlendEquation` allows you to define which blend mode to use.
+-}
+type BlendEquation
+    = BlendEquation Int
+
+
+{-|
+-}
+add : BlendEquation
+add =
+    BlendEquation 32774
+
+
+{-|
+-}
+subtract : BlendEquation
+subtract =
+    BlendEquation 32778
+
+
+{-|
+-}
+reverseSubtract : BlendEquation
+reverseSubtract =
+    BlendEquation 32779
 
 
 {-| Activates depth comparisons and updates to the depth buffer.
@@ -129,7 +336,7 @@ depth =
 * `far` specifies the mapping of the far clipping plane to window coordinates
 -}
 type alias DepthOptions =
-    { func : WebGL.Constants.CompareMode
+    { func : CompareMode
     , mask : Bool
     , near : Float
     , far : Float
@@ -140,11 +347,73 @@ type alias DepthOptions =
 -}
 depthOptions : DepthOptions
 depthOptions =
-    { func = WebGL.Constants.less
+    { func = less
     , mask = True
     , near = 0
     , far = 1
     }
+
+
+{-| The `CompareMode` allows you to define how to compare values.
+-}
+type CompareMode
+    = CompareMode Int
+
+
+{-|
+-}
+never : CompareMode
+never =
+    CompareMode 512
+
+
+{-|
+-}
+always : CompareMode
+always =
+    CompareMode 519
+
+
+{-|
+-}
+less : CompareMode
+less =
+    CompareMode 513
+
+
+{-|
+-}
+lessOrEqual : CompareMode
+lessOrEqual =
+    CompareMode 515
+
+
+{-|
+-}
+equal : CompareMode
+equal =
+    CompareMode 514
+
+
+{-|
+-}
+greaterOrEqual : CompareMode
+greaterOrEqual =
+    CompareMode 518
+
+
+{-|
+-}
+greater : CompareMode
+greater =
+    CompareMode 516
+
+
+{-|
+-}
+notEqual : CompareMode
+notEqual =
+    CompareMode 517
 
 
 {-| Activates stencil testing and updates to the stencil buffer.
@@ -153,6 +422,13 @@ Initiate it with StencilOptions.
 stencil : StencilOptions -> Setting
 stencil =
     Stencil
+
+
+{-| separate settings for front- and back-facing polygons
+-}
+stencilSeparate : StencilOptions -> StencilOptions -> Setting
+stencilSeparate =
+    StencilSeparate
 
 
 {-| Defines options for the stencil setting
@@ -166,12 +442,12 @@ stencil =
 * `writeMask` - a bit mask to enable or disable writing of individual bits in the stencil plane
 -}
 type alias StencilOptions =
-    { func : WebGL.Constants.CompareMode
+    { func : CompareMode
     , ref : Int
     , valueMask : Int
-    , fail : WebGL.Constants.ZMode
-    , zfail : WebGL.Constants.ZMode
-    , zpass : WebGL.Constants.ZMode
+    , fail : ZMode
+    , zfail : ZMode
+    , zpass : ZMode
     , writeMask : Int
     }
 
@@ -180,21 +456,84 @@ type alias StencilOptions =
 -}
 stencilOptions : StencilOptions
 stencilOptions =
-    { func = WebGL.Constants.always
+    { func = always
     , ref = 0
     , valueMask = 4294967295
-    , fail = WebGL.Constants.keep
-    , zfail = WebGL.Constants.keep
-    , zpass = WebGL.Constants.keep
+    , fail = keep
+    , zfail = keep
+    , zpass = keep
     , writeMask = 4294967295
     }
 
 
-{-| separate settings for front- and back-facing polygons
+{-| The `ZMode` type allows you to define what to do
+with the stencil buffer value.
 -}
-stencilSeparate : StencilOptions -> StencilOptions -> Setting
-stencilSeparate =
-    StencilSeparate
+type ZMode
+    = ZMode Int
+
+
+{-| Keeps the current value
+-}
+keep : ZMode
+keep =
+    ZMode 7680
+
+
+{-| Sets the stencil buffer value to 0.
+Should be named `zero`, but it is taken.
+-}
+none : ZMode
+none =
+    ZMode 0
+
+
+{-| Sets the stencil buffer value to `ref`,
+see `Settings.stencilFunc` for more information.
+-}
+replace : ZMode
+replace =
+    ZMode 7681
+
+
+{-| Increments the current stencil buffer value.
+Clamps to the maximum representable unsigned value.
+-}
+increment : ZMode
+increment =
+    ZMode 7682
+
+
+{-| Decrements the current stencil buffer value. Clamps to 0.
+-}
+decrement : ZMode
+decrement =
+    ZMode 7683
+
+
+{-| Bitwise inverts the current stencil buffer value.
+-}
+invert : ZMode
+invert =
+    ZMode 5386
+
+
+{-| Increments the current stencil buffer value.
+Wraps stencil buffer value to zero when incrementing
+the maximum representable unsigned value.
+-}
+incrementWrap : ZMode
+incrementWrap =
+    ZMode 34055
+
+
+{-| Decrements the current stencil buffer value.
+Wraps stencil buffer value to the maximum representable unsigned
+value when decrementing a stencil buffer value of zero.
+-}
+decrementWrap : ZMode
+decrementWrap =
+    ZMode 34056
 
 
 {-| Set the scissor box, which limits the drawing of fragments to the
@@ -214,16 +553,6 @@ should be written into the frame buffer.
 colorMask : Bool -> Bool -> Bool -> Bool -> Setting
 colorMask =
     ColorMask
-
-
-{-| Cull polygons based on their winding in window coordinates.
-
-Polygons with counter-clock-wise winding are front-facing .
-
--}
-cullFace : WebGL.Constants.FaceMode -> Setting
-cullFace (WebGL.Constants.FaceMode faceMode) =
-    CullFace faceMode
 
 
 {-| Dither color components or indices before they
@@ -267,3 +596,40 @@ The temporary coverage value is then ANDed with the fragment coverage value.
 sampleAlphaToCoverage : Setting
 sampleAlphaToCoverage =
     SampleAlphaToCoverage
+
+
+{-| Cull polygons based on their winding in window coordinates.
+
+Polygons with counter-clock-wise winding are front-facing .
+
+-}
+cullFace : FaceMode -> Setting
+cullFace (FaceMode faceMode) =
+    CullFace faceMode
+
+
+{-| The `FaceMode` defines the face of the polygon
+-}
+type FaceMode
+    = FaceMode Int
+
+
+{-| Targets the front-facing polygons
+-}
+front : FaceMode
+front =
+    FaceMode 1028
+
+
+{-| Targets the back-facing polygons
+-}
+back : FaceMode
+back =
+    FaceMode 1029
+
+
+{-| Targets both front- and back-facing polygons
+-}
+frontAndBack : FaceMode
+frontAndBack =
+    FaceMode 1032
