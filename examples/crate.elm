@@ -13,7 +13,6 @@ import Time exposing (Time)
 import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
 import WebGL.Settings exposing (..)
-import WebGL.Constants exposing (..)
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
