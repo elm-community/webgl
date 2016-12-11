@@ -8,16 +8,13 @@ module WebGL.Options
         , clearColor
         )
 
-{-|
-
-# Options
-
+{-| # Options
 @docs Option, alpha, depth, stencil, antialias, clearColor
-
 -}
 
 
-{-| Provides a typesafe way to configure WebGLContext and scene behavior.
+{-| Provides a typesafe way to configure WebGLContext and the scene behavior
+in `WebGL.toHtmlWith`.
 -}
 type Option
     = Alpha Bool
@@ -27,9 +24,11 @@ type Option
     | ClearColor Float Float Float Float
 
 
-{-| Enable alpha channel in the drawing buffer. If the argument is true
+{-| Enable alpha channel in the drawing buffer. If the argument is `True`, then
 the page compositor will assume the drawing buffer contains colors with
 premultiplied alpha.
+
+`alpha True` is enabled by default when you use `WebGL.toHtml`.
 -}
 alpha : Bool -> Option
 alpha =
@@ -37,7 +36,9 @@ alpha =
 
 
 {-| Enable the depth buffer, and prefill it with given value each time before
-the scene is rendered. The value is clamped between 0 and 1. The default is 1.
+the scene is rendered. The value is clamped between 0 and 1.
+
+`depth 1` is enabled by default when you use `WebGL.toHtml`.
 -}
 depth : Float -> Option
 depth =
@@ -55,6 +56,8 @@ stencil =
 
 {-| Enable antialiasing of the drawing buffer, if supported by the browser.
 Useful when you want to preserve sharp edges when resizing the canvas.
+
+`antialias` is enabled by default when you use `WebGL.toHtml`.
 -}
 antialias : Option
 antialias =

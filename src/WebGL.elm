@@ -13,7 +13,7 @@ module WebGL
         , triangleFan
         , triangleStrip
         , render
-        , renderWithSettings
+        , renderWith
         , toHtml
         , toHtmlWith
         , unsafeShader
@@ -24,21 +24,29 @@ module WebGL
 and look at some examples before trying to do too much with just the
 documentation provided here.
 
-# Main Types
-@docs Shader, Renderable, Texture
+# Mesh
+@docs Drawable, triangles
 
-# Drawables
-@docs Drawable, triangles, indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan, triangleStrip
+Please find other kinds of drawables in the [corresponding section](#drawables).
+
+# Shaders
+@docs Shader, Texture
 
 # Renderables
-@docs render, renderWithSettings
+@docs Renderable, render
 
 # WebGL Html
-@docs toHtml, toHtmlWith
+@docs toHtml
+
+# Advanced Usage
+@docs renderWith, toHtmlWith
+
+# Other Drawables
+@docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,
+      triangleStrip
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
-
 -}
 
 import Html exposing (Html, Attribute)
@@ -47,9 +55,21 @@ import Native.WebGL
 import WebGL.Options as Options exposing (Option)
 
 
-{-|
-WebGL has a number of rendering modes available.
-See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
+{-| Defines the mesh by forming geometry from the specified vertices.
+Each vertex contains a bunch of attributes, that should be defined as
+a custom record type, e.g.:
+
+```
+type alias Attributes =
+    { position : Vec3
+    , color : Vec3
+    }
+```
+
+The supported types in attributes are: `Int`, `Float`, `WebGL.Texture`
+and `Vec2`, `Vec3`, `Vec4`, `Mat4` from the
+[linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
+package.
 -}
 type Drawable attributes
     = Triangles (List ( attributes, attributes, attributes ))
@@ -63,9 +83,7 @@ type Drawable attributes
 
 
 {-| Triangles are the basic building blocks of a mesh. You can put them together
-to form any shape. Each corner of a triangle is called a *vertex* and contains a
-bunch of *attributes* that describe that particular corner. These attributes can
-be things like position and color.
+to form any shape.
 
 So when you create `triangles` you are really providing three sets of attributes
 that describe the corners of each triangle.
@@ -75,61 +93,56 @@ triangles =
     Triangles
 
 
-{-|
--}
-triangleFan : List attributes -> Drawable attributes
-triangleFan =
-    TriangleFan
-
-
-{-|
+{-| Creates a strip of triangles where each additional vertex creates an
+additional triangle once the first three vertices have been drawn.
 -}
 triangleStrip : List attributes -> Drawable attributes
 triangleStrip =
     TriangleStrip
 
 
+{-| Similar to `triangleStrip`, but creates a fan shaped output.
+-}
+triangleFan : List attributes -> Drawable attributes
+triangleFan =
+    TriangleFan
+
+
 {-| IndexedTriangles is a special mode in which you provide a list of attributes
-that describe the vertexes and and a list of indices, that are grouped in sets
-of three that refer to the vertexes that form each triangle.
+that describe the vertices and and a list of indices, that are grouped in sets
+of three that refer to the vertices that form each triangle.
 -}
 indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Drawable attributes
 indexedTriangles =
     IndexedTriangles
 
 
-{-|
+{-| Connects each pair of vertices with a line.
 -}
 lines : List ( attributes, attributes ) -> Drawable attributes
 lines =
     Lines
 
 
-{-|
+{-| Connects each two subsequent vertices in the list with a line.
 -}
 lineStrip : List attributes -> Drawable attributes
 lineStrip =
     LineStrip
 
 
-{-|
+{-| Similar to `lineStrip`, but connects the last vertex back to the first.
 -}
 lineLoop : List attributes -> Drawable attributes
 lineLoop =
     LineLoop
 
 
-{-|
+{-| Draws a single dot per vertex.
 -}
 points : List attributes -> Drawable attributes
 points =
     Points
-
-
-{-| `Shader` is a phantom data type.
--}
-type Shader attributes uniforms varyings
-    = Shader
 
 
 {-| Shaders are programs for running many computations on the GPU in parallel.
@@ -137,49 +150,77 @@ They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
 shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Normally you specify a shader with a `glsl` block. This is because shaders
-must be compiled before they are used, imposing an overhead that is best avoided in general. This function lets you create a shader with a raw string of
-GLSL. It is intended specifically for library writers who want to create shader
-combinators.
+Normally you specify a shader with a `glsl[| |]` block. This is because shaders
+must be compiled before they are used, imposing an overhead that is best
+avoided in general.
+
+* `attributes` is a record type that defines [vertices in the mesh](#mesh);
+* `uniforms` is a record type where you may pass custom parameters like
+  transformation matrix, texture, screen size, etc.;
+* `varyings` is a record type that defines the output from the shader.
+
+Elm compiler will parse the shader code block and derive the type
+signature for your shader.
 -}
-unsafeShader : String -> Shader attribute uniform varying
+type Shader attributes uniforms varyings
+    = Shader
+
+
+{-| Creates a shader with a raw string of GLSL. It is intended specifically
+for library writers, who want to create shader combinators.
+-}
+unsafeShader : String -> Shader attributes uniforms varyings
 unsafeShader =
     Native.WebGL.unsafeCoerceGLSL
 
 
-{-| `Texture` is a phantom data type, can be
-created with `Texture.load` or `Texture.loadWith`
+{-| Use Texture to pass the sampler2D uniform value to the shader. Please
+find more about textures in `WebGL.Texture`.
 -}
 type Texture
     = Texture
 
 
-{-| Conceptually, an encapsulation of the instructions to render something
+{-| Conceptually, an encapsulation of the instructions to render something.
 -}
 type Renderable
     = Renderable
 
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniforms
-as a `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
-You can read more about the pipeline
+as a `Renderable`. This specifies a full rendering pipeline to be run
+on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
 Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
 new entities if you are reusing shaders and meshes that have been used before.
--}
-renderWithSettings : List Setting -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
-renderWithSettings =
-    Native.WebGL.render
 
-
-{-| Same as `renderWithConfig` but without using
-custom per-render configurations.
+By default, depth test setting is enabled for you. If you need more settings,
+like stencil test, blending, etc., then check `renderWith`.
 -}
-render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
+render :
+    Shader attributes uniforms varyings
+    -> Shader {} uniforms varyings
+    -> Drawable attributes
+    -> uniforms
+    -> Renderable
 render =
-    renderWithSettings [ Settings.depth Settings.depthOptions ]
+    renderWith [ Settings.depth Settings.depthOptions ]
+
+
+{-| The same as `render`, but allows to configure a renderable with a list
+of settings. Check `WebGL.Settings` for the possible values.
+-}
+renderWith :
+    List Setting
+    -> Shader attributes uniforms varyings
+    -> Shader {} uniforms varyings
+    -> Drawable attributes
+    -> uniforms
+    -> Renderable
+renderWith =
+    Native.WebGL.render
 
 
 {-| Render a WebGL scene with the given options, html attributes, and entities.
@@ -195,11 +236,13 @@ toHtml =
     toHtmlWith [ Options.alpha True, Options.antialias, Options.depth 1 ]
 
 
-{-| Render a WebGL scene with the given options, html attributes, and entities.
+{-| Render a WebGL scene with the given list of options,
+html attributes, and entities.
 
 Please note that due to browser limitations, options will be applied only once
 when the canvas is created for the first time.
 
+Check `WebGL.Options` for all possible options.
 -}
 toHtmlWith : List Option -> List (Attribute msg) -> List Renderable -> Html msg
 toHtmlWith options attributes renderables =

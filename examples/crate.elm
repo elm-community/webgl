@@ -202,7 +202,7 @@ view { texture, theta } =
 
 renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Renderable
 renderBox settings worldTransform overrideColor tex camera =
-    renderWithSettings settings
+    renderWith settings
         boxVert
         boxFrag
         crate
@@ -215,7 +215,7 @@ renderBox settings worldTransform overrideColor tex camera =
 
 renderFloor : List Setting -> Mat4 -> Renderable
 renderFloor settings camera =
-    renderWithSettings settings
+    renderWith settings
         floorVert
         floorFrag
         floor
