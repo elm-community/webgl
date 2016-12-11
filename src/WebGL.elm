@@ -194,7 +194,8 @@ on the GPU. You can read more about the pipeline
 
 Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
-new entities if you are reusing shaders and meshes that have been used before.
+new renderables if you are reusing shaders and meshes that have been used
+before.
 
 By default, depth test setting is enabled for you. If you need more settings,
 like stencil test, blending, etc., then check `renderWith`.
@@ -223,10 +224,12 @@ renderWith =
     Native.WebGL.render
 
 
-{-| Render a WebGL scene with the given options, html attributes, and entities.
+{-| Render a WebGL scene with the given options, html attributes, and
+renderables.
 
 Shaders and meshes are cached so that they do not get resent to the GPU,
-so it should be relatively cheap to create new entities out of existing values.
+so it should be relatively cheap to create new renderables out of existing
+values.
 
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
 options are enabled. If you need more options, please check `toHtmlWith`.
@@ -237,7 +240,7 @@ toHtml =
 
 
 {-| Render a WebGL scene with the given list of options,
-html attributes, and entities.
+html attributes, and renderables.
 
 Please note that due to browser limitations, options will be applied only once
 when the canvas is created for the first time.
