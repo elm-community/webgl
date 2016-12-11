@@ -8,14 +8,11 @@ module WebGL.Texture
         , size
         )
 
-{-|
-
-# Types
+{-| # Types
 @docs Texture, TextureFilter, Error
 
 # Loading Textures
 @docs load, loadWith, size
-
 -}
 
 import Task exposing (Task)
@@ -23,28 +20,29 @@ import WebGL
 import Native.Texture
 
 
-{-| `Texture` is a phantom data type, can be
-created with `load` or `loadWith`
+{-| Textures can be passed in `uniforms`, and used in the fragment shader.
+You can created a texture with `load` or `loadWith`.
 -}
 type alias Texture =
     WebGL.Texture
 
 
-{-| Textures work in two ways when looking up a pixel value - Linear or Nearest
+{-| Textures work in two ways when looking up a pixel value: Linear or Nearest.
 -}
 type TextureFilter
     = Linear
     | Nearest
 
 
-{-| An error which occurred while loading a texture
+{-| An error which occurred while loading a texture.
 -}
 type Error
     = Error
 
 
 {-| Loads a texture from the given url with Linear filtering.
-PNG and JPEG are known to work, but other formats have not been as well-tested yet.
+PNG and JPEG are known to work, but other formats have not been as
+well-tested yet.
 -}
 load : String -> Task Error Texture
 load =

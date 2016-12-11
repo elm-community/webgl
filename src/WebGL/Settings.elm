@@ -67,9 +67,7 @@ module WebGL.Settings
         , frontAndBack
         )
 
-{-|
-
-# Settings
+{-| # Settings
 
 @docs Setting
 
@@ -99,6 +97,8 @@ module WebGL.Settings
 
 # Stencil Test
 
+In order to use this setting, `Options.stencil` has to be used in `toHtmlWith`.
+
 @docs stencil, StencilOptions, stencilOptions, stencilSeparate
 
 ## ZModes
@@ -118,7 +118,8 @@ module WebGL.Settings
 -}
 
 
-{-| Provides a typesafe way to call all pre-fragment operations.
+{-| Provides a typesafe way to configure the rendering operation in
+`WebGL.renderWith`.
 -}
 type Setting
     = Blend BlendOptions Float Float Float Float
@@ -136,8 +137,8 @@ type Setting
 
 
 {-| Blend setting allows to control how the source and destination
-colors are blended. Initiate it with BlendOptions and
-red green blue alpha color components, that are from 0 to 1.
+colors are blended. Initiate it with `BlendOptions` and
+red, green, blue, alpha color components, that are from 0 to 1.
 -}
 blend : BlendOptions -> Float -> Float -> Float -> Float -> Setting
 blend =
@@ -154,14 +155,14 @@ blendSeparate =
 
 {-| Defines options for the blend setting
 
-* `equation` specifies how source and destination color components are combined
-* `source` specifies how the source blending factors are computed
-* `destination` specifies how the destination blending factors are computed
+* `equation` specifies how source and destination color components are combined;
+* `source` specifies how the source blending factors are computed;
+* `destination` specifies how the destination blending factors are computed.
 
-srcAlphaSaturate should only be used for the source.
+`srcAlphaSaturate` blend factor should only be used for the source.
 
-constantColor and constantAlpha values should not be used together
-as source and destination.
+`constantColor` and `constantAlpha` blend factors should not be used together
+for `source` and `destination`.
 
 -}
 type alias BlendOptions =
@@ -171,7 +172,7 @@ type alias BlendOptions =
     }
 
 
-{-| Defaut options for the blend setting
+{-| Defaut options for the blend setting.
 -}
 blendOptions : BlendOptions
 blendOptions =
@@ -187,132 +188,134 @@ type BlendFactor
     = BlendFactor Int
 
 
-{-|
+{-| Multiplies all colors by 0.
 -}
 zero : BlendFactor
 zero =
     BlendFactor 0
 
 
-{-|
+{-| Multiplies all colors by 1.
 -}
 one : BlendFactor
 one =
     BlendFactor 1
 
 
-{-|
+{-| Multiplies all colors by the source colors.
 -}
 srcColor : BlendFactor
 srcColor =
     BlendFactor 768
 
 
-{-|
+{-| Multiplies all colors by 1 minus each source color.
 -}
 oneMinusSrcColor : BlendFactor
 oneMinusSrcColor =
     BlendFactor 769
 
 
-{-|
+{-| Multiplies all colors by the destination color.
 -}
 dstColor : BlendFactor
 dstColor =
     BlendFactor 774
 
 
-{-|
+{-| Multiplies all colors by 1 minus each destination color.
 -}
 oneMinusDstColor : BlendFactor
 oneMinusDstColor =
     BlendFactor 775
 
 
-{-|
+{-| Multiplies all colors by the source alpha value.
 -}
 srcAlpha : BlendFactor
 srcAlpha =
     BlendFactor 770
 
 
-{-|
+{-| Multiplies all colors by 1 minus the source alpha value.
 -}
 oneMinusSrcAlpha : BlendFactor
 oneMinusSrcAlpha =
     BlendFactor 771
 
 
-{-|
+{-| Multiplies all colors by the destination alpha value.
 -}
 dstAlpha : BlendFactor
 dstAlpha =
     BlendFactor 772
 
 
-{-|
+{-| Multiplies all colors by 1 minus the destination alpha value.
 -}
 oneMinusDstAlpha : BlendFactor
 oneMinusDstAlpha =
     BlendFactor 773
 
 
-{-|
+{-| Multiplies all colors by a constant color.
 -}
 constantColor : BlendFactor
 constantColor =
     BlendFactor 32769
 
 
-{-|
+{-| Multiplies all colors by 1 minus a constant color.
 -}
 oneMinusConstantColor : BlendFactor
 oneMinusConstantColor =
     BlendFactor 32770
 
 
-{-|
+{-| Multiplies all colors by a constant alpha value.
 -}
 constantAlpha : BlendFactor
 constantAlpha =
     BlendFactor 32771
 
 
-{-|
+{-| Multiplies all colors by 1 minus a constant alpha value.
 -}
 oneMinusConstantAlpha : BlendFactor
 oneMinusConstantAlpha =
     BlendFactor 32772
 
 
-{-|
+{-| Multiplies the RGB colors by the smaller of either the source alpha value
+or the value of 1 minus the destination alpha value. The alpha value is
+multiplied by 1.
 -}
 srcAlphaSaturate : BlendFactor
 srcAlphaSaturate =
     BlendFactor 776
 
 
-{-| The `BlendEquation` allows you to define which blend mode to use.
+{-| Allows to specify how source and destination colors are combined
 -}
 type BlendEquation
     = BlendEquation Int
 
 
-{-|
+{-| source + destination
 -}
 add : BlendEquation
 add =
     BlendEquation 32774
 
 
-{-|
+{-| source - destination
 -}
 subtract : BlendEquation
 subtract =
     BlendEquation 32778
 
 
-{-|
+{-| destination - source
 -}
 reverseSubtract : BlendEquation
 reverseSubtract =
@@ -321,18 +324,21 @@ reverseSubtract =
 
 {-| Activates depth comparisons and updates to the depth buffer.
 Initiate it with DepthOptions.
+
+`depth depthOptions` is included for you when you use `WebGL.render`.
 -}
 depth : DepthOptions -> Setting
 depth =
     Depth
 
 
-{-| Defines options for the depth setting
+{-| Defines options for the depth setting:
 
-* `func` specifies a function that compares incoming pixel depth to the current depth buffer value
-* `mask` specifies whether the depth buffer is enabled for writing
-* `near` specifies the mapping of the near clipping plane to window coordinates
-* `far` specifies the mapping of the far clipping plane to window coordinates
+* `func` - a function that compares incoming pixel depth to the current
+  depth buffer value;
+* `mask` - enables the depth buffer for writing;
+* `near` - a mapping of the near clipping plane to window coordinates;
+* `far` - a mapping of the far clipping plane to window coordinates.
 -}
 type alias DepthOptions =
     { func : CompareMode
@@ -342,7 +348,7 @@ type alias DepthOptions =
     }
 
 
-{-| Defaut options for the depth setting
+{-| Defaut options for the depth setting.
 -}
 depthOptions : DepthOptions
 depthOptions =
@@ -353,62 +359,65 @@ depthOptions =
     }
 
 
-{-| The `CompareMode` allows you to define how to compare values.
+{-| The `CompareMode` allows you to define how to compare the incoming value
+with the depth buffer value, in order to set the conditions under which
+the pixel will be drawn.
 -}
 type CompareMode
     = CompareMode Int
 
 
-{-|
+{-| Never pass.
 -}
 never : CompareMode
 never =
     CompareMode 512
 
 
-{-|
+{-| Always pass.
 -}
 always : CompareMode
 always =
     CompareMode 519
 
 
-{-|
+{-| Pass if the incoming value is less than the depth buffer value.
 -}
 less : CompareMode
 less =
     CompareMode 513
 
 
-{-|
+{-| Pass if the incoming value is less than or equal to the depth buffer value.
 -}
 lessOrEqual : CompareMode
 lessOrEqual =
     CompareMode 515
 
 
-{-|
+{-| Pass if the incoming value equals the the depth buffer value.
 -}
 equal : CompareMode
 equal =
     CompareMode 514
 
 
-{-|
+{-| Pass if the incoming value is greater than or equal to the depth buffer
+value.
 -}
 greaterOrEqual : CompareMode
 greaterOrEqual =
     CompareMode 518
 
 
-{-|
+{-| Pass if the incoming value is greater than the depth buffer value.
 -}
 greater : CompareMode
 greater =
     CompareMode 516
 
 
-{-|
+{-| Pass if the incoming value is not equal to the depth buffer value.
 -}
 notEqual : CompareMode
 notEqual =
@@ -423,22 +432,28 @@ stencil =
     Stencil
 
 
-{-| separate settings for front- and back-facing polygons
+{-| Separate settings for front- and back-facing polygons.
 -}
 stencilSeparate : StencilOptions -> StencilOptions -> Setting
 stencilSeparate =
     StencilSeparate
 
 
-{-| Defines options for the stencil setting
+{-| Defines options for the stencil setting:
 
-* `func` - the test function
-* `ref` - the reference value for the stencil test, clamped to the range 0 to 2^n - 1, n is the number of bitplanes in the stencil buffer
-* `valueMask` - bit-wise mask that is used to AND the reference value and the stored stencil value when the test is done
-* `fail` - the function to use when the stencil test fails
-* `zfail` - the function to use when the stencil test passes, but the depth test fails
-* `zpass` - the function to use when both the stencil test and the depth test pass, or when the stencil test passes and there is no depth buffer or depth testing is disabled
-* `writeMask` - a bit mask to enable or disable writing of individual bits in the stencil plane
+* `func` - the test function;
+* `ref` - the reference value for the stencil test, clamped to the range
+  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer;
+* `valueMask` - bit-wise mask that is used to AND the reference value and
+  the stored stencil value when the test is done;
+* `fail` - the function to use when the stencil test fails;
+* `zfail` - the function to use when the stencil test passes, but the depth
+  test fails;
+* `zpass` - the function to use when both the stencil test and the depth test
+  pass, or when the stencil test passes and there is no depth buffer or depth
+  testing is disabled;
+* `writeMask` - a bit mask to enable or disable writing of individual bits in
+  the stencil plane.
 -}
 type alias StencilOptions =
     { func : CompareMode
@@ -451,7 +466,7 @@ type alias StencilOptions =
     }
 
 
-{-| Defaut options for the stencil setting
+{-| Defaut options for the stencil setting.
 -}
 stencilOptions : StencilOptions
 stencilOptions =
@@ -465,38 +480,37 @@ stencilOptions =
     }
 
 
-{-| The `ZMode` type allows you to define what to do
-with the stencil buffer value.
+{-| The `ZMode` type allows you to define what to do with the stencil buffer
+value.
 -}
 type ZMode
     = ZMode Int
 
 
-{-| Keeps the current value
+{-| Keeps the current value.
 -}
 keep : ZMode
 keep =
     ZMode 7680
 
 
-{-| Sets the stencil buffer value to 0.
-Should be named `zero`, but it is taken.
+{-| Sets the stencil buffer value to 0. Should've been named `zero`,
+according to specification, but was is taken.
 -}
 none : ZMode
 none =
     ZMode 0
 
 
-{-| Sets the stencil buffer value to `ref`,
-see `Settings.stencilFunc` for more information.
+{-| Sets the stencil buffer value to `ref` from the `stencilOptions`.
 -}
 replace : ZMode
 replace =
     ZMode 7681
 
 
-{-| Increments the current stencil buffer value.
-Clamps to the maximum representable unsigned value.
+{-| Increments the current stencil buffer value. Clamps to the maximum
+representable unsigned value.
 -}
 increment : ZMode
 increment =
@@ -517,9 +531,8 @@ invert =
     ZMode 5386
 
 
-{-| Increments the current stencil buffer value.
-Wraps stencil buffer value to zero when incrementing
-the maximum representable unsigned value.
+{-| Increments the current stencil buffer value. Wraps stencil buffer value to
+zero when incrementing the maximum representable unsigned value.
 -}
 incrementWrap : ZMode
 incrementWrap =
@@ -562,12 +575,14 @@ dither =
     Dither
 
 
-{-| Add an offset to depth values of a polygon's fragments
-produced by rasterization. The offset is added before the depth
-test is performed and before the value is written into the depth buffer.
+{-| Add an offset to depth values of a polygon's fragments produced by
+rasterization. The offset is added before the depth test is performed and
+before the value is written into the depth buffer.
 
-* the first argument is the scale factor for the variable depth offset for each polygon.
-* the second argument is the multiplier by which an implementation-specific value is multiplied
+* the first argument is the scale factor for the variable depth offset for
+  each polygon;
+* the second argument is the multiplier by which an implementation-specific
+  value is multiplied
   with to create a constant depth offset.
 -}
 polygonOffset : Float -> Float -> Setting
@@ -579,7 +594,8 @@ polygonOffset =
 
 The fragment's coverage is ANDed with the temporary coverage value.
 
-* the first argument specifies sample coverage value, that is clamped to the range 0 1.
+* the first argument specifies sample coverage value, that is clamped to
+  the range 0 1;
 * the second argument represents if the coverage masks should be inverted.
 -}
 sampleCoverage : Float -> Bool -> Setting
@@ -587,8 +603,8 @@ sampleCoverage =
     SampleCoverage
 
 
-{-| Compute a temporary coverage value
-where each bit is determined by the alpha value at the corresponding sample location.
+{-| Compute a temporary coverage value, where each bit is determined by the
+alpha value at the corresponding sample location.
 
 The temporary coverage value is then ANDed with the fragment coverage value.
 -}
@@ -597,10 +613,8 @@ sampleAlphaToCoverage =
     SampleAlphaToCoverage
 
 
-{-| Cull polygons based on their winding in window coordinates.
-
-Polygons with counter-clock-wise winding are front-facing .
-
+{-| Cull polygons based on their winding in window coordinates. Polygons with
+counter-clock-wise winding are front-facing.
 -}
 cullFace : FaceMode -> Setting
 cullFace (FaceMode faceMode) =
@@ -613,21 +627,21 @@ type FaceMode
     = FaceMode Int
 
 
-{-| Targets the front-facing polygons
+{-| Targets the front-facing polygons.
 -}
 front : FaceMode
 front =
     FaceMode 1028
 
 
-{-| Targets the back-facing polygons
+{-| Targets the back-facing polygons.
 -}
 back : FaceMode
 back =
     FaceMode 1029
 
 
-{-| Targets both front- and back-facing polygons
+{-| Targets both front- and back-facing polygons.
 -}
 frontAndBack : FaceMode
 frontAndBack =
