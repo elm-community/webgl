@@ -2,17 +2,45 @@ module WebGL.Texture
     exposing
         ( Texture
         , Error
-        , TextureFilter(..)
         , load
         , loadWith
+        , TextureOptions
+        , textureOptions
+        , MagnifyingFilter
+        , magnifyLinear
+        , magnifyNearest
+        , MinifyingFilter
+        , linear
+        , nearest
+        , nearestMipmapNearest
+        , linearMipmapNearest
+        , nearestMipmapLinear
+        , linearMipmapLinear
+        , TextureWrap
+        , repeat
+        , clampToEdge
+        , mirroredRepeat
         , size
         )
 
 {-| # Types
-@docs Texture, TextureFilter, Error
+@docs Texture, Error
 
-# Loading Textures
-@docs load, loadWith, size
+# Loading
+@docs load, loadWith, TextureOptions, textureOptions
+
+## Magnifying Filter
+@docs MagnifyingFilter, magnifyLinear, magnifyNearest
+
+## Minifying Filter
+@docs MinifyingFilter, linear, nearest, nearestMipmapNearest,
+      linearMipmapNearest, nearestMipmapLinear, linearMipmapLinear
+
+## Wrapping Texture
+@docs TextureWrap, repeat, clampToEdge, mirroredRepeat
+
+# Measuring
+@docs size
 -}
 
 import Task exposing (Task)
@@ -27,11 +55,120 @@ type alias Texture =
     WebGL.Texture
 
 
-{-| Textures work in two ways when looking up a pixel value: Linear or Nearest.
+{-|
 -}
-type TextureFilter
-    = Linear
-    | Nearest
+type alias TextureOptions =
+    { magnifyingFilter : MagnifyingFilter
+    , minifyingFilter : MinifyingFilter
+    , horizontalWrap : TextureWrap
+    , verticalWrap : TextureWrap
+    }
+
+
+{-|
+-}
+textureOptions : TextureOptions
+textureOptions =
+    { magnifyingFilter = magnifyLinear
+    , minifyingFilter = nearestMipmapLinear
+    , horizontalWrap = repeat
+    , verticalWrap = repeat
+    }
+
+
+{-|
+-}
+type MagnifyingFilter
+    = MagnifyingFilter Int
+
+
+{-|
+-}
+magnifyLinear : MagnifyingFilter
+magnifyLinear =
+    MagnifyingFilter 9729
+
+
+{-|
+-}
+magnifyNearest : MagnifyingFilter
+magnifyNearest =
+    MagnifyingFilter 9728
+
+
+{-|
+-}
+type MinifyingFilter
+    = MinifyingFilter Int
+
+
+{-|
+-}
+linear : MinifyingFilter
+linear =
+    MinifyingFilter 9729
+
+
+{-|
+-}
+nearest : MinifyingFilter
+nearest =
+    MinifyingFilter 9728
+
+
+{-|
+-}
+nearestMipmapNearest : MinifyingFilter
+nearestMipmapNearest =
+    MinifyingFilter 9984
+
+
+{-|
+-}
+linearMipmapNearest : MinifyingFilter
+linearMipmapNearest =
+    MinifyingFilter 9985
+
+
+{-|
+-}
+nearestMipmapLinear : MinifyingFilter
+nearestMipmapLinear =
+    MinifyingFilter 9986
+
+
+{-|
+-}
+linearMipmapLinear : MinifyingFilter
+linearMipmapLinear =
+    MinifyingFilter 9987
+
+
+{-|
+-}
+type TextureWrap
+    = TextureWrap Int
+
+
+{-|
+-}
+repeat : TextureWrap
+repeat =
+    TextureWrap 10497
+
+
+{-|
+-}
+clampToEdge : TextureWrap
+clampToEdge =
+    TextureWrap 33071
+
+
+{-|
+-}
+mirroredRepeat : TextureWrap
+mirroredRepeat =
+    TextureWrap 33648
 
 
 {-| An error which occurred while loading a texture.
@@ -46,15 +183,15 @@ well-tested yet.
 -}
 load : String -> Task Error Texture
 load =
-    loadWith Linear
+    loadWith textureOptions
 
 
 {-| Loads a texture from the given url. PNG and JPEG are known to work, but
 other formats have not been as well-tested yet. Configurable filter.
 -}
-loadWith : TextureFilter -> String -> Task Error Texture
-loadWith =
-    Native.Texture.loadWith
+loadWith : TextureOptions -> String -> Task Error Texture
+loadWith options url =
+    Native.Texture.loadWith options url
 
 
 {-| Return the (width, height) size of a texture. Useful for sprite sheets
