@@ -2,17 +2,46 @@ module WebGL.Texture
     exposing
         ( Texture
         , Error
-        , TextureFilter(..)
         , load
         , loadWith
+        , TextureOptions
+        , textureOptions
+        , MagnifyingFilter
+        , magnifyLinear
+        , magnifyNearest
+        , MinifyingFilter
+        , minifyLinear
+        , minifyNearest
+        , minifyNearestMipmapNearest
+        , minifyLinearMipmapNearest
+        , minifyNearestMipmapLinear
+        , minifyLinearMipmapLinear
+        , TextureWrap
+        , repeat
+        , clampToEdge
+        , mirroredRepeat
         , size
         )
 
-{-| # Types
-@docs Texture, TextureFilter, Error
+{-| # Texture
+@docs Texture, load, Error, size
 
-# Loading Textures
-@docs load, loadWith, size
+# Custom Loading
+@docs loadWith, TextureOptions, textureOptions
+
+## Magnifying Filter
+@docs MagnifyingFilter, magnifyLinear, magnifyNearest
+
+## Minifying Filter
+@docs MinifyingFilter, minifyNearestMipmapLinear, minifyLinear, minifyNearest,
+      minifyNearestMipmapNearest, minifyLinearMipmapNearest,
+      minifyLinearMipmapLinear
+
+## Wrapping Texture
+@docs TextureWrap, repeat, clampToEdge, mirroredRepeat
+
+# Measuring
+@docs size
 -}
 
 import Task exposing (Task)
@@ -21,17 +50,25 @@ import Native.Texture
 
 
 {-| Textures can be passed in `uniforms`, and used in the fragment shader.
-You can created a texture with `load` or `loadWith`.
+You can create a texture with `load` or `loadWith` and measure its dimesions
+with `size`.
 -}
 type alias Texture =
     WebGL.Texture
 
 
-{-| Textures work in two ways when looking up a pixel value: Linear or Nearest.
+{-| Loads a texture from the given url with default options.
+PNG and JPEG are known to work, but other formats have not been as
+well-tested yet.
+
+The Y axis of the texture is flipped automatically for you, so it has
+the same direction as in the clip-space, i.e. pointing up.
+
+If you need to change flipping, wrapping or filtering, you can use `loadWith`.
 -}
-type TextureFilter
-    = Linear
-    | Nearest
+load : String -> Task Error Texture
+load =
+    loadWith textureOptions
 
 
 {-| An error which occurred while loading a texture.
@@ -40,21 +77,172 @@ type Error
     = Error
 
 
-{-| Loads a texture from the given url with Linear filtering.
-PNG and JPEG are known to work, but other formats have not been as
-well-tested yet.
+{-| Same as
 -}
-load : String -> Task Error Texture
-load =
-    loadWith Linear
+loadWith : TextureOptions -> String -> Task Error Texture
+loadWith options url =
+    Native.Texture.loadWith options url
 
 
-{-| Loads a texture from the given url. PNG and JPEG are known to work, but
-other formats have not been as well-tested yet. Configurable filter.
+{-| Possible options when loading a texture
+
+* `magnifyingFilter` - texture magnification filter,
+  the default is `magnifyLinear`;
+* `minifyingFilter` - texture minification filter,
+  the default is `minifyNearestMipmapLinear`;
+* `horizontalWrap` - wrapping function for texture coordinate s,
+  the default is `repeat`;
+* `verticalWrap` - wrapping function for texture coordinate t,
+  the default is `repeat`;
+* `flipY` - flip the Y axis of the texture so it has the same direction
+  as in the clip-space, i.e. pointing up. The default is `True`.
+
+You can read more about these parameters in the
+[specification](https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexParameter.xml).
 -}
-loadWith : TextureFilter -> String -> Task Error Texture
-loadWith =
-    Native.Texture.loadWith
+type alias TextureOptions =
+    { magnifyingFilter : MagnifyingFilter
+    , minifyingFilter : MinifyingFilter
+    , horizontalWrap : TextureWrap
+    , verticalWrap : TextureWrap
+    , flipY : Bool
+    }
+
+
+{-| Default options for texture loading.
+-}
+textureOptions : TextureOptions
+textureOptions =
+    { magnifyingFilter = magnifyLinear
+    , minifyingFilter = minifyNearestMipmapLinear
+    , horizontalWrap = repeat
+    , verticalWrap = repeat
+    , flipY = True
+    }
+
+
+{-| The texture magnification filter is used when the pixel being textured
+maps to an area less than or equal to one texture element.
+-}
+type MagnifyingFilter
+    = MagnifyingFilter Int
+
+
+{-| Returns the weighted average of the four texture elements that are closest
+to the center of the pixel being textured. This is the default value of
+magnifying filter.
+-}
+magnifyLinear : MagnifyingFilter
+magnifyLinear =
+    MagnifyingFilter 9729
+
+
+{-| Returns the value of the texture element that is nearest (in Manhattan
+distance) to the center of the pixel being textured.
+-}
+magnifyNearest : MagnifyingFilter
+magnifyNearest =
+    MagnifyingFilter 9728
+
+
+{-| The texture minifying filter is used whenever the pixel being
+textured maps to an area greater than one texture element.
+-}
+type MinifyingFilter
+    = MinifyingFilter Int
+
+
+{-| Chooses the mipmap that most closely matches the size of the pixel being
+textured and uses the `nearest` criterion (the texture element nearest to
+the center of the pixel) to produce a texture value.
+
+A mipmap is an ordered set of arrays representing the same image at
+progressively lower resolutions.
+
+This is the default value of the minifying filter.
+-}
+minifyNearestMipmapNearest : MinifyingFilter
+minifyNearestMipmapNearest =
+    MinifyingFilter 9984
+
+
+{-| Returns the weighted average of the four texture elements that are closest
+to the center of the pixel being textured.
+-}
+minifyLinear : MinifyingFilter
+minifyLinear =
+    MinifyingFilter 9729
+
+
+{-| Returns the value of the texture element that is nearest
+(in Manhattan distance) to the center of the pixel being textured.
+-}
+minifyNearest : MinifyingFilter
+minifyNearest =
+    MinifyingFilter 9728
+
+
+{-| Chooses the mipmap that most closely matches the size of the pixel being
+textured and uses the `linear` criterion (a weighted average of the four
+texture elements that are closest to the center of the pixel) to produce a
+texture value.
+-}
+minifyLinearMipmapNearest : MinifyingFilter
+minifyLinearMipmapNearest =
+    MinifyingFilter 9985
+
+
+{-| Chooses the two mipmaps that most closely match the size of the pixel being
+textured and uses the `nearest` criterion (the texture element nearest to the
+center of the pixel) to produce a texture value from each mipmap. The final
+texture value is a weighted average of those two values.
+-}
+minifyNearestMipmapLinear : MinifyingFilter
+minifyNearestMipmapLinear =
+    MinifyingFilter 9986
+
+
+{-| Chooses the two mipmaps that most closely match the size of the pixel being
+textured and uses the `linear` criterion (a weighted average of the four
+texture elements that are closest to the center of the pixel) to produce a
+texture value from each mipmap. The final texture value is a weighted average
+of those two values.
+-}
+minifyLinearMipmapLinear : MinifyingFilter
+minifyLinearMipmapLinear =
+    MinifyingFilter 9987
+
+
+{-| Sets the wrap parameter for texture coordinate.
+-}
+type TextureWrap
+    = TextureWrap Int
+
+
+{-| Causes the integer part of the coordinate to be ignored. This is the
+default value for both texture axis.
+-}
+repeat : TextureWrap
+repeat =
+    TextureWrap 10497
+
+
+{-| Causes coordinates to be clamped to the range 1 2N 1 - 1 2N, where N is
+the size of the texture in the direction of clamping.
+-}
+clampToEdge : TextureWrap
+clampToEdge =
+    TextureWrap 33071
+
+
+{-| Causes the coordinate c to be set to the fractional part of the texture
+coordinate if the integer part is even; if the integer part is odd, then
+the coordinate is set to 1 - frac, where frac represents the fractional part
+of the coordinate.
+-}
+mirroredRepeat : TextureWrap
+mirroredRepeat =
+    TextureWrap 33648
 
 
 {-| Return the (width, height) size of a texture. Useful for sprite sheets

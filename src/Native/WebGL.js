@@ -149,31 +149,6 @@ var _elm_community$webgl$Native_WebGL = function () {
     return cleanupOperations;
   }
 
-
-  function doTexture(gl, texture) {
-
-    var tex = gl.createTexture();
-    LOG('Created texture');
-
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img());
-    switch (texture.filter.ctor) {
-      case 'Linear':
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        break;
-      case 'Nearest':
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        break;
-    }
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    return tex;
-
-  }
-
   function doCompile(gl, src, type) {
 
     var shader = gl.createShader(type);
@@ -535,7 +510,8 @@ var _elm_community$webgl$Native_WebGL = function () {
               texture.id = guid();
             }
             if (!tex) {
-              tex = doTexture(gl, texture);
+              LOG('Created texture');
+              tex = texture.createTexture(gl);
               model.cache.textures[texture.id] = tex;
             }
             gl.activeTexture(gl[activeName]);
