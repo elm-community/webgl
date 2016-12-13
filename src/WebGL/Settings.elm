@@ -155,9 +155,12 @@ blendSeparate =
 
 {-| Defines options for the blend setting
 
-* `equation` specifies how source and destination color components are combined;
-* `source` specifies how the source blending factors are computed;
-* `destination` specifies how the destination blending factors are computed.
+* `equation` specifies how source and destination color components are combined,
+  the default is `add`;
+* `source` specifies how the source blending factors are computed, the default
+  is `one`;
+* `destination` specifies how the destination blending factors are computed,
+  the default is `zero`.
 
 `srcAlphaSaturate` blend factor should only be used for the source.
 
@@ -323,7 +326,6 @@ reverseSubtract =
 
 
 {-| Activates depth comparisons and updates to the depth buffer.
-Initiate it with DepthOptions.
 
 `depth depthOptions` is included for you when you use `WebGL.render`.
 -}
@@ -335,10 +337,13 @@ depth =
 {-| Defines options for the depth setting:
 
 * `func` - a function that compares incoming pixel depth to the current
-  depth buffer value;
-* `mask` - enables the depth buffer for writing;
-* `near` - a mapping of the near clipping plane to window coordinates;
-* `far` - a mapping of the far clipping plane to window coordinates.
+  depth buffer value, the default is `less`;
+* `mask` - enables the depth buffer for writing, the default is `True`;
+* `near` - a mapping of the near clipping plane to window coordinates,
+  [read more here](https://www.khronos.org/opengles/sdk/docs/man/xhtml/glDepthRangef.xml).
+  The default is 0;
+* `far` - a mapping of the far clipping plane to window coordinates, the default
+  is 1.
 -}
 type alias DepthOptions =
     { func : CompareMode
@@ -425,7 +430,6 @@ notEqual =
 
 
 {-| Activates stencil testing and updates to the stencil buffer.
-Initiate it with StencilOptions.
 -}
 stencil : StencilOptions -> Setting
 stencil =
@@ -441,19 +445,21 @@ stencilSeparate =
 
 {-| Defines options for the stencil setting:
 
-* `func` - the test function;
+* `func` - the test function, the default is `always`;
 * `ref` - the reference value for the stencil test, clamped to the range
-  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer;
+  0 to 2^n - 1, n is the number of bitplanes in the stencil buffer, the
+  default is 0;
 * `valueMask` - bit-wise mask that is used to AND the reference value and
-  the stored stencil value when the test is done;
-* `fail` - the function to use when the stencil test fails;
+  the stored stencil value when the test is done, the default is all 1's;
+* `fail` - the function to use when the stencil test fails, the default
+  is `keep`;
 * `zfail` - the function to use when the stencil test passes, but the depth
-  test fails;
+  test fails, the default is `keep`;
 * `zpass` - the function to use when both the stencil test and the depth test
   pass, or when the stencil test passes and there is no depth buffer or depth
-  testing is disabled;
+  testing is disabled, the default is `keep`;
 * `writeMask` - a bit mask to enable or disable writing of individual bits in
-  the stencil plane.
+  the stencil plane, the default is all 1's.
 -}
 type alias StencilOptions =
     { func : CompareMode
@@ -495,7 +501,7 @@ keep =
 
 
 {-| Sets the stencil buffer value to 0. Should've been named `zero`,
-according to specification, but was is taken.
+according to specification, but it was taken.
 -}
 none : ZMode
 none =
@@ -613,15 +619,15 @@ sampleAlphaToCoverage =
     SampleAlphaToCoverage
 
 
-{-| Cull polygons based on their winding in window coordinates. Polygons with
-counter-clock-wise winding are front-facing.
+{-| Excludes polygons based on winding (the order of the vertices) in window
+coordinates. Polygons with counter-clock-wise winding are front-facing.
 -}
 cullFace : FaceMode -> Setting
 cullFace (FaceMode faceMode) =
     CullFace faceMode
 
 
-{-| The `FaceMode` defines the face of the polygon
+{-| The `FaceMode` defines the face of the polygon.
 -}
 type FaceMode
     = FaceMode Int

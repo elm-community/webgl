@@ -27,7 +27,7 @@ documentation provided here.
 # Mesh
 @docs Drawable, triangles
 
-Please find other kinds of drawables in the [corresponding section](#drawables).
+Find other kinds of drawables in the [corresponding section](#drawables).
 
 # Shaders
 @docs Shader, Texture
@@ -174,8 +174,8 @@ unsafeShader =
     Native.WebGL.unsafeCoerceGLSL
 
 
-{-| Use Texture to pass the sampler2D uniform value to the shader. Please
-find more about textures in `WebGL.Texture`.
+{-| Use Texture to pass the sampler2D uniform value to the shader. Find
+more about textures in `WebGL.Texture`.
 -}
 type Texture
     = Texture
@@ -232,7 +232,7 @@ so it should be relatively cheap to create new renderables out of existing
 values.
 
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
-options are enabled. If you need more options, please check `toHtmlWith`.
+options are enabled. Use `toHtmlWith` for custom options.
 -}
 toHtml : List (Attribute msg) -> List Renderable -> Html msg
 toHtml =
@@ -242,7 +242,7 @@ toHtml =
 {-| Render a WebGL scene with the given list of options,
 html attributes, and renderables.
 
-Please note that due to browser limitations, options will be applied only once
+Due to browser limitations, options will be applied only once,
 when the canvas is created for the first time.
 
 Check `WebGL.Options` for all possible options.
