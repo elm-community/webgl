@@ -77,7 +77,7 @@ type Error
     = Error
 
 
-{-| Same as
+{-| Same as load, but allows to set options.
 -}
 loadWith : TextureOptions -> String -> Task Error Texture
 loadWith options url =
