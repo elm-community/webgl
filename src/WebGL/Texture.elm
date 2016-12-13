@@ -10,12 +10,12 @@ module WebGL.Texture
         , magnifyLinear
         , magnifyNearest
         , MinifyingFilter
-        , linear
-        , nearest
-        , nearestMipmapNearest
-        , linearMipmapNearest
-        , nearestMipmapLinear
-        , linearMipmapLinear
+        , minifyLinear
+        , minifyNearest
+        , minifyNearestMipmapNearest
+        , minifyLinearMipmapNearest
+        , minifyNearestMipmapLinear
+        , minifyLinearMipmapLinear
         , TextureWrap
         , repeat
         , clampToEdge
@@ -33,8 +33,9 @@ module WebGL.Texture
 @docs MagnifyingFilter, magnifyLinear, magnifyNearest
 
 ## Minifying Filter
-@docs MinifyingFilter, nearestMipmapLinear, linear, nearest,
-      nearestMipmapNearest, linearMipmapNearest, linearMipmapLinear
+@docs MinifyingFilter, minifyNearestMipmapLinear, minifyLinear, minifyNearest,
+      minifyNearestMipmapNearest, minifyLinearMipmapNearest,
+      minifyLinearMipmapLinear
 
 ## Wrapping Texture
 @docs TextureWrap, repeat, clampToEdge, mirroredRepeat
@@ -63,7 +64,7 @@ well-tested yet.
 The Y axis of the texture is flipped automatically for you, so it has
 the same direction as in the clip-space, i.e. pointing up.
 
-If you need to change wrapping or filtering, you can use `loadWith`.
+If you need to change flipping, wrapping or filtering, you can use `loadWith`.
 -}
 load : String -> Task Error Texture
 load =
@@ -88,11 +89,13 @@ loadWith options url =
 * `magnifyingFilter` - texture magnification filter,
   the default is `magnifyLinear`;
 * `minifyingFilter` - texture minification filter,
-  the default is `nearestMipmapLinear`;
+  the default is `minifyNearestMipmapLinear`;
 * `horizontalWrap` - wrapping function for texture coordinate s,
   the default is `repeat`;
 * `verticalWrap` - wrapping function for texture coordinate t,
-  the default is `repeat`.
+  the default is `repeat`;
+* `flipY` - flip the Y axis of the texture so it has the same direction
+  as in the clip-space, i.e. pointing up. The default is `True`.
 
 You can read more about these parameters in the
 [specification](https://www.khronos.org/opengles/sdk/docs/man/xhtml/glTexParameter.xml).
@@ -102,6 +105,7 @@ type alias TextureOptions =
     , minifyingFilter : MinifyingFilter
     , horizontalWrap : TextureWrap
     , verticalWrap : TextureWrap
+    , flipY : Bool
     }
 
 
@@ -110,9 +114,10 @@ type alias TextureOptions =
 textureOptions : TextureOptions
 textureOptions =
     { magnifyingFilter = magnifyLinear
-    , minifyingFilter = nearestMipmapLinear
+    , minifyingFilter = minifyNearestMipmapLinear
     , horizontalWrap = repeat
     , verticalWrap = repeat
+    , flipY = True
     }
 
 
@@ -156,24 +161,24 @@ progressively lower resolutions.
 
 This is the default value of the minifying filter.
 -}
-nearestMipmapNearest : MinifyingFilter
-nearestMipmapNearest =
+minifyNearestMipmapNearest : MinifyingFilter
+minifyNearestMipmapNearest =
     MinifyingFilter 9984
 
 
 {-| Returns the weighted average of the four texture elements that are closest
 to the center of the pixel being textured.
 -}
-linear : MinifyingFilter
-linear =
+minifyLinear : MinifyingFilter
+minifyLinear =
     MinifyingFilter 9729
 
 
 {-| Returns the value of the texture element that is nearest
 (in Manhattan distance) to the center of the pixel being textured.
 -}
-nearest : MinifyingFilter
-nearest =
+minifyNearest : MinifyingFilter
+minifyNearest =
     MinifyingFilter 9728
 
 
@@ -182,8 +187,8 @@ textured and uses the `linear` criterion (a weighted average of the four
 texture elements that are closest to the center of the pixel) to produce a
 texture value.
 -}
-linearMipmapNearest : MinifyingFilter
-linearMipmapNearest =
+minifyLinearMipmapNearest : MinifyingFilter
+minifyLinearMipmapNearest =
     MinifyingFilter 9985
 
 
@@ -192,8 +197,8 @@ textured and uses the `nearest` criterion (the texture element nearest to the
 center of the pixel) to produce a texture value from each mipmap. The final
 texture value is a weighted average of those two values.
 -}
-nearestMipmapLinear : MinifyingFilter
-nearestMipmapLinear =
+minifyNearestMipmapLinear : MinifyingFilter
+minifyNearestMipmapLinear =
     MinifyingFilter 9986
 
 
@@ -203,8 +208,8 @@ texture elements that are closest to the center of the pixel) to produce a
 texture value from each mipmap. The final texture value is a weighted average
 of those two values.
 -}
-linearMipmapLinear : MinifyingFilter
-linearMipmapLinear =
+minifyLinearMipmapLinear : MinifyingFilter
+minifyLinearMipmapLinear =
     MinifyingFilter 9987
 
 

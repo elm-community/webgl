@@ -91,7 +91,7 @@ fetchTextures =
     Texture.loadWith
         { textureOptions
             | magnifyingFilter = Texture.magnifyNearest
-            , minifyingFilter = Texture.nearest
+            , minifyingFilter = Texture.minifyNearest
         }
         "texture/thwomp_face.jpg"
         |> Task.andThen
@@ -99,7 +99,7 @@ fetchTextures =
                 Texture.loadWith
                     { textureOptions
                         | magnifyingFilter = Texture.magnifyNearest
-                        , minifyingFilter = Texture.nearest
+                        , minifyingFilter = Texture.minifyNearest
                     }
                     "texture/thwomp_side.jpg"
                     |> Task.andThen
