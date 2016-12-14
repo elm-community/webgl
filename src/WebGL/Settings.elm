@@ -146,7 +146,7 @@ blend =
 
 
 {-| The same as blend setting, but allows to pass separate
-blend options for color channels and alpha channel
+blend options for color channels and alpha channel.
 -}
 blendSeparate : BlendOptions -> BlendOptions -> Float -> Float -> Float -> Float -> Setting
 blendSeparate =
@@ -175,7 +175,7 @@ type alias BlendOptions =
     }
 
 
-{-| Defaut options for the blend setting.
+{-| Default options for the blend setting.
 -}
 blendOptions : BlendOptions
 blendOptions =
@@ -298,7 +298,7 @@ srcAlphaSaturate =
     BlendFactor 776
 
 
-{-| Allows to specify how source and destination colors are combined
+{-| Allows to specify how source and destination colors are combined.
 -}
 type BlendEquation
     = BlendEquation Int
@@ -353,7 +353,7 @@ type alias DepthOptions =
     }
 
 
-{-| Defaut options for the depth setting.
+{-| Default options for the depth setting.
 -}
 depthOptions : DepthOptions
 depthOptions =

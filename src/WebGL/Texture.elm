@@ -50,7 +50,7 @@ import Native.Texture
 
 
 {-| Textures can be passed in `uniforms`, and used in the fragment shader.
-You can create a texture with `load` or `loadWith` and measure its dimesions
+You can create a texture with `load` or `loadWith` and measure its dimensions
 with `size`.
 -}
 type alias Texture =
