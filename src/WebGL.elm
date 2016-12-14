@@ -154,10 +154,16 @@ Normally you specify a shader with a `glsl[| |]` block. This is because shaders
 must be compiled before they are used, imposing an overhead that is best
 avoided in general.
 
-* `attributes` is a record type that defines [vertices in the mesh](#mesh);
-* `uniforms` is a record type where you may pass custom parameters like
+* `attributes` defines [vertices in the mesh](#mesh);
+* `uniforms` allow you to pass custom parameters like
   transformation matrix, texture, screen size, etc.;
-* `varyings` is a record type that defines the output from the shader.
+* `varyings` defines the output from the shader.
+
+`attributes`, `uniforms` and `varyings` are records with the fields of the
+following types: `Int`, `Float`, `WebGL.Texture` and `Vec2`, `Vec3`, `Vec4`,
+`Mat4` from the
+[linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
+package.
 
 Elm compiler will parse the shader code block and derive the type
 signature for your shader.
@@ -191,6 +197,12 @@ type Renderable
 as a `Renderable`. This specifies a full rendering pipeline to be run
 on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
+
+The vertex shader receives `attributes` and `uniforms` and returns `varyings`
+and `gl_Position` (the position of the pixel on the screen) for the fragment
+shader. The fragment shader is called for each pixel with `varyings` and
+`uniforms` as inputs and returns `gl_FragColor` (the color of the pixel on the
+screen).
 
 Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
