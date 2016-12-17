@@ -52,101 +52,104 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
  /**
-  *  Apply settings to the gl context
+  *  Apply setting to the gl context
   *
   *  @param {WebGLRenderingContext} gl context
-  *  @param {List<Setting>} settings the list of settings coming in from Elm
-  *  @return {Array<Function>} array of functions, when invoked with gl,
-  *          will cleanup the context from changes, caused by the settings
+  *  @param {Setting} setting coming in from Elm
   */
-  function doSettings(gl, settings) {
-    var cleanupOperations = [];
-    var s1;
-    var s2;
-    function disable(capability) {
-      return function (gl) {
-        gl.disable(capability);
-      };
+  function applySetting(gl, setting) {
+    switch (setting.ctor) {
+      case 'Blend':
+        gl.enable(gl.BLEND);
+        // eq1 f11 f12 eq2 f21 f22 r g b a
+        gl.blendEquationSeparate(setting._0, setting._3);
+        gl.blendFuncSeparate(setting._1, setting._2, setting._4, setting._5);
+        gl.blendColor(setting._6, setting._7, setting._8, setting._9);
+        break;
+      case 'DepthTest':
+        gl.enable(gl.DEPTH_TEST);
+        // func mask near far
+        gl.depthFunc(setting._0);
+        gl.depthMask(setting._1);
+        gl.depthRange(setting._2, setting._3);
+        break;
+      case 'StencilTest':
+        gl.enable(gl.STENCIL_TEST);
+        // t1 ref1 vMask1 fail1 zfail1 zpass1 mask1 t2 ref2 vMask2 fail2 zfail2 zpass2 mask2
+        gl.stencilFuncSeparate(gl.FRONT, setting._0, setting._1, setting._2);
+        gl.stencilOpSeparate(gl.FRONT, setting._3, setting._4, setting._5);
+        gl.stencilMaskSeparate(gl.FRONT, setting._6);
+        gl.stencilFuncSeparate(gl.BACK, setting._7, setting._8, setting._9);
+        gl.stencilOpSeparate(gl.BACK, setting._10, setting._11, setting._12);
+        gl.stencilMaskSeparate(gl.BACK, setting._13);
+        break;
+      case 'Scissor':
+        gl.enable(gl.SCISSOR_TEST);
+        gl.scissor(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'ColorMask':
+        gl.colorMask(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'CullFace':
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(setting._0);
+        break;
+      case 'Dither':
+        gl.enable(gl.DITHER);
+        break;
+      case 'PolygonOffset':
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(setting._0, setting._1);
+        break;
+      case 'SampleCoverage':
+        gl.enable(gl.SAMPLE_COVERAGE);
+        gl.sampleCoverage(setting._0, setting._1);
+        break;
+      case 'SampleAlphaToCoverage':
+        gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        break;
     }
-    listEach(function (setting) {
-      s1 = setting._0;
-      s2 = setting._1;
-      switch (setting.ctor) {
-        case 'Blend':
-          cleanupOperations.push(disable(gl.BLEND));
-          gl.enable(gl.BLEND);
-          gl.blendColor(setting._1, setting._2, setting._3, setting._4);
-          gl.blendFunc(s1.source._0, s1.destination._0);
-          gl.blendEquation(s1.equation._0);
-          break;
-        case 'BlendSeparate':
-          cleanupOperations.push(disable(gl.BLEND));
-          gl.enable(gl.BLEND);
-          gl.blendColor(setting._2, setting._3, setting._4, setting._5);
-          gl.blendFuncSeparate(s1.source._0, s1.destination._0, s2.source._0, s2.destination._0);
-          gl.blendEquationSeparate(s1.equation._0, s2.equation._0);
-          break;
-        case 'Depth':
-          cleanupOperations.push(disable(gl.DEPTH_TEST));
-          gl.enable(gl.DEPTH_TEST);
-          gl.depthFunc(s1.func._0);
-          gl.depthMask(s1.mask);
-          gl.depthRange(s1.near, s1.far);
-          break;
-        case 'Stencil':
-          cleanupOperations.push(disable(gl.STENCIL_TEST));
-          gl.enable(gl.STENCIL_TEST);
-          gl.stencilFunc(s1.func._0, s1.ref, s1.valueMask);
-          gl.stencilOp(s1.fail._0, s1.zfail._0, s1.zpass._0);
-          gl.stencilMask(s1.writeMask);
-          break;
-        case 'StencilFuncSeparate':
-          cleanupOperations.push(disable(gl.STENCIL_TEST));
-          gl.enable(gl.STENCIL_TEST);
-          gl.stencilFuncSeparate(gl.FRONT, s1.func._0, s1.ref, s1.valueMask);
-          gl.stencilOpSeparate(gl.FRONT, s1.fail._0, s1.zfail._0, s1.zpass._0);
-          gl.stencilMaskSeparate(gl.FRONT, s1.writeMask);
-          gl.stencilFuncSeparate(gl.BACK, s2.func._0, s2.ref, s2.valueMask);
-          gl.stencilOpSeparate(gl.BACK, s2.fail._0, s2.zfail._0, s2.zpass._0);
-          gl.stencilMaskSeparate(gl.BACK, s2.writeMask);
-          break;
-        case 'Scissor':
-          cleanupOperations.push(disable(gl.SCISSOR_TEST));
-          gl.enable(gl.SCISSOR_TEST);
-          gl.scissor(setting._0, setting._1, setting._2, setting._3);
-          break;
-        case 'ColorMask':
-          cleanupOperations.push(function (gl) {
-            gl.colorMask(true, true, true, true);
-          });
-          gl.colorMask(setting._0, setting._1, setting._2, setting._3);
-          break;
-        case 'CullFace':
-          cleanupOperations.push(disable(gl.CULL_FACE));
-          gl.enable(gl.CULL_FACE);
-          gl.cullFace(s1);
-          break;
-        case 'Dither':
-          cleanupOperations.push(disable(gl.DITHER));
-          gl.enable(gl.DITHER);
-          break;
-        case 'PolygonOffset':
-          cleanupOperations.push(disable(gl.POLYGON_OFFSET_FILL));
-          gl.enable(gl.POLYGON_OFFSET_FILL);
-          gl.polygonOffset(s1, s2);
-          break;
-        case 'SampleCoverage':
-          cleanupOperations.push(disable(gl.SAMPLE_COVERAGE));
-          gl.enable(gl.SAMPLE_COVERAGE);
-          gl.sampleCoverage(s1, s2);
-          break;
-        case 'SampleAlphaToCoverage':
-          cleanupOperations.push(disable(gl.SAMPLE_ALPHA_TO_COVERAGE));
-          gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-          break;
-      }
-    }, settings);
-    return cleanupOperations;
+  }
+
+ /**
+  *  Revert setting that was applied to the gl context
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {Setting} setting coming in from Elm
+  */
+  function revertSetting(gl, setting) {
+    switch (setting.ctor) {
+      case 'Blend':
+        gl.disable(gl.BLEND);
+        break;
+      case 'DepthTest':
+        gl.disable(gl.DEPTH_TEST);
+        break;
+      case 'StencilTest':
+        gl.disable(gl.STENCIL_TEST);
+        break;
+      case 'Scissor':
+        gl.disable(gl.SCISSOR_TEST);
+        break;
+      case 'ColorMask':
+        gl.colorMask(true, true, true, true);
+        break;
+      case 'CullFace':
+        gl.disable(gl.CULL_FACE);
+        break;
+      case 'Dither':
+        gl.disable(gl.DITHER);
+        break;
+      case 'PolygonOffset':
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+        break;
+      case 'SampleCoverage':
+        gl.disable(gl.SAMPLE_COVERAGE);
+        break;
+      case 'SampleAlphaToCoverage':
+        gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        break;
+    }
   }
 
   function doCompile(gl, src, type) {
@@ -453,13 +456,15 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
 
-      var cleanupOperations = doSettings(gl, entity.settings);
+      listEach(function (setting) {
+        applySetting(gl, setting);
+      }, entity.settings);
 
       gl.drawElements(entityType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
-      cleanupOperations.forEach(function (operation) {
-        operation(gl);
-      });
+      listEach(function (setting) {
+        revertSetting(gl, setting);
+      }, entity.settings);
 
     }
 

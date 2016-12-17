@@ -13,7 +13,8 @@ import Time exposing (Time)
 import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
 import WebGL.Settings exposing (..)
-import WebGL.Options as Options
+import WebGL.Settings.DepthTest as DepthTest
+import WebGL.Settings.StencilTest as StencilTest exposing (defaultOptions)
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -166,7 +167,7 @@ camera =
 view : Model -> Html Action
 view { texture, theta } =
     WebGL.toHtmlWith
-        [ Options.alpha True, Options.antialias, Options.depth 1, Options.stencil 0 ]
+        [ alpha True, antialias, depth 1, stencil 0 ]
         [ width 400, height 400 ]
         (case texture of
             Nothing ->
@@ -178,19 +179,31 @@ view { texture, theta } =
                         perspective theta
                 in
                     [ renderBox
-                        [ depth depthOptions ]
+                        [ DepthTest.less ]
                         Math.Matrix4.identity
                         (vec3 1 1 1)
                         tex
                         camera
                     , renderFloor
-                        [ depth { depthOptions | mask = False }
-                        , stencil { stencilOptions | ref = 1, zpass = replace }
+                        [ DepthTest.custom
+                            { test = DepthTest.customLess
+                            , near = 0
+                            , far = 1
+                            , mask = False
+                            }
+                        , StencilTest.test
+                            { defaultOptions
+                                | test = StencilTest.always 1
+                                , zpass = StencilTest.replace
+                            }
                         ]
                         camera
                     , renderBox
-                        [ stencil { stencilOptions | func = equal, ref = 1, writeMask = 0 }
-                        , depth depthOptions
+                        [ StencilTest.test
+                            { defaultOptions
+                                | test = StencilTest.equal 1 0xFFFFFFFF
+                            }
+                        , DepthTest.less
                         ]
                         (makeScale (vec3 1 -1 1))
                         (vec3 0.6 0.6 0.6)

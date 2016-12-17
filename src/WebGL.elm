@@ -16,6 +16,12 @@ module WebGL
         , entityWith
         , toHtml
         , toHtmlWith
+        , Option
+        , alpha
+        , depth
+        , stencil
+        , antialias
+        , clearColor
         , unsafeShader
         )
 
@@ -39,7 +45,8 @@ Find other kinds of meshes in the [corresponding section](#meshes).
 @docs toHtml
 
 # Advanced Usage
-@docs entityWith, toHtmlWith
+@docs entityWith, toHtmlWith, Option, alpha, depth, stencil, antialias,
+      clearColor
 
 # Meshes
 @docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,
@@ -51,8 +58,8 @@ Find other kinds of meshes in the [corresponding section](#meshes).
 
 import Html exposing (Html, Attribute)
 import WebGL.Settings as Settings exposing (Setting)
+import WebGL.Settings.DepthTest as DepthTest
 import Native.WebGL
-import WebGL.Options as Options exposing (Option)
 
 
 {-| Defines the mesh by forming geometry from the specified vertices.
@@ -210,7 +217,7 @@ new entities if you are reusing shaders and meshes that have been used
 before.
 
 By default, depth test setting is enabled for you. If you need more settings,
-like stencil test, blending, etc., then check `entityWith`.
+like stencil test, blending, etc., then check [`entityWith`](#entityWith).
 -}
 entity :
     Shader attributes uniforms varyings
@@ -219,7 +226,7 @@ entity :
     -> uniforms
     -> Entity
 entity =
-    entityWith [ Settings.depth Settings.depthOptions ]
+    entityWith [ DepthTest.less ]
 
 
 {-| The same as `entity`, but allows to configure an entity with a list
@@ -248,7 +255,7 @@ options are enabled. Use `toHtmlWith` for custom options.
 -}
 toHtml : List (Attribute msg) -> List Entity -> Html msg
 toHtml =
-    toHtmlWith [ Options.alpha True, Options.antialias, Options.depth 1 ]
+    toHtmlWith [ alpha True, antialias, depth 1 ]
 
 
 {-| Render a WebGL scene with the given list of options,
@@ -262,3 +269,63 @@ Check `WebGL.Options` for all possible options.
 toHtmlWith : List Option -> List (Attribute msg) -> List Entity -> Html msg
 toHtmlWith options attributes entities =
     Native.WebGL.toHtml options attributes entities
+
+
+{-| Provides a way to enable features and change the scene behavior
+in `WebGL.toHtmlWith`.
+-}
+type Option
+    = Alpha Bool
+    | Depth Float
+    | Stencil Int
+    | Antialias
+    | ClearColor Float Float Float Float
+
+
+{-| Enable alpha channel in the drawing buffer. If the argument is `True`, then
+the page compositor will assume the drawing buffer contains colors with
+premultiplied alpha.
+
+`alpha True` is enabled by default when you use `WebGL.toHtml`.
+-}
+alpha : Bool -> Option
+alpha =
+    Alpha
+
+
+{-| Enable the depth buffer, and prefill it with given value each time before
+the scene is rendered. The value is clamped between 0 and 1.
+
+`depth 1` is enabled by default when you use `WebGL.toHtml`.
+-}
+depth : Float -> Option
+depth =
+    Depth
+
+
+{-| Enable the stencil buffer, specifying the index used to fill the
+stencil buffer before we render the scene. The index is masked with 2^m - 1,
+where m >= 8 is the number of bits in the stencil buffer. The default is 0.
+-}
+stencil : Int -> Option
+stencil =
+    Stencil
+
+
+{-| Enable antialiasing of the drawing buffer, if supported by the browser.
+Useful when you want to preserve sharp edges when resizing the canvas.
+
+`antialias` is enabled by default when you use `WebGL.toHtml`.
+-}
+antialias : Option
+antialias =
+    Antialias
+
+
+{-| Set the red, green, blue and alpha channels, that will be used to
+fill the drawing buffer every time before drawing the scene. The values are
+clamped between 0 and 1. The default is all 0's.
+-}
+clearColor : Float -> Float -> Float -> Float -> Option
+clearColor =
+    ClearColor
