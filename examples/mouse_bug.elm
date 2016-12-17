@@ -23,7 +23,7 @@ type alias Vertex =
     { position : Vec2, color : Vec3 }
 
 
-mesh : GL.Drawable Vertex
+mesh : GL.Mesh Vertex
 mesh =
     GL.indexedTriangles
         [ Vertex (vec2 0 0) (vec3 1 0 0)
@@ -43,7 +43,7 @@ view : Mouse.Position -> Html Mouse.Position
 view { x, y } =
     GL.toHtml
         [ width x, height y ]
-        [ GL.render vertexShader fragmentShader mesh { mat = ortho2D 1 1 } ]
+        [ GL.entity vertexShader fragmentShader mesh { mat = ortho2D 1 1 } ]
 
 
 

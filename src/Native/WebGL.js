@@ -34,14 +34,14 @@ var _elm_community$webgl$Native_WebGL = function () {
     return { src: src };
   }
 
-  function render(settings, vert, frag, buffer, uniforms) {
+  function entity(settings, vert, frag, buffer, uniforms) {
 
     if (!buffer.guid) {
       buffer.guid = guid();
     }
 
     return {
-      ctor: 'Renderable',
+      ctor: 'Entity',
       vert: vert,
       frag: frag,
       buffer: buffer,
@@ -370,67 +370,67 @@ var _elm_community$webgl$Native_WebGL = function () {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     LOG('Drawing');
 
-    function drawEntity(render) {
-      if (listLength(render.buffer._0) === 0) {
+    function drawEntity(entity) {
+      if (listLength(entity.buffer._0) === 0) {
         return;
       }
 
       var progid;
       var program;
-      if (render.vert.id && render.frag.id) {
-        progid = getProgID(render.vert.id, render.frag.id);
+      if (entity.vert.id && entity.frag.id) {
+        progid = getProgID(entity.vert.id, entity.frag.id);
         program = model.cache.programs[progid];
       }
 
       if (!program) {
 
         var vshader;
-        if (render.vert.id) {
-          vshader = model.cache.shaders[render.vert.id];
+        if (entity.vert.id) {
+          vshader = model.cache.shaders[entity.vert.id];
         } else {
-          render.vert.id = guid();
+          entity.vert.id = guid();
         }
 
         if (!vshader) {
-          vshader = doCompile(gl, render.vert.src, gl.VERTEX_SHADER);
-          model.cache.shaders[render.vert.id] = vshader;
+          vshader = doCompile(gl, entity.vert.src, gl.VERTEX_SHADER);
+          model.cache.shaders[entity.vert.id] = vshader;
         }
 
         var fshader;
-        if (render.frag.id) {
-          fshader = model.cache.shaders[render.frag.id];
+        if (entity.frag.id) {
+          fshader = model.cache.shaders[entity.frag.id];
         } else {
-          render.frag.id = guid();
+          entity.frag.id = guid();
         }
 
         if (!fshader) {
-          fshader = doCompile(gl, render.frag.src, gl.FRAGMENT_SHADER);
-          model.cache.shaders[render.frag.id] = fshader;
+          fshader = doCompile(gl, entity.frag.src, gl.FRAGMENT_SHADER);
+          model.cache.shaders[entity.frag.id] = fshader;
         }
 
         program = doLink(gl, vshader, fshader);
-        progid = getProgID(render.vert.id, render.frag.id);
+        progid = getProgID(entity.vert.id, entity.frag.id);
         model.cache.programs[progid] = program;
 
       }
 
       gl.useProgram(program);
 
-      progid = progid || getProgID(render.vert.id, render.frag.id);
+      progid = progid || getProgID(entity.vert.id, entity.frag.id);
       var setters = model.cache.uniformSetters[progid];
       if (!setters) {
         setters = createUniformSetters(gl, model, program);
         model.cache.uniformSetters[progid] = setters;
       }
 
-      setUniforms(setters, render.uniforms);
+      setUniforms(setters, entity.uniforms);
 
-      var renderType = getRenderInfo(gl, render.buffer.ctor);
-      var buffer = model.cache.buffers[render.buffer.guid];
+      var entityType = getRenderInfo(gl, entity.buffer.ctor);
+      var buffer = model.cache.buffers[entity.buffer.guid];
 
       if (!buffer) {
-        buffer = doBindSetup(gl, renderType, render.buffer);
-        model.cache.buffers[render.buffer.guid] = buffer;
+        buffer = doBindSetup(gl, entityType, entity.buffer);
+        model.cache.buffers[entity.buffer.guid] = buffer;
       }
 
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
@@ -444,7 +444,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.enableVertexAttribArray(attribLocation);
 
         if (buffer.buffers[attribute.name] === undefined) {
-          buffer.buffers[attribute.name] = doBindAttribute(gl, attribute, render.buffer._0, renderType.elemSize);
+          buffer.buffers[attribute.name] = doBindAttribute(gl, attribute, entity.buffer._0, entityType.elemSize);
         }
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
@@ -453,9 +453,9 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
 
-      var cleanupOperations = doSettings(gl, render.settings);
+      var cleanupOperations = doSettings(gl, entity.settings);
 
-      gl.drawElements(renderType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(entityType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
       cleanupOperations.forEach(function (operation) {
         operation(gl);
@@ -463,7 +463,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     }
 
-    listEach(drawEntity, model.renderables);
+    listEach(drawEntity, model.entities);
     return domNode;
   }
 
@@ -549,9 +549,9 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(options, factList, renderables) {
+  function toHtml(options, factList, entities) {
     var model = {
-      renderables: renderables,
+      entities: entities,
       cache: {},
       options: options
     };
@@ -560,7 +560,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   var implementation = {
-    render: renderCanvas,
+    render: render,
     diff: diff
   };
 
@@ -570,10 +570,10 @@ var _elm_community$webgl$Native_WebGL = function () {
    *  @param {Object} model.cache that may contain the following properties:
              gl, shaders, programs, uniformSetters, buffers, textures
    *  @param {List<Option>} model.options list of options coming from Elm
-   *  @param {List<Renderable>} model.renderables list of renderables coming from Elm
+   *  @param {List<Entity>} model.entities list of entities coming from Elm
    *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
    */
-  function renderCanvas(model) {
+  function render(model) {
 
     var contextAttributes = {
       alpha: false,
@@ -659,7 +659,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   return {
     unsafeCoerceGLSL: unsafeCoerceGLSL,
-    render: F5(render),
+    entity: F5(entity),
     toHtml: F3(toHtml)
   };
 

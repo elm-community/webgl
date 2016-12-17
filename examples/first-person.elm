@@ -243,14 +243,14 @@ gravity dt person =
             }
 
 
-world : Maybe Texture -> Mat4 -> List Renderable
+world : Maybe Texture -> Mat4 -> List Entity
 world maybeTexture perspective =
     case maybeTexture of
         Nothing ->
             []
 
         Just tex ->
-            [ render vertexShader fragmentShader crate { crate = tex, perspective = perspective } ]
+            [ entity vertexShader fragmentShader crate { crate = tex, perspective = perspective } ]
 
 
 
@@ -317,7 +317,7 @@ type alias Vertex =
     }
 
 
-crate : Drawable Vertex
+crate : Mesh Vertex
 crate =
     triangles (List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ])
 

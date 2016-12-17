@@ -2,8 +2,8 @@ module WebGL
     exposing
         ( Texture
         , Shader
-        , Renderable
-        , Drawable
+        , Entity
+        , Mesh
         , triangles
         , indexedTriangles
         , lines
@@ -12,8 +12,8 @@ module WebGL
         , points
         , triangleFan
         , triangleStrip
-        , render
-        , renderWith
+        , entity
+        , entityWith
         , toHtml
         , toHtmlWith
         , unsafeShader
@@ -25,23 +25,23 @@ and look at some examples before trying to do too much with just the
 documentation provided here.
 
 # Mesh
-@docs Drawable, triangles
+@docs Mesh, triangles
 
-Find other kinds of drawables in the [corresponding section](#drawables).
+Find other kinds of meshes in the [corresponding section](#meshes).
 
 # Shaders
 @docs Shader, Texture
 
-# Renderables
-@docs Renderable, render
+# Entities
+@docs Entity, entity
 
 # WebGL Html
 @docs toHtml
 
 # Advanced Usage
-@docs renderWith, toHtmlWith
+@docs entityWith, toHtmlWith
 
-# Other Drawables
+# Meshes
 @docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,
       triangleStrip
 
@@ -71,7 +71,7 @@ and `Vec2`, `Vec3`, `Vec4`, `Mat4` from the
 [linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
 package.
 -}
-type Drawable attributes
+type Mesh attributes
     = Triangles (List ( attributes, attributes, attributes ))
     | Lines (List ( attributes, attributes ))
     | LineStrip (List attributes)
@@ -88,7 +88,7 @@ to form any shape.
 So when you create `triangles` you are really providing three sets of attributes
 that describe the corners of each triangle.
 -}
-triangles : List ( attributes, attributes, attributes ) -> Drawable attributes
+triangles : List ( attributes, attributes, attributes ) -> Mesh attributes
 triangles =
     Triangles
 
@@ -96,14 +96,14 @@ triangles =
 {-| Creates a strip of triangles where each additional vertex creates an
 additional triangle once the first three vertices have been drawn.
 -}
-triangleStrip : List attributes -> Drawable attributes
+triangleStrip : List attributes -> Mesh attributes
 triangleStrip =
     TriangleStrip
 
 
 {-| Similar to `triangleStrip`, but creates a fan shaped output.
 -}
-triangleFan : List attributes -> Drawable attributes
+triangleFan : List attributes -> Mesh attributes
 triangleFan =
     TriangleFan
 
@@ -112,35 +112,35 @@ triangleFan =
 that describe the vertices and and a list of indices, that are grouped in sets
 of three that refer to the vertices that form each triangle.
 -}
-indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Drawable attributes
+indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Mesh attributes
 indexedTriangles =
     IndexedTriangles
 
 
 {-| Connects each pair of vertices with a line.
 -}
-lines : List ( attributes, attributes ) -> Drawable attributes
+lines : List ( attributes, attributes ) -> Mesh attributes
 lines =
     Lines
 
 
 {-| Connects each two subsequent vertices in the list with a line.
 -}
-lineStrip : List attributes -> Drawable attributes
+lineStrip : List attributes -> Mesh attributes
 lineStrip =
     LineStrip
 
 
 {-| Similar to `lineStrip`, but connects the last vertex back to the first.
 -}
-lineLoop : List attributes -> Drawable attributes
+lineLoop : List attributes -> Mesh attributes
 lineLoop =
     LineLoop
 
 
 {-| Draws a single dot per vertex.
 -}
-points : List attributes -> Drawable attributes
+points : List attributes -> Mesh attributes
 points =
     Points
 
@@ -187,14 +187,14 @@ type Texture
     = Texture
 
 
-{-| Conceptually, an encapsulation of the instructions to render something.
+{-| Conceptually, an encapsulation of the instructions to entity something.
 -}
-type Renderable
-    = Renderable
+type Entity
+    = Entity
 
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniforms
-as a `Renderable`. This specifies a full rendering pipeline to be run
+as a `Entity`. This specifies a full rendering pipeline to be run
 on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
@@ -206,59 +206,59 @@ screen).
 
 Values will be cached intelligently, so if you have already sent a shader or
 mesh to the GPU, it will not be resent. This means it is fairly cheap to create
-new renderables if you are reusing shaders and meshes that have been used
+new entities if you are reusing shaders and meshes that have been used
 before.
 
 By default, depth test setting is enabled for you. If you need more settings,
-like stencil test, blending, etc., then check `renderWith`.
+like stencil test, blending, etc., then check `entityWith`.
 -}
-render :
+entity :
     Shader attributes uniforms varyings
     -> Shader {} uniforms varyings
-    -> Drawable attributes
+    -> Mesh attributes
     -> uniforms
-    -> Renderable
-render =
-    renderWith [ Settings.depth Settings.depthOptions ]
+    -> Entity
+entity =
+    entityWith [ Settings.depth Settings.depthOptions ]
 
 
-{-| The same as `render`, but allows to configure a renderable with a list
-of settings. Check `WebGL.Settings` for the possible values.
+{-| The same as `entity`, but allows to configure an entity with a list
+of settings. Check [WebGL.Settings](WebGL.Settings) for the possible values.
 -}
-renderWith :
+entityWith :
     List Setting
     -> Shader attributes uniforms varyings
     -> Shader {} uniforms varyings
-    -> Drawable attributes
+    -> Mesh attributes
     -> uniforms
-    -> Renderable
-renderWith =
-    Native.WebGL.render
+    -> Entity
+entityWith =
+    Native.WebGL.entity
 
 
 {-| Render a WebGL scene with the given options, html attributes, and
-renderables.
+entities.
 
 Shaders and meshes are cached so that they do not get resent to the GPU,
-so it should be relatively cheap to create new renderables out of existing
+so it should be relatively cheap to create new entities out of existing
 values.
 
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
 options are enabled. Use `toHtmlWith` for custom options.
 -}
-toHtml : List (Attribute msg) -> List Renderable -> Html msg
+toHtml : List (Attribute msg) -> List Entity -> Html msg
 toHtml =
     toHtmlWith [ Options.alpha True, Options.antialias, Options.depth 1 ]
 
 
 {-| Render a WebGL scene with the given list of options,
-html attributes, and renderables.
+html attributes, and entities.
 
 Due to browser limitations, options will be applied only once,
 when the canvas is created for the first time.
 
 Check `WebGL.Options` for all possible options.
 -}
-toHtmlWith : List Option -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWith options attributes renderables =
-    Native.WebGL.toHtml options attributes renderables
+toHtmlWith : List Option -> List (Attribute msg) -> List Entity -> Html msg
+toHtmlWith options attributes entities =
+    Native.WebGL.toHtml options attributes entities

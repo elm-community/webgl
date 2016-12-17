@@ -30,7 +30,7 @@ type alias Vertex =
     }
 
 
-cube : Drawable Vertex
+cube : Mesh Vertex
 cube =
     let
         rft =
@@ -102,9 +102,9 @@ face rawColor a b c d =
 -- VIEW
 
 
-scene : Float -> List Renderable
+scene : Float -> List Entity
 scene angle =
-    [ render vertexShader fragmentShader cube (uniforms angle) ]
+    [ entity vertexShader fragmentShader cube (uniforms angle) ]
 
 
 uniforms : Float -> { rotation : Mat4, perspective : Mat4, camera : Mat4, shade : Float }

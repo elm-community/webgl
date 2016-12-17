@@ -16,7 +16,7 @@ type alias Vertex =
     { position : Vec3, color : Vec3 }
 
 
-mesh : Drawable Vertex
+mesh : Mesh Vertex
 mesh =
     triangles
         [ ( Vertex (vec3 0 0 0) (vec3 1 0 0)
@@ -40,7 +40,7 @@ view : Float -> Html msg
 view t =
     WebGL.toHtml
         [ width 400, height 400 ]
-        [ render vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
+        [ entity vertexShader fragmentShader mesh { perspective = perspective (t / 1000) } ]
 
 
 perspective : Float -> Mat4

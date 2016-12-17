@@ -74,7 +74,7 @@ main =
 -- MESHES
 
 
-crate : Drawable { pos : Vec3, coord : Vec3 }
+crate : Mesh { pos : Vec3, coord : Vec3 }
 crate =
     triangles <|
         List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
@@ -118,7 +118,7 @@ face =
         ]
 
 
-floor : Drawable { pos : Vec3 }
+floor : Mesh { pos : Vec3 }
 floor =
     let
         topLeft =
@@ -200,9 +200,9 @@ view { texture, theta } =
         )
 
 
-renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Renderable
+renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Entity
 renderBox settings worldTransform overrideColor tex camera =
-    renderWith settings
+    entityWith settings
         boxVert
         boxFrag
         crate
@@ -213,9 +213,9 @@ renderBox settings worldTransform overrideColor tex camera =
         }
 
 
-renderFloor : List Setting -> Mat4 -> Renderable
+renderFloor : List Setting -> Mat4 -> Entity
 renderFloor settings camera =
-    renderWith settings
+    entityWith settings
         floorVert
         floorFrag
         floor

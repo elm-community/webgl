@@ -118,8 +118,18 @@ In order to use this setting, `Options.stencil` has to be used in `toHtmlWith`.
 -}
 
 
-{-| Provides a typesafe way to configure the rendering operation in
-`WebGL.renderWith`.
+{-| Lets you customize how an `Entity` is rendered. So if you only want to see
+the red part of your entity, you would use [`entityWith`](WebGL#entityWith) and
+[`colorMask`](#colorMask) to say:
+
+    entityWith [colorMask True False False False]
+        vertShader fragShader mesh uniforms
+
+    -- vertShader : Shader attributes uniforms varyings
+    -- fragShader : Shader {} uniforms varyings
+    -- mesh : Mesh attributes
+    -- uniforms : uniforms
+
 -}
 type Setting
     = Blend BlendOptions Float Float Float Float

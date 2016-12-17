@@ -220,12 +220,12 @@ view mesh1 mesh2 ({ textures, size } as model) =
             )
 
 
-toEntity : List ( Vertex, Vertex, Vertex ) -> Maybe Texture -> Mat4 -> List Renderable
+toEntity : List ( Vertex, Vertex, Vertex ) -> Maybe Texture -> Mat4 -> List Entity
 toEntity mesh response perspective =
     response
         |> Maybe.map
             (\texture ->
-                [ render vertexShader fragmentShader (triangles mesh) { texture = texture, perspective = perspective } ]
+                [ entity vertexShader fragmentShader (triangles mesh) { texture = texture, perspective = perspective } ]
             )
         |> Maybe.withDefault []
 
