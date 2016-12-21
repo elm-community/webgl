@@ -67,7 +67,8 @@ the same direction as in the clip-space, i.e. pointing up.
 If you need to change flipping, filtering or wrapping, you can use
 [`loadWith`](#loadWith).
 
-    load url = loadWith defaultOptions url
+    load url =
+        loadWith defaultOptions url
 
 -}
 load : String -> Task Error Texture

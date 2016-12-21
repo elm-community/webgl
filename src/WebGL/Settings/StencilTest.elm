@@ -2,6 +2,7 @@ module WebGL.Settings.StencilTest
     exposing
         ( test
         , testSeparate
+        , Options
         , defaultOptions
         , Test
         , never
@@ -27,18 +28,29 @@ module WebGL.Settings.StencilTest
 # Stencil Test
 In order to use this, [`stencil`](WebGL#stencil) option has to be used in
 [`toHtmlWith`](WebGL#toHtmlWith).
-@docs test, testSeparate, defaultOptions, Test, never, always,
-      less, lessOrEqual, equal, greaterOrEqual, greater, notEqual
-# Operations
+@docs test, Options, defaultOptions
+## Tests
+@docs Test, less, never, always, equal, greater, notEqual,
+  lessOrEqual, greaterOrEqual
+## Operations
 @docs Operation, replace, keep, zero, increment, decrement, invert,
-      incrementWrap, decrementWrap
+  incrementWrap, decrementWrap
+# Separate Test
+@docs testSeparate
 -}
 
 import WebGL.Settings exposing (Setting)
 import WebGL.Settings.Internal as I
 
 
-{-| Perform the stencil test and then update the stencil buffer:
+{-| Perform the stencil test and update the stencil buffer:
+-}
+test : Options -> Setting
+test options =
+    testSeparate options options
+
+
+{-| Options
 * `test` - the test to run against the stencil buffer;
 * `fail` - the operation to use when the stencil test fails;
 * `zfail` - the operation to use when the stencil test passes, but the depth
@@ -48,44 +60,47 @@ import WebGL.Settings.Internal as I
   testing is disabled;
 * `mask` - a bit mask to enable or disable writing of individual bits in
   the stencil plane.
-
-For example this will fill draw the entity, and fill the stencil buffer
-with all 1's:
-   test { defaultOptions | test = always 1, zpass = replace }
-
-Another example, use the values from the stencil buffer to mask the entity
-and keep the stencil buffer intact:
-   test { defaultOptions | test = equal 1 0xFFFFFFFF, mask = 0 }
 -}
-test :
+type alias Options =
     { test : Test
     , fail : Operation
     , zfail : Operation
     , zpass : Operation
     , mask : Int
     }
-    -> Setting
-test options =
-    testSeparate options options
 
 
-{-| Defaut options for the stencil setting. The following test will always
-pass without any changes to the stencil buffer:
+{-| Defaut options for the stencil setting.
+
+    { test = always 0
+    , fail = keep
+    , zfail = keep
+    , zpass = keep
+    , mask = 0xFF
+    }
+
+The following test will always pass without causing any changes to
+the stencil buffer:
+
     test defaultOptions
+
+Draw the entity, and fill the stencil buffer with all 1's:
+
+    test { defaultOptions | test = always 1, zpass = replace }
+
+Use the values from the stencil buffer to mask the entity and keep the
+stencil buffer intact:
+
+    test { defaultOptions | test = equal 1 0xFF, mask = 0 }
+
 -}
-defaultOptions :
-    { test : Test
-    , fail : Operation
-    , zfail : Operation
-    , zpass : Operation
-    , mask : Int
-    }
+defaultOptions : Options
 defaultOptions =
     { test = always 0
     , fail = keep
     , zfail = keep
     , zpass = keep
-    , mask = 0xFFFFFFFF
+    , mask = 0xFF
     }
 
 
@@ -223,20 +238,7 @@ decrementWrap =
 
 {-| Different options for front and back facing polygons
 -}
-testSeparate :
-    { test : Test
-    , fail : Operation
-    , zfail : Operation
-    , zpass : Operation
-    , mask : Int
-    }
-    -> { test : Test
-       , fail : Operation
-       , zfail : Operation
-       , zpass : Operation
-       , mask : Int
-       }
-    -> Setting
+testSeparate : Options -> Options -> Setting
 testSeparate options1 options2 =
     let
         expandTest (Test test ref mask) fn =

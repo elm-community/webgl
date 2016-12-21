@@ -218,6 +218,9 @@ before.
 
 By default, depth test setting is enabled for you. If you need more settings,
 like stencil test, blending, etc., then check [`entityWith`](#entityWith).
+
+    entity =
+        entityWith [ DepthTest.default ]
 -}
 entity :
     Shader attributes uniforms varyings
@@ -226,7 +229,7 @@ entity :
     -> uniforms
     -> Entity
 entity =
-    entityWith [ DepthTest.less ]
+    entityWith [ DepthTest.default ]
 
 
 {-| The same as `entity`, but allows to configure an entity with a list
@@ -252,6 +255,9 @@ values.
 
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
 options are enabled. Use `toHtmlWith` for custom options.
+
+    toHtml =
+        toHtmlWith [ alpha True, antialias, depth 1 ]
 -}
 toHtml : List (Attribute msg) -> List Entity -> Html msg
 toHtml =

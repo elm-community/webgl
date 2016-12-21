@@ -179,17 +179,16 @@ view { texture, theta } =
                         perspective theta
                 in
                     [ renderBox
-                        [ DepthTest.less ]
+                        [ DepthTest.default ]
                         Math.Matrix4.identity
                         (vec3 1 1 1)
                         tex
                         camera
                     , renderFloor
-                        [ DepthTest.custom
-                            { test = DepthTest.customLess
+                        [ DepthTest.less
+                            { write = False
                             , near = 0
                             , far = 1
-                            , mask = False
                             }
                         , StencilTest.test
                             { defaultOptions
@@ -201,9 +200,9 @@ view { texture, theta } =
                     , renderBox
                         [ StencilTest.test
                             { defaultOptions
-                                | test = StencilTest.equal 1 0xFFFFFFFF
+                                | test = StencilTest.equal 1 0xFF
                             }
-                        , DepthTest.less
+                        , DepthTest.default
                         ]
                         (makeScale (vec3 1 -1 1))
                         (vec3 0.6 0.6 0.6)

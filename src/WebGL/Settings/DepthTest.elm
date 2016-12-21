@@ -1,176 +1,120 @@
 module WebGL.Settings.DepthTest
     exposing
-        ( less
+        ( default
+        , Options
+        , less
         , never
         , always
-        , lessOrEqual
         , equal
-        , greaterOrEqual
         , greater
         , notEqual
-        , custom
-        , Test
-        , customLess
-        , customNever
-        , customAlways
-        , customLessOrEqual
-        , customEqual
-        , customGreaterOrEqual
-        , customGreater
-        , customNotEqual
+        , lessOrEqual
+        , greaterOrEqual
         )
 
 {-|
+You can read more about depth-testing in the
+[OpenGL wiki](https://www.khronos.org/opengl/wiki/Depth_Test)
+or [OpenGL docs](https://www.opengl.org/sdk/docs/man2/xhtml/glDepthFunc.xml).
 # Depth Tests
-@docs never, always, less, lessOrEqual, equal, greaterOrEqual,
-      greater, notEqual
+@docs default
 # Custom Tests
-@docs custom, Test, customLess, customNever, customAlways, customLessOrEqual,
-      customEqual, customGreaterOrEqual, customGreater, customNotEqual
+@docs Options, less, never, always, equal, greater, notEqual,
+  lessOrEqual, greaterOrEqual
 -}
 
 import WebGL.Settings exposing (Setting)
 import WebGL.Settings.Internal as I
 
 
-{-| Allows you to define how to compare the incoming value
-with the depth buffer value, in order to set the conditions under which
-the pixel will be drawn.
+{-| With every pixel, we have to figure out which color to show.
 
-This will pass if the incoming value is less than the depth buffer value.
+Imagine you have many entities in the same line of sight. The floor,
+then a table, then a plate. When depth-testing is off, you go through
+the entities in the order they appear in your *code*! That means if
+you describe the floor last, it will be “on top” of the table and plate.
+
+Depth-testing means the color is chosen based on the distance from the
+camera. So `default` uses the color closest to the camera. This means
+the plate will be on top of the table, and both are on top of the floor.
+Seems more reasonable!
+
+There are a bunch of ways you can customize the depth test, shown later,
+and you can use them to define `default` like this:
+
+    default =
+        less { write = True, near = 0, far = 1}
 -}
-less : Setting
-less =
-    I.DepthTest 513 True 0 1
+default : Setting
+default =
+    less { write = True, near = 0, far = 1 }
 
 
-{-| Never pass.
+{-| When rendering, you have a buffer of pixels. Depth-testing works by
+creating a second buffer with exactly the same number of entries, but
+instead of holding colors, each entry holds the distance from the camera.
+You go through all your entities, writing into the depth buffer, and then
+you draw the color of the “winner”.
+
+Which color wins? This is based on a bunch of comparison functions:
+
+    <TABLE>
+
+Explain write. Specifically mention that depth testing and stencil testing
+interact. That is the main usage for this.
+
+Explain clipping planes and near/far. Speculate on why you'd want it.
 -}
-never : Setting
-never =
-    I.DepthTest 512 True 0 1
-
-
-{-| Always pass.
--}
-always : Setting
-always =
-    I.DepthTest 519 True 0 1
-
-
-{-| Pass if the incoming value is less than or equal to the depth buffer value.
--}
-lessOrEqual : Setting
-lessOrEqual =
-    I.DepthTest 515 True 0 1
-
-
-{-| Pass if the incoming value equals the the depth buffer value.
--}
-equal : Setting
-equal =
-    I.DepthTest 514 True 0 1
-
-
-{-| Pass if the incoming value is greater than or equal to the depth buffer
-value.
--}
-greaterOrEqual : Setting
-greaterOrEqual =
-    I.DepthTest 518 True 0 1
-
-
-{-| Pass if the incoming value is greater than the depth buffer value.
--}
-greater : Setting
-greater =
-    I.DepthTest 516 True 0 1
-
-
-{-| Pass if the incoming value is not equal to the depth buffer value.
--}
-notEqual : Setting
-notEqual =
-    I.DepthTest 517 True 0 1
-
-
-{-| It is possible to turn off writing to the depth buffer and limit the
-buffer’s range (0 <= near <= far <= 1). For example, this will disable
-writing to the depth buffer, but still test against it:
-
-    customTest : Setting
-    customTest =
-        custom
-            { mask = False
-            , near = 0
-            , far = 1
-            , test = customLess
-            }
-
-By default, [`less`](#less) writes to the depth buffer and the whole
-range (0 to 1) is utilised.
--}
-custom :
-    { mask : Bool
+type alias Options =
+    { write : Bool
     , near : Float
     , far : Float
-    , test : Test
     }
-    -> Setting
-custom { mask, near, far, test } =
-    case test of
-        Test fn ->
-            fn mask near far
 
 
 {-| -}
-type Test
-    = Test (Bool -> Float -> Float -> Setting)
+less : Options -> Setting
+less { write, near, far } =
+    I.DepthTest 513 write near far
 
 
 {-| -}
-customLess : Test
-customLess =
-    Test (I.DepthTest 513)
+never : Options -> Setting
+never { write, near, far } =
+    I.DepthTest 512 write near far
 
 
 {-| -}
-customNever : Test
-customNever =
-    Test (I.DepthTest 512)
+always : Options -> Setting
+always { write, near, far } =
+    I.DepthTest 519 write near far
 
 
 {-| -}
-customAlways : Test
-customAlways =
-    Test (I.DepthTest 519)
+equal : Options -> Setting
+equal { write, near, far } =
+    I.DepthTest 514 write near far
 
 
 {-| -}
-customLessOrEqual : Test
-customLessOrEqual =
-    Test (I.DepthTest 515)
+greater : Options -> Setting
+greater { write, near, far } =
+    I.DepthTest 516 write near far
 
 
 {-| -}
-customEqual : Test
-customEqual =
-    Test (I.DepthTest 514)
+notEqual : Options -> Setting
+notEqual { write, near, far } =
+    I.DepthTest 517 write near far
 
 
 {-| -}
-customGreaterOrEqual : Test
-customGreaterOrEqual =
-    Test (I.DepthTest 518)
+lessOrEqual : Options -> Setting
+lessOrEqual { write, near, far } =
+    I.DepthTest 515 write near far
 
 
 {-| -}
-customGreater : Test
-customGreater =
-    Test (I.DepthTest 516)
-
-
-{-| -}
-customNotEqual : Test
-customNotEqual =
-    Test (I.DepthTest 517)
+greaterOrEqual : Options -> Setting
+greaterOrEqual { write, near, far } =
+    I.DepthTest 518 write near far
