@@ -12,12 +12,13 @@ module WebGL.Settings.DepthTest
         , greaterOrEqual
         )
 
-{-|
-You can read more about depth-testing in the
+{-| You can read more about depth-testing in the
 [OpenGL wiki](https://www.khronos.org/opengl/wiki/Depth_Test)
 or [OpenGL docs](https://www.opengl.org/sdk/docs/man2/xhtml/glDepthFunc.xml).
-# Depth Tests
+
+# Depth Test
 @docs default
+
 # Custom Tests
 @docs Options, less, never, always, equal, greater, notEqual,
   lessOrEqual, greaterOrEqual
@@ -43,7 +44,11 @@ There are a bunch of ways you can customize the depth test, shown later,
 and you can use them to define `default` like this:
 
     default =
-        less { write = True, near = 0, far = 1}
+        less { write = True, near = 0, far = 1 }
+
+Requires [`WebGL.depth`](WebGL#depth) option in
+[`toHtmlWith`](WebGL#toHtmlWith).
+
 -}
 default : Setting
 default =
@@ -58,12 +63,28 @@ you draw the color of the “winner”.
 
 Which color wins? This is based on a bunch of comparison functions:
 
-    <TABLE>
+    less options           -- value < depth
+    never options          -- Never pass
+    always options         -- Always pass
+    equal options          -- value == depth
+    greater options        -- value > depth
+    notEqual options       -- value != depth
+    lessOrEqual options    -- value <= depth
+    greaterOrEqual options -- value >= depth
 
-Explain write. Specifically mention that depth testing and stencil testing
-interact. That is the main usage for this.
+If the test passes, the current value will be written into the depth buffer, so
+the next pixels will be tested against it. Sometimes you may want to disable
+writing. For example, when using depth test together with stencil test to create
+[reflection effect](https://open.gl/depthstencils) you want to draw the
+reflection *underneath* the floor, in this case you set `write = False`
+when drawing the floor. The
+[crate example](https://github.com/elm-community/webgl/blob/master/examples/crate.elm)
+shows how to do it in Elm.
 
-Explain clipping planes and near/far. Speculate on why you'd want it.
+`near` and `far` allow to allocate a portion of the depth range from 0 to 1.
+For example, if you want to render GUI on top of the scene, you can
+set `near = 0.1, far = 1` for the scene and then render the GUI with
+`near = 0, far = 0.1`.
 -}
 type alias Options =
     { write : Bool

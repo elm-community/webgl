@@ -14,7 +14,7 @@ import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
 import WebGL.Settings exposing (..)
 import WebGL.Settings.DepthTest as DepthTest
-import WebGL.Settings.StencilTest as StencilTest exposing (defaultOptions)
+import WebGL.Settings.StencilTest as StencilTest
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -191,16 +191,21 @@ view { texture, theta } =
                             , far = 1
                             }
                         , StencilTest.test
-                            { defaultOptions
-                                | test = StencilTest.always 1
-                                , zpass = StencilTest.replace
+                            { test = StencilTest.always 1
+                            , fail = StencilTest.keep
+                            , zfail = StencilTest.keep
+                            , zpass = StencilTest.replace
+                            , writeMask = 0xFF
                             }
                         ]
                         camera
                     , renderBox
                         [ StencilTest.test
-                            { defaultOptions
-                                | test = StencilTest.equal 1 0xFF
+                            { test = StencilTest.equal 1 0xFF
+                            , fail = StencilTest.keep
+                            , zfail = StencilTest.keep
+                            , zpass = StencilTest.keep
+                            , writeMask = 0
                             }
                         , DepthTest.default
                         ]

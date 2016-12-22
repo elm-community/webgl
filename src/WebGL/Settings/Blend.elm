@@ -29,10 +29,12 @@ module WebGL.Settings.Blend
 {-|
 # Blenders
 @docs add, subtract, reverseSubtract
+
 # Blend Factors
 @docs Factor, zero, one, srcColor, oneMinusSrcColor, dstColor,
       oneMinusDstColor, srcAlpha, oneMinusSrcAlpha, dstAlpha,
       oneMinusDstAlpha, srcAlphaSaturate
+
 # Custom Blenders
 @docs custom, Blender, customAdd, customSubtract, customReverseSubtract,
       constantColor, oneMinusConstantColor, constantAlpha,
@@ -46,7 +48,9 @@ import WebGL.Settings.Internal as I
 {-| Add the color of the current `Renderable` (the source color)
 with whatever is behind it (the destination color). For example,
 here is the “default” blender:
+
     add one zero
+
 The resulting color will be `(src * 1) + (dest * 0)`, which means
 we do not use the destination color at all!
 You can get a feel for all the different blending factors
@@ -64,9 +68,11 @@ add factor1 factor2 =
         }
 
 
-{-| Similar to `add`, but it does `(src * factor1) - (dest * factor2)`.
+{-| Similar to [`add`](#add), but it does `(src * factor1) - (dest * factor2)`.
 For example:
+
     subtract one one
+
 This would do `(src * 1) - (dest * 1)` so you would take away colors
 based on the background.
 -}
@@ -82,7 +88,7 @@ subtract factor1 factor2 =
         }
 
 
-{-| Similar to `add`, but it does `(dest * factor2) - (src * factor1)`.
+{-| Similar to [`add`](#add), but it does `(dest * factor2) - (src * factor1)`.
 This one is weird.
 -}
 reverseSubtract : Factor -> Factor -> Setting
@@ -175,6 +181,7 @@ srcAlphaSaturate =
 {-| It is possible to do some very fancy blending with
 `custom`. For example, you can blend the color value and
 the alpha values separately:
+
     myBlender : Float -> Setting
     myBlender alpha =
         custom
@@ -232,6 +239,12 @@ customReverseSubtract (Factor factor1) (Factor factor2) =
 {-| This uses the constant `r`, `g`, `b`, and `a` values
 given to [`custom`](#custom). If you use this `Factor` with
 [`add`](#add), the constant color will default to black.
+
+Because of
+[restriction in WebGL](https://www.khronos.org/registry/webgl/specs/latest/1.0/#6.13),
+you cannot create a `Blender`, that has one factor set to
+`constantColor` or `oneMinusConstantColor` and another set to
+`constantAlpha` or `oneMinusConstantAlpha`.
 -}
 constantColor : Factor
 constantColor =

@@ -24,7 +24,6 @@ module WebGL.Texture
         )
 
 {-|
-
 # Texture
 @docs Texture, load, Error, size
 

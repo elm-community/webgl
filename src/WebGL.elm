@@ -27,13 +27,11 @@ module WebGL
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)
-and look at some examples before trying to do too much with just the
-documentation provided here.
+and look at [some examples](https://github.com/elm-community/webgl/tree/master/examples)
+before trying to do too much with just the documentation provided here.
 
 # Mesh
 @docs Mesh, triangles
-
-Find other kinds of meshes in the [corresponding section](#meshes).
 
 # Shaders
 @docs Shader, Texture
@@ -46,11 +44,11 @@ Find other kinds of meshes in the [corresponding section](#meshes).
 
 # Advanced Usage
 @docs entityWith, toHtmlWith, Option, alpha, depth, stencil, antialias,
-      clearColor
+  clearColor
 
 # Meshes
 @docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,
-      triangleStrip
+  triangleStrip
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
@@ -62,16 +60,13 @@ import WebGL.Settings.DepthTest as DepthTest
 import Native.WebGL
 
 
-{-| Defines the mesh by forming geometry from the specified vertices.
-Each vertex contains a bunch of attributes, that should be defined as
-a custom record type, e.g.:
+{-| Mesh forms geometry from the specified vertices. Each vertex contains a
+bunch of attributes, defined as a custom record type, e.g.:
 
-```
-type alias Attributes =
-    { position : Vec3
-    , color : Vec3
-    }
-```
+    type alias Attributes =
+        { position : Vec3
+        , color : Vec3
+        }
 
 The supported types in attributes are: `Int`, `Float`, `WebGL.Texture`
 and `Vec2`, `Vec3`, `Vec4`, `Mat4` from the
@@ -108,16 +103,34 @@ triangleStrip =
     TriangleStrip
 
 
-{-| Similar to `triangleStrip`, but creates a fan shaped output.
+{-| Similar to [`triangleStrip`](#triangleStrip), but creates a fan shaped
+output.
 -}
 triangleFan : List attributes -> Mesh attributes
 triangleFan =
     TriangleFan
 
 
-{-| IndexedTriangles is a special mode in which you provide a list of attributes
-that describe the vertices and and a list of indices, that are grouped in sets
-of three that refer to the vertices that form each triangle.
+{-| Create triangles from a vertices and indices, grouped in sets of three to
+define each triangle by refering the vertices.
+
+This helps to avoid duplicated vertices whenever two triangles share an
+edge. For example, if you want to define a rectangle using
+[`triangles`](#triangles), `v0` and `v2` will have to be duplicated:
+
+    -- v2 +---+ v1
+    --    |\  |
+    --    | \ |
+    --    |  \|
+    -- v3 +---+ v0
+
+    rectangle =
+        triangles [(v0, v1, v2), (v2, v3, v0)]
+
+This will use two vertices less:
+
+    rectangle =
+        indexedTriangles [v0, v1, v2, v3] [(0, 1, 2), (2, 3, 0)]
 -}
 indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Mesh attributes
 indexedTriangles =
@@ -131,14 +144,15 @@ lines =
     Lines
 
 
-{-| Connects each two subsequent vertices in the list with a line.
+{-| Connects each two subsequent vertices with a line.
 -}
 lineStrip : List attributes -> Mesh attributes
 lineStrip =
     LineStrip
 
 
-{-| Similar to `lineStrip`, but connects the last vertex back to the first.
+{-| Similar to [`lineStrip`](#lineStrip), but connects the last vertex back to
+the first.
 -}
 lineLoop : List attributes -> Mesh attributes
 lineLoop =
@@ -157,23 +171,19 @@ They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
 shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Normally you specify a shader with a `glsl[| |]` block. This is because shaders
-must be compiled before they are used, imposing an overhead that is best
-avoided in general.
+Normally you specify a shader with a `glsl[| |]` block. Elm compiler will parse
+the shader code block and derive the type signature for your shader.
 
-* `attributes` defines [vertices in the mesh](#mesh);
-* `uniforms` allow you to pass custom parameters like
+* `attributes` define vertices in the [mesh](#Mesh);
+* `uniforms` allow you to pass scene parameters like
   transformation matrix, texture, screen size, etc.;
-* `varyings` defines the output from the shader.
+* `varyings` define the output from the vertex shader.
 
 `attributes`, `uniforms` and `varyings` are records with the fields of the
-following types: `Int`, `Float`, `WebGL.Texture` and `Vec2`, `Vec3`, `Vec4`,
+following types: `Int`, `Float`, `[Texture](#Texture)` and `Vec2`, `Vec3`, `Vec4`,
 `Mat4` from the
 [linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
 package.
-
-Elm compiler will parse the shader code block and derive the type
-signature for your shader.
 -}
 type Shader attributes uniforms varyings
     = Shader
@@ -187,14 +197,14 @@ unsafeShader =
     Native.WebGL.unsafeCoerceGLSL
 
 
-{-| Use Texture to pass the sampler2D uniform value to the shader. Find
-more about textures in `WebGL.Texture`.
+{-| Use `Texture` to pass the `sampler2D` uniform value to the shader. Find
+more about textures in `[WebGL.Texture](WebGL-Texture)`.
 -}
 type Texture
     = Texture
 
 
-{-| Conceptually, an encapsulation of the instructions to entity something.
+{-| Conceptually, an encapsulation of the instructions to render something.
 -}
 type Entity
     = Entity
@@ -206,18 +216,35 @@ on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
 The vertex shader receives `attributes` and `uniforms` and returns `varyings`
-and `gl_Position` (the position of the pixel on the screen) for the fragment
-shader. The fragment shader is called for each pixel with `varyings` and
-`uniforms` as inputs and returns `gl_FragColor` (the color of the pixel on the
-screen).
+and `gl_Position`—the position of the vertex on the screen, defined as
+`vec4(x, y, z, w)`, that means `(x/w, y/w, z/w)` in the clip space coordinates:
 
-Values will be cached intelligently, so if you have already sent a shader or
-mesh to the GPU, it will not be resent. This means it is fairly cheap to create
-new entities if you are reusing shaders and meshes that have been used
-before.
+    --   (-1,1,1) +================+ (1,1,1)
+    --           /|               /|
+    --          / |     |        / |
+    --(-1,1,-1)+================+ (1,1,-1)
+    --         |  |     | /     |  |
+    --         |  |     |/      |  |
+    --         |  |     +-------|->|
+    -- (-1,-1,1|) +--(0,0,0)----|--+ (1,-1,1)
+    --         | /              | /
+    --         |/               |/
+    --         +================+
+    --   (-1,-1,-1)         (1,-1,-1)
 
-By default, depth test setting is enabled for you. If you need more settings,
-like stencil test, blending, etc., then check [`entityWith`](#entityWith).
+The fragment shader is called for each pixel inside the clip space with
+`varyings` and `uniforms` and returns `gl_FragColor`—the color of
+the pixel, defined as `vec4(r, g, b, a)` where each color component is a float
+from 0 to 1.
+
+Shaders and mesh are cached so that they do not get resent to the GPU,
+so it should be relatively cheap to create new entities out of existing
+values.
+
+By default, [depth test](WebGL-Settings-DepthTest#default) is enabled for you.
+If you need more [settings](WebGL-Settings), like
+[blending](WebGL-Settings-Blend) or [stencil test](WebG-Settings-StencilTest),
+then use [`entityWith`](#entityWith).
 
     entity =
         entityWith [ DepthTest.default ]
@@ -232,8 +259,8 @@ entity =
     entityWith [ DepthTest.default ]
 
 
-{-| The same as `entity`, but allows to configure an entity with a list
-of settings. Check [WebGL.Settings](WebGL.Settings) for the possible values.
+{-| The same as [`entity`](#entity), but allows to configure an entity with
+[settings](WebGL-Settings).
 -}
 entityWith :
     List Setting
@@ -246,15 +273,10 @@ entityWith =
     Native.WebGL.entity
 
 
-{-| Render a WebGL scene with the given options, html attributes, and
-entities.
-
-Shaders and meshes are cached so that they do not get resent to the GPU,
-so it should be relatively cheap to create new entities out of existing
-values.
+{-| Render a WebGL scene with the given html attributes, and entities.
 
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
-options are enabled. Use `toHtmlWith` for custom options.
+are enabled. Use [`toHtmlWith`](#toHtmlWith) for custom options.
 
     toHtml =
         toHtmlWith [ alpha True, antialias, depth 1 ]
@@ -264,13 +286,10 @@ toHtml =
     toHtmlWith [ alpha True, antialias, depth 1 ]
 
 
-{-| Render a WebGL scene with the given list of options,
-html attributes, and entities.
+{-| Render a WebGL scene with the given options, html attributes, and entities.
 
 Due to browser limitations, options will be applied only once,
 when the canvas is created for the first time.
-
-Check `WebGL.Options` for all possible options.
 -}
 toHtmlWith : List Option -> List (Attribute msg) -> List Entity -> Html msg
 toHtmlWith options attributes entities =
@@ -278,7 +297,7 @@ toHtmlWith options attributes entities =
 
 
 {-| Provides a way to enable features and change the scene behavior
-in `WebGL.toHtmlWith`.
+in [`toHtmlWith`](#toHtmlWith).
 -}
 type Option
     = Alpha Bool
@@ -290,9 +309,7 @@ type Option
 
 {-| Enable alpha channel in the drawing buffer. If the argument is `True`, then
 the page compositor will assume the drawing buffer contains colors with
-premultiplied alpha.
-
-`alpha True` is enabled by default when you use `WebGL.toHtml`.
+premultiplied alpha `(r * a, g * a, b * a, a)`.
 -}
 alpha : Bool -> Option
 alpha =
@@ -301,8 +318,6 @@ alpha =
 
 {-| Enable the depth buffer, and prefill it with given value each time before
 the scene is rendered. The value is clamped between 0 and 1.
-
-`depth 1` is enabled by default when you use `WebGL.toHtml`.
 -}
 depth : Float -> Option
 depth =
@@ -318,10 +333,10 @@ stencil =
     Stencil
 
 
-{-| Enable antialiasing of the drawing buffer, if supported by the browser.
-Useful when you want to preserve sharp edges when resizing the canvas.
-
-`antialias` is enabled by default when you use `WebGL.toHtml`.
+{-| Enable multisample antialiasing of the drawing buffer, if supported by
+the platform. Useful when you need to have smooth lines and smooth edges of
+triangles at a lower cost than supersampling (rendering to larger dimensions and
+then scaling down with CSS transform).
 -}
 antialias : Option
 antialias =

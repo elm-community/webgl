@@ -15,24 +15,19 @@ module WebGL.Settings
         )
 
 {-| # Settings
-
-@docs Setting
-
-@docs scissor, colorMask, dither, polygonOffset, sampleCoverage,
-      sampleAlphaToCoverage, cullFace
+@docs Setting, scissor, colorMask, dither, polygonOffset, sampleAlphaToCoverage,
+  sampleCoverage, cullFace
 
 ## Face Modes
-
 @docs FaceMode, front, back, frontAndBack
-
 -}
 
 import WebGL.Settings.Internal as I
 
 
-{-| Lets you customize how an `Entity` is rendered. So if you only want to see
-the red part of your entity, you would use [`entityWith`](WebGL#entityWith) and
-[`colorMask`](#colorMask) to say:
+{-| Lets you customize how an [`Entity`](WebGL#Entity) is rendered. So if you
+only want to see the red part of your entity, you would use
+[`entityWith`](WebGL#entityWith) and [`colorMask`](#colorMask) to say:
 
     entityWith [colorMask True False False False]
         vertShader fragShader mesh uniforms
@@ -51,65 +46,94 @@ type alias Setting =
 screen to a specified rectangle.
 
 The arguments are the coordinates of the lower left corner, width and height.
-
 -}
 scissor : Int -> Int -> Int -> Int -> Setting
 scissor =
     I.Scissor
 
 
-{-| Specify whether or not each channel (red, green, blue, alpha)
-should be written into the frame buffer.
+{-| Specify whether or not each channel (red, green, blue, alpha) should be
+output on the screen.
 -}
 colorMask : Bool -> Bool -> Bool -> Bool -> Setting
 colorMask =
     I.ColorMask
 
 
-{-| Dither color components or indices before they
-are written to the color buffer.
+{-| Dither color components or indices before they are written on the screen.
+This is needed to prevent gradient banding, when transitioning between close
+colors. The implementation is platform specific.
 -}
 dither : Setting
 dither =
     I.Dither
 
 
-{-| Add an offset to depth values of a polygon's fragments produced by
-rasterization. The offset is added before the depth test is performed and
-before the value is written into the depth buffer.
+{-| When you want to draw the highlighting wireframe on top of the solid
+object, the lines may fade in and out of the coincident polygons,
+which is sometimes called "stitching" and is visually unpleasant.
 
-* the first argument is the scale factor for the variable depth offset for
-  each polygon;
-* the second argument is the multiplier by which an implementation-specific
-  value is multiplied
-  with to create a constant depth offset.
+This setting helps to avoid "stitching" by adding an offset to pixels’ depth
+values before the depth test is performed and before the value is written
+into the depth buffer.
+
+    polygonOffset factor units
+
+This adds an `offset = m * factor + r * units`, where
+
+* `m = max (dz / dx) (dz / dy)` is the maximum depth slope of the polygon.
+  The depth slope is the change in `z` (depth) values divided by the change in
+  either `x` or `y` coordinates, as you traverse a polygon;
+* `r` is the smallest value guaranteed to produce a resolvable difference in
+  window coordinate depth values. The value `r` is an implementation-specific
+  constant.
+
+The question is: "How much offset is enough?". It really depends on the slope.
+For polygons that are parallel to the near and far clipping planes,
+the depth slope is zero, so the minimum offset is needed:
+
+    polygonOffset 0 1
+
+For polygons that are at a great angle to the clipping planes, the depth slope
+can be significantly greater than zero. Use small non-zero values for factor,
+such as `0.75` or `1.0` should be enough to generate distinct depth values:
+
+    polygonOffset 0.75 1
 -}
 polygonOffset : Float -> Float -> Setting
 polygonOffset =
     I.PolygonOffset
 
 
-{-| Specify multisample coverage parameters.
+{-| When you render overlapping transparent entities, like grass or hair, you
+may notice that alpha blending doesn’t really work with depth testing, because
+depth test ignores transparency.
+[Alpha To Coverage](http://wiki.polycount.com/wiki/Transparency_map#Alpha_To_Coverage)
+is a way to address this issue without sorting transparent entities.
 
-The fragment's coverage is ANDed with the temporary coverage value.
+It works by computing a temporary coverage value, where each bit is determined
+by the alpha value at the corresponding sample location. The temporary coverage
+value is then ANDed with the fragment coverage value.
 
-* the first argument specifies sample coverage value, that is clamped to
-  the range 0 1;
-* the second argument represents if the coverage masks should be inverted.
--}
-sampleCoverage : Float -> Bool -> Setting
-sampleCoverage =
-    I.SampleCoverage
-
-
-{-| Compute a temporary coverage value, where each bit is determined by the
-alpha value at the corresponding sample location.
-
-The temporary coverage value is then ANDed with the fragment coverage value.
+Requires [`WebGL.antialias`](WebGL#antialias) option.
 -}
 sampleAlphaToCoverage : Setting
 sampleAlphaToCoverage =
     I.SampleAlphaToCoverage
+
+
+{-| Specifies multisample coverage parameters. The fragment's coverage is ANDed
+with the temporary coverage value.
+
+* the first argument specifies sample coverage value, that is clamped to the
+  range from 0 to 1;
+* the second argument represents if the coverage masks should be inverted.
+
+Requires [`WebGL.antialias`](WebGL#antialias) option.
+-}
+sampleCoverage : Float -> Bool -> Setting
+sampleCoverage =
+    I.SampleCoverage
 
 
 {-| Excludes polygons based on winding (the order of the vertices) in window
@@ -120,28 +144,25 @@ cullFace (FaceMode faceMode) =
     I.CullFace faceMode
 
 
-{-| The `FaceMode` defines the face of the polygon.
+{-| Targets the polygons based on their facing.
 -}
 type FaceMode
     = FaceMode Int
 
 
-{-| Targets the front-facing polygons.
--}
+{-| -}
 front : FaceMode
 front =
     FaceMode 1028
 
 
-{-| Targets the back-facing polygons.
--}
+{-| -}
 back : FaceMode
 back =
     FaceMode 1029
 
 
-{-| Targets both front- and back-facing polygons.
--}
+{-| -}
 frontAndBack : FaceMode
 frontAndBack =
     FaceMode 1032

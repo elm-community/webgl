@@ -3,15 +3,14 @@ module WebGL.Settings.StencilTest
         ( test
         , testSeparate
         , Options
-        , defaultOptions
         , Test
-        , never
         , always
-        , less
-        , lessOrEqual
         , equal
-        , greaterOrEqual
+        , never
+        , less
         , greater
+        , lessOrEqual
+        , greaterOrEqual
         , notEqual
         , Operation
         , replace
@@ -24,17 +23,21 @@ module WebGL.Settings.StencilTest
         , decrementWrap
         )
 
-{-|
+{-| You can read more about stencil-testing in the
+[OpenGL wiki](https://www.khronos.org/opengl/wiki/Stencil_Test)
+or [OpenGL docs](https://www.opengl.org/sdk/docs/man2/xhtml/glStencilFunc.xml).
+
 # Stencil Test
-In order to use this, [`stencil`](WebGL#stencil) option has to be used in
-[`toHtmlWith`](WebGL#toHtmlWith).
-@docs test, Options, defaultOptions
+@docs test, Options
+
 ## Tests
-@docs Test, less, never, always, equal, greater, notEqual,
+@docs Test, always, equal, never, less, greater, notEqual,
   lessOrEqual, greaterOrEqual
+
 ## Operations
 @docs Operation, replace, keep, zero, increment, decrement, invert,
   incrementWrap, decrementWrap
+
 # Separate Test
 @docs testSeparate
 -}
@@ -43,134 +46,126 @@ import WebGL.Settings exposing (Setting)
 import WebGL.Settings.Internal as I
 
 
-{-| Perform the stencil test and update the stencil buffer:
--}
+{-| -}
 test : Options -> Setting
 test options =
     testSeparate options options
 
 
-{-| Options
-* `test` - the test to run against the stencil buffer;
-* `fail` - the operation to use when the stencil test fails;
-* `zfail` - the operation to use when the stencil test passes, but the depth
+{-| When you need to draw an intercection of two entities, e.g. a reflection in
+the mirror, you can test against the stencil buffer, that has to be enabled
+with [`stencil`](WebGL#stencil) option in [`toHtmlWith`](WebGL#toHtmlWith).
+
+Stencil [test](#Test) decides if the pixel should be drawn on the screen.
+Depending on the results, it performs one of the following
+[operations](#Operation) on the stencil buffer:
+
+* `fail`—the operation to use when the stencil test fails;
+* `zfail`—the operation to use when the stencil test passes, but the depth
   test fails;
-* `zpass` - the operation to use when both the stencil test and the depth test
+* `zpass`—the operation to use when both the stencil test and the depth test
   pass, or when the stencil test passes and there is no depth buffer or depth
-  testing is disabled;
-* `mask` - a bit mask to enable or disable writing of individual bits in
-  the stencil plane.
+  testing is disabled.
+
+For example, draw the mirror `Entity` on the screen and fill the stencil buffer
+with all 1's:
+
+    test
+        { test = always 1 0xFF -- pass for each pixel and set ref to 1
+        , fail = keep          -- noop
+        , zfail = keep         -- noop
+        , zpass = replace      -- write ref to the stencil buffer
+        , writeMask = 0xFF     -- enable all stencil bits for writing
+        }
+
+Crop the reflection `Entity` using the values from the stencil buffer:
+
+    test
+        { test = equal 1 0xFF -- pass when the stencil value is 1
+        , fail = keep         -- noop
+        , zfail = keep        -- noop
+        , zpass = keep        -- noop
+        , writeMask = 0       -- disable writing to the stencil buffer
+        }
+
+You can see the complete example
+[here](https://github.com/elm-community/webgl/blob/master/examples/crate.elm).
 -}
 type alias Options =
     { test : Test
     , fail : Operation
     , zfail : Operation
     , zpass : Operation
-    , mask : Int
+    , writeMask : Int
     }
 
 
-{-| Defaut options for the stencil setting.
-
-    { test = always 0
-    , fail = keep
-    , zfail = keep
-    , zpass = keep
-    , mask = 0xFF
-    }
-
-The following test will always pass without causing any changes to
-the stencil buffer:
-
-    test defaultOptions
-
-Draw the entity, and fill the stencil buffer with all 1's:
-
-    test { defaultOptions | test = always 1, zpass = replace }
-
-Use the values from the stencil buffer to mask the entity and keep the
-stencil buffer intact:
-
-    test { defaultOptions | test = equal 1 0xFF, mask = 0 }
-
--}
-defaultOptions : Options
-defaultOptions =
-    { test = always 0
-    , fail = keep
-    , zfail = keep
-    , zpass = keep
-    , mask = 0xFF
-    }
-
-
-{-| The `Test` allows you to define how to compare the incoming value
+{-| The `Test` allows you to define how to compare the reference value
 with the stencil buffer value, in order to set the conditions under which
 the pixel will be drawn.
+
+    always ref mask         -- Always pass
+    equal ref mask          -- ref & mask == stencil & mask
+    never ref mask          -- Never pass
+    less ref mask           -- ref & mask < stencil & mask
+    greater ref mask        -- ref & mask > stencil & mask
+    notEqual ref mask       -- ref & mask != stencil & mask
+    lessOrEqual ref mask    -- ref & mask <= stencil & mask
+    greaterOrEqual ref mask -- ref & mask >= stencil & mask
 -}
 type Test
     = Test Int Int Int
 
 
-{-| Never pass.
--}
-never : Int -> Test
-never ref =
-    Test 512 ref 0
-
-
-{-| Always pass.
--}
-always : Int -> Test
+{-| -}
+always : Int -> Int -> Test
 always ref =
-    Test 519 ref 0
+    Test 519 ref
 
 
-{-| For the `value` from the stencil buffer, this will pass
-if `(ref & mask) < (value & mask)`:
-    less ref mask
--}
-less : Int -> Int -> Test
-less =
-    Test 513
-
-
-{-| Pass if `(ref & mask) <= (value & mask)`.
--}
-lessOrEqual : Int -> Int -> Test
-lessOrEqual =
-    Test 515
-
-
-{-| Pass if `(ref & mask) == (value & mask)`.
--}
+{-| -}
 equal : Int -> Int -> Test
 equal =
     Test 514
 
 
-{-| Pass if `(ref & mask) >= (value & mask)`.
--}
-greaterOrEqual : Int -> Int -> Test
-greaterOrEqual =
-    Test 518
+{-| -}
+never : Int -> Int -> Test
+never ref =
+    Test 512 ref
 
 
-{-| Pass if `(ref & mask) > (value & mask)`.
--}
+{-| -}
+less : Int -> Int -> Test
+less =
+    Test 513
+
+
+{-| -}
 greater : Int -> Int -> Test
 greater =
     Test 516
 
 
-{-| Pass if `(ref & mask) != (value & mask)`.
--}
+{-| -}
 notEqual : Int -> Int -> Test
 notEqual =
     Test 517
 
 
-{-| Defines what to do with the stencil buffer value.
+{-| -}
+lessOrEqual : Int -> Int -> Test
+lessOrEqual =
+    Test 515
+
+
+{-| -}
+greaterOrEqual : Int -> Int -> Test
+greaterOrEqual =
+    Test 518
+
+
+{-| Defines how to update the value in the stencil buffer.
 -}
 type Operation
     = Operation Int
@@ -236,7 +231,9 @@ decrementWrap =
     Operation 34056
 
 
-{-| Different options for front and back facing polygons
+{-| Different options for front and back facing polygons. Both options must
+use the same `ref`, `mask` and `writeMask`,
+[see here](https://www.khronos.org/registry/webgl/specs/latest/1.0/#6.10).
 -}
 testSeparate : Options -> Options -> Setting
 testSeparate options1 options2 =
@@ -247,12 +244,12 @@ testSeparate options1 options2 =
         expandOp (Operation op) fn =
             fn op
 
-        expand { test, fail, zfail, zpass, mask } =
+        expand { test, fail, zfail, zpass, writeMask } =
             expandTest test
                 >> expandOp fail
                 >> expandOp zfail
                 >> expandOp zpass
-                >> (|>) mask
+                >> (|>) writeMask
     in
         I.StencilTest
             |> expand options1
