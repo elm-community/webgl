@@ -11,7 +11,6 @@ import Math.Matrix4 exposing (..)
 import Task exposing (Task)
 import Time exposing (..)
 import WebGL exposing (..)
-import WebGL.Options as Options
 import WebGL.Texture as Texture exposing (Error)
 import Html exposing (Html, text, div)
 import Html
@@ -243,14 +242,14 @@ gravity dt person =
             }
 
 
-world : Maybe Texture -> Mat4 -> List Renderable
+world : Maybe Texture -> Mat4 -> List Entity
 world maybeTexture perspective =
     case maybeTexture of
         Nothing ->
             []
 
         Just tex ->
-            [ render vertexShader fragmentShader crate { crate = tex, perspective = perspective } ]
+            [ entity vertexShader fragmentShader crate { crate = tex, perspective = perspective } ]
 
 
 
@@ -280,7 +279,7 @@ view { size, person, texture } =
                 ]
             ]
             [ WebGL.toHtmlWith
-                [ Options.depth 1, Options.antialias ]
+                [ depth 1, antialias ]
                 [ width size.width
                 , height size.height
                 , style [ ( "display", "block" ) ]
@@ -317,7 +316,7 @@ type alias Vertex =
     }
 
 
-crate : Drawable Vertex
+crate : Mesh Vertex
 crate =
     triangles (List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ])
 

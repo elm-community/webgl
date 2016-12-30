@@ -15,14 +15,14 @@ main =
         [ HA.width 400
         , HA.height 300
         ]
-        [ WebGL.render vertexShader fragmentShader heroVertices {} ]
+        [ WebGL.entity vertexShader fragmentShader heroVertices {} ]
 
 
 type alias Vertex =
     { pos : Vec3 }
 
 
-heroVertices : WebGL.Drawable Vertex
+heroVertices : WebGL.Mesh Vertex
 heroVertices =
     WebGL.triangles
         [ ( { pos = Vec3.vec3 0 0 0 }

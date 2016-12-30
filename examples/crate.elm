@@ -13,7 +13,8 @@ import Time exposing (Time)
 import WebGL exposing (..)
 import WebGL.Texture as Texture exposing (Error)
 import WebGL.Settings exposing (..)
-import WebGL.Options as Options
+import WebGL.Settings.DepthTest as DepthTest
+import WebGL.Settings.StencilTest as StencilTest
 import Html exposing (Html)
 import AnimationFrame
 import Html.Attributes exposing (width, height)
@@ -74,7 +75,7 @@ main =
 -- MESHES
 
 
-crate : Drawable { pos : Vec3, coord : Vec3 }
+crate : Mesh { pos : Vec3, coord : Vec3 }
 crate =
     triangles <|
         List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
@@ -118,7 +119,7 @@ face =
         ]
 
 
-floor : Drawable { pos : Vec3 }
+floor : Mesh { pos : Vec3 }
 floor =
     let
         topLeft =
@@ -166,7 +167,7 @@ camera =
 view : Model -> Html Action
 view { texture, theta } =
     WebGL.toHtmlWith
-        [ Options.alpha True, Options.antialias, Options.depth 1, Options.stencil 0 ]
+        [ alpha True, antialias, depth 1, stencil 0 ]
         [ width 400, height 400 ]
         (case texture of
             Nothing ->
@@ -178,19 +179,35 @@ view { texture, theta } =
                         perspective theta
                 in
                     [ renderBox
-                        [ depth depthOptions ]
+                        [ DepthTest.default ]
                         Math.Matrix4.identity
                         (vec3 1 1 1)
                         tex
                         camera
                     , renderFloor
-                        [ depth { depthOptions | mask = False }
-                        , stencil { stencilOptions | ref = 1, zpass = replace }
+                        [ DepthTest.less
+                            { write = False
+                            , near = 0
+                            , far = 1
+                            }
+                        , StencilTest.test
+                            { test = StencilTest.always 1
+                            , fail = StencilTest.keep
+                            , zfail = StencilTest.keep
+                            , zpass = StencilTest.replace
+                            , writeMask = 0xFF
+                            }
                         ]
                         camera
                     , renderBox
-                        [ stencil { stencilOptions | func = equal, ref = 1, writeMask = 0 }
-                        , depth depthOptions
+                        [ StencilTest.test
+                            { test = StencilTest.equal 1 0xFF
+                            , fail = StencilTest.keep
+                            , zfail = StencilTest.keep
+                            , zpass = StencilTest.keep
+                            , writeMask = 0
+                            }
+                        , DepthTest.default
                         ]
                         (makeScale (vec3 1 -1 1))
                         (vec3 0.6 0.6 0.6)
@@ -200,9 +217,9 @@ view { texture, theta } =
         )
 
 
-renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Renderable
+renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Entity
 renderBox settings worldTransform overrideColor tex camera =
-    renderWith settings
+    entityWith settings
         boxVert
         boxFrag
         crate
@@ -213,9 +230,9 @@ renderBox settings worldTransform overrideColor tex camera =
         }
 
 
-renderFloor : List Setting -> Mat4 -> Renderable
+renderFloor : List Setting -> Mat4 -> Entity
 renderFloor settings camera =
-    renderWith settings
+    entityWith settings
         floorVert
         floorFrag
         floor
