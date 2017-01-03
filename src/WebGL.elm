@@ -111,7 +111,7 @@ triangleFan =
     TriangleFan
 
 
-{-| Create triangles from a vertices and indices, grouped in sets of three to
+{-| Create triangles from vertices and indices, grouped in sets of three to
 define each triangle by refering the vertices.
 
 This helps to avoid duplicated vertices whenever two triangles share an
@@ -211,7 +211,7 @@ type Entity
 
 
 {-| Packages a vertex shader, a fragment shader, a mesh, and uniforms
-as a `Entity`. This specifies a full rendering pipeline to be run
+as an `Entity`. This specifies a full rendering pipeline to be run
 on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
@@ -237,8 +237,8 @@ The fragment shader is called for each pixel inside the clip space with
 the pixel, defined as `vec4(r, g, b, a)` where each color component is a float
 from 0 to 1.
 
-Shaders and mesh are cached so that they do not get resent to the GPU,
-so it should be relatively cheap to create new entities out of existing
+Shaders and a mesh are cached so that they do not get resent to the GPU.
+It should be relatively cheap to create new entities out of existing
 values.
 
 By default, [depth test](WebGL-Settings-DepthTest#default) is enabled for you.
