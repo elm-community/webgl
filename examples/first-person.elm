@@ -1,31 +1,40 @@
--- Try adding the ability to crouch or to land on top of the crate.
+module Main exposing (main)
 
+{- Try adding the ability to crouch or to land on top of the crate. -}
 
-module Main exposing (..)
-
-import Keyboard
-import Math.Vector2 exposing (Vec2)
-import Math.Vector3 exposing (..)
-import Math.Vector3 as V3
-import Math.Matrix4 exposing (..)
-import Task exposing (Task)
-import Time exposing (..)
-import WebGL exposing (..)
-import WebGL.Texture as Texture exposing (Error)
-import Html exposing (Html, text, div)
-import Html
-import Html.Attributes exposing (width, height, style)
 import AnimationFrame
+import Html exposing (Html, text, div)
+import Html.Attributes exposing (width, height, style)
+import Keyboard
+import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector2 as Vec2 exposing (Vec2, vec2)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+import Task exposing (Task)
+import Time exposing (Time)
+import WebGL exposing (Mesh, Shader, Entity)
+import WebGL.Texture as Texture exposing (Texture, Error)
 import Window
 
 
--- MODEL
+type alias Model =
+    { texture : Maybe Texture
+    , keys : Keys
+    , size : Window.Size
+    , person : Person
+    }
 
 
 type alias Person =
     { position : Vec3
     , velocity : Vec3
     }
+
+
+type Msg
+    = TextureLoaded (Result Error Texture)
+    | KeyChange Bool Keyboard.KeyCode
+    | Animate Time
+    | Resize Window.Size
 
 
 type alias Keys =
@@ -37,120 +46,7 @@ type alias Keys =
     }
 
 
-type alias Model =
-    { texture : Maybe Texture
-    , keys : Keys
-    , size : Window.Size
-    , person : Person
-    }
-
-
-type Action
-    = TextureError Error
-    | TextureLoaded Texture
-    | KeyChange (Keys -> Keys)
-    | Animate Time
-    | Resize Window.Size
-
-
-eyeLevel : Float
-eyeLevel =
-    2
-
-
-defaultPerson : Person
-defaultPerson =
-    { position = vec3 0 eyeLevel -10
-    , velocity = vec3 0 0 0
-    }
-
-
-update : Action -> Model -> ( Model, Cmd Action )
-update action model =
-    case action of
-        TextureError err ->
-            ( model, Cmd.none )
-
-        TextureLoaded texture ->
-            ( { model | texture = Just texture }, Cmd.none )
-
-        KeyChange keyfunc ->
-            ( { model | keys = keyfunc model.keys }, Cmd.none )
-
-        Resize size ->
-            ( { model | size = size }, Cmd.none )
-
-        Animate dt ->
-            ( { model
-                | person =
-                    model.person
-                        |> walk (directions model.keys)
-                        |> jump model.keys.space
-                        |> gravity (dt / 500)
-                        |> physics (dt / 500)
-              }
-            , Cmd.none
-            )
-
-
-init : ( Model, Cmd Action )
-init =
-    ( { texture = Nothing
-      , person = defaultPerson
-      , keys = Keys False False False False False
-      , size = Window.Size 0 0
-      }
-    , Cmd.batch
-        [ Texture.load "texture/woodCrate.jpg"
-            |> Task.attempt
-                (\result ->
-                    case result of
-                        Err err ->
-                            TextureError err
-
-                        Ok val ->
-                            TextureLoaded val
-                )
-        , Task.perform Resize Window.size
-        ]
-    )
-
-
-subscriptions : Model -> Sub Action
-subscriptions _ =
-    [ AnimationFrame.diffs Animate
-    , Keyboard.downs (keyChange True)
-    , Keyboard.ups (keyChange False)
-    , Window.resizes Resize
-    ]
-        |> Sub.batch
-
-
-keyChange : Bool -> Keyboard.KeyCode -> Action
-keyChange on keyCode =
-    (case keyCode of
-        32 ->
-            \k -> { k | space = on }
-
-        37 ->
-            \k -> { k | left = on }
-
-        39 ->
-            \k -> { k | right = on }
-
-        38 ->
-            \k -> { k | up = on }
-
-        40 ->
-            \k -> { k | down = on }
-
-        _ ->
-            Basics.identity
-    )
-        |> KeyChange
-
-
-main : Program Never Model Action
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -160,69 +56,117 @@ main =
         }
 
 
-directions : Keys -> { x : Int, y : Int }
-directions { left, right, up, down } =
+eyeLevel : Float
+eyeLevel =
+    2
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { texture = Nothing
+      , person = Person (vec3 0 eyeLevel -10) (vec3 0 0 0)
+      , keys = Keys False False False False False
+      , size = Window.Size 0 0
+      }
+    , Cmd.batch
+        [ Task.attempt TextureLoaded (Texture.load "texture/wood-crate.jpg")
+        , Task.perform Resize Window.size
+        ]
+    )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.batch
+        [ AnimationFrame.diffs Animate
+        , Keyboard.downs (KeyChange True)
+        , Keyboard.ups (KeyChange False)
+        , Window.resizes Resize
+        ]
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update action model =
+    case action of
+        TextureLoaded textureResult ->
+            ( { model | texture = Result.toMaybe textureResult }, Cmd.none )
+
+        KeyChange on code ->
+            ( { model | keys = keyFunc on code model.keys }, Cmd.none )
+
+        Resize size ->
+            ( { model | size = size }, Cmd.none )
+
+        Animate dt ->
+            ( { model
+                | person =
+                    model.person
+                        |> move model.keys
+                        |> gravity (dt / 500)
+                        |> physics (dt / 500)
+              }
+            , Cmd.none
+            )
+
+
+keyFunc : Bool -> Keyboard.KeyCode -> Keys -> Keys
+keyFunc on keyCode keys =
+    case keyCode of
+        32 ->
+            { keys | space = on }
+
+        37 ->
+            { keys | left = on }
+
+        39 ->
+            { keys | right = on }
+
+        38 ->
+            { keys | up = on }
+
+        40 ->
+            { keys | down = on }
+
+        _ ->
+            keys
+
+
+move : Keys -> Person -> Person
+move { left, right, up, down, space } person =
     let
         direction a b =
-            case ( a, b ) of
-                ( True, False ) ->
-                    -1
+            if a == b then
+                0
+            else if a then
+                1
+            else
+                -1
 
-                ( False, True ) ->
-                    1
-
-                _ ->
-                    0
+        vy =
+            if space then
+                2
+            else
+                Vec3.getY person.velocity
     in
-        { x = direction left right
-        , y = direction down up
-        }
-
-
-walk : { x : Int, y : Int } -> Person -> Person
-walk directions person =
-    if getY person.position > eyeLevel then
-        person
-    else
-        let
-            vx =
-                toFloat -directions.x
-
-            vz =
-                toFloat directions.y
-        in
+        if Vec3.getY person.position <= eyeLevel then
             { person
-                | velocity = vec3 vx (getY person.velocity) vz
+                | velocity =
+                    vec3 (direction left right) vy (direction up down)
             }
-
-
-jump : Bool -> Person -> Person
-jump isJumping person =
-    if not isJumping || getY person.position > eyeLevel then
-        person
-    else
-        let
-            ( vx, _, vz ) =
-                toTuple person.velocity
-        in
-            { person
-                | velocity = vec3 vx 2 vz
-            }
+        else
+            person
 
 
 physics : Float -> Person -> Person
 physics dt person =
     let
         position =
-            add person.position (V3.scale dt person.velocity)
-
-        ( x, y, z ) =
-            toTuple position
+            Vec3.add person.position (Vec3.scale dt person.velocity)
     in
         { person
             | position =
-                if y < eyeLevel then
-                    vec3 x eyeLevel z
+                if Vec3.getY position < eyeLevel then
+                    Vec3.setY eyeLevel position
                 else
                     position
         }
@@ -230,74 +174,55 @@ physics dt person =
 
 gravity : Float -> Person -> Person
 gravity dt person =
-    if getY person.position <= eyeLevel then
-        person
+    if Vec3.getY person.position > eyeLevel then
+        { person
+            | velocity =
+                Vec3.setY
+                    (Vec3.getY person.velocity - 2 * dt)
+                    person.velocity
+        }
     else
-        let
-            v =
-                toRecord person.velocity
-        in
-            { person
-                | velocity = vec3 v.x (v.y - 2 * dt) v.z
-            }
-
-
-world : Maybe Texture -> Mat4 -> List Entity
-world maybeTexture perspective =
-    case maybeTexture of
-        Nothing ->
-            []
-
-        Just tex ->
-            [ entity vertexShader fragmentShader crate { crate = tex, perspective = perspective } ]
+        person
 
 
 
--- VIEW
+-- View
 
 
-perspective : ( Int, Int ) -> Person -> Mat4
-perspective ( w, h ) person =
-    mul (makePerspective 45 (toFloat w / toFloat h) 0.01 100)
-        (makeLookAt person.position (add person.position k) j)
-
-
-view : Model -> Html Action
+view : Model -> Html Msg
 view { size, person, texture } =
-    let
-        perspectiveMatrix =
-            perspective ( size.width, size.height ) person
-
-        entities =
-            world texture perspectiveMatrix
-    in
-        div
+    div
+        [ style
+            [ ( "width", toString size.width ++ "px" )
+            , ( "height", toString size.height ++ "px" )
+            , ( "position", "relative" )
+            ]
+        ]
+        [ WebGL.toHtmlWith
+            [ WebGL.depth 1
+            , WebGL.antialias
+            ]
+            [ width size.width
+            , height size.height
+            , style [ ( "display", "block" ) ]
+            ]
+            (texture
+                |> Maybe.map (scene size person)
+                |> Maybe.withDefault []
+            )
+        , div
             [ style
-                [ ( "width", toString size.width ++ "px" )
-                , ( "height", toString size.height ++ "px" )
-                , ( "position", "relative" )
+                [ ( "position", "absolute" )
+                , ( "font-family", "monospace" )
+                , ( "color", "white" )
+                , ( "text-align", "center" )
+                , ( "left", "20px" )
+                , ( "right", "20px" )
+                , ( "top", "20px" )
                 ]
             ]
-            [ WebGL.toHtmlWith
-                [ depth 1, antialias ]
-                [ width size.width
-                , height size.height
-                , style [ ( "display", "block" ) ]
-                ]
-                entities
-            , div
-                [ style
-                    [ ( "position", "absolute" )
-                    , ( "font-family", "monospace" )
-                    , ( "color", "white" )
-                    , ( "text-align", "center" )
-                    , ( "left", "20px" )
-                    , ( "right", "20px" )
-                    , ( "top", "20px" )
-                    ]
-                ]
-                [ text message ]
-            ]
+            [ text message ]
+        ]
 
 
 message : String
@@ -306,53 +231,75 @@ message =
         ++ "Arrows keys to move, space bar to jump."
 
 
+scene : Window.Size -> Person -> Texture -> List Entity
+scene { width, height } person texture =
+    let
+        perspective =
+            Mat4.mul
+                (Mat4.makePerspective 45 (toFloat width / toFloat height) 0.01 100)
+                (Mat4.makeLookAt person.position (Vec3.add person.position Vec3.k) Vec3.j)
+    in
+        [ WebGL.entity
+            vertexShader
+            fragmentShader
+            crate
+            { texture = texture
+            , perspective = perspective
+            }
+        ]
+
+
 
 -- Define the mesh for a crate
 
 
 type alias Vertex =
     { position : Vec3
-    , coord : Vec3
+    , coord : Vec2
     }
 
 
 crate : Mesh Vertex
 crate =
-    triangles (List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ])
+    [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
+        |> List.concatMap rotatedSquare
+        |> WebGL.triangles
 
 
-rotatedFace : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
-rotatedFace ( angleXZ, angleYZ ) =
+rotatedSquare : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
+rotatedSquare ( angleXZ, angleYZ ) =
     let
-        x =
-            makeRotate (degrees angleXZ) j
+        transformMat =
+            Mat4.mul
+                (Mat4.makeRotate (degrees angleXZ) Vec3.j)
+                (Mat4.makeRotate (degrees angleYZ) Vec3.i)
 
-        y =
-            makeRotate (degrees angleYZ) i
+        transform vertex =
+            { vertex
+                | position =
+                    Mat4.transform transformMat vertex.position
+            }
 
-        t =
-            mul x y
-
-        each f ( a, b, c ) =
-            ( f a, f b, f c )
+        transformTriangle ( a, b, c ) =
+            ( transform a, transform b, transform c )
     in
-        List.map (each (\v -> { v | position = transform t v.position })) face
+        List.map transformTriangle square
 
 
-face : List ( Vertex, Vertex, Vertex )
-face =
+square : List ( Vertex, Vertex, Vertex )
+square =
     let
         topLeft =
-            Vertex (vec3 -1 1 1) (vec3 0 1 0)
+            Vertex (vec3 -1 1 1) (vec2 0 1)
 
         topRight =
-            Vertex (vec3 1 1 1) (vec3 1 1 0)
+            Vertex (vec3 1 1 1) (vec2 1 1)
 
         bottomLeft =
-            Vertex (vec3 -1 -1 1) (vec3 0 0 0)
+            Vertex (vec3 -1 -1 1) (vec2 0 0)
 
         bottomRight =
-            Vertex (vec3 1 -1 1) (vec3 1 0 0)
+            Vertex (vec3 1 -1 1) (vec2 1 0)
     in
         [ ( topLeft, topRight, bottomLeft )
         , ( bottomLeft, topRight, bottomRight )
@@ -363,33 +310,39 @@ face =
 -- Shaders
 
 
-vertexShader : Shader { position : Vec3, coord : Vec3 } { u | perspective : Mat4 } { vcoord : Vec2 }
+type alias Uniforms =
+    { texture : Texture
+    , perspective : Mat4
+    }
+
+
+vertexShader : Shader Vertex Uniforms { vcoord : Vec2 }
 vertexShader =
     [glsl|
 
-attribute vec3 position;
-attribute vec3 coord;
-uniform mat4 perspective;
-varying vec2 vcoord;
+        attribute vec3 position;
+        attribute vec2 coord;
+        uniform mat4 perspective;
+        varying vec2 vcoord;
 
-void main () {
-  gl_Position = perspective * vec4(position, 1.0);
-  vcoord = coord.xy;
-}
+        void main () {
+          gl_Position = perspective * vec4(position, 1.0);
+          vcoord = coord;
+        }
 
-|]
+    |]
 
 
-fragmentShader : Shader {} { u | crate : Texture } { vcoord : Vec2 }
+fragmentShader : Shader {} Uniforms { vcoord : Vec2 }
 fragmentShader =
     [glsl|
 
-precision mediump float;
-uniform sampler2D crate;
-varying vec2 vcoord;
+        precision mediump float;
+        uniform sampler2D texture;
+        varying vec2 vcoord;
 
-void main () {
-  gl_FragColor = texture2D(crate, vcoord);
-}
+        void main () {
+          gl_FragColor = texture2D(texture, vcoord);
+        }
 
-|]
+    |]

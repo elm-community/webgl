@@ -1,23 +1,23 @@
-module Main exposing (..)
+module Main exposing (main)
 
-{-|
-    This example was inspired by https://open.gl/depthstencils
-    It demonstrates how to use the stencil buffer.
+{-
+   This example was inspired by https://open.gl/depthstencils
+   It demonstrates how to use the stencil buffer.
 -}
 
-import Math.Vector2 exposing (Vec2)
-import Math.Vector3 exposing (..)
-import Math.Matrix4 exposing (..)
+import AnimationFrame
+import Html exposing (Html)
+import Html.Attributes exposing (width, height, style)
+import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector2 as Vec2 exposing (Vec2, vec2)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Task
 import Time exposing (Time)
-import WebGL exposing (..)
-import WebGL.Texture as Texture exposing (Error)
-import WebGL.Settings exposing (..)
+import WebGL exposing (Mesh, Shader, Entity)
+import WebGL.Settings.Blend as Blend
 import WebGL.Settings.DepthTest as DepthTest
 import WebGL.Settings.StencilTest as StencilTest
-import Html exposing (Html)
-import AnimationFrame
-import Html.Attributes exposing (width, height)
+import WebGL.Texture as Texture exposing (Error, Texture)
 
 
 type alias Model =
@@ -26,42 +26,29 @@ type alias Model =
     }
 
 
-type Action
-    = TextureError Error
-    | TextureLoaded Texture
+type Msg
+    = TextureLoaded (Result Error Texture)
     | Animate Time
 
 
-update : Action -> Model -> ( Model, Cmd Action )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
     case action of
-        TextureError err ->
-            ( model, Cmd.none )
-
-        TextureLoaded texture ->
-            ( { model | texture = Just texture }, Cmd.none )
+        TextureLoaded textureResult ->
+            ( { model | texture = Result.toMaybe textureResult }, Cmd.none )
 
         Animate dt ->
             ( { model | theta = model.theta + dt / 10000 }, Cmd.none )
 
 
-init : ( Model, Cmd Action )
+init : ( Model, Cmd Msg )
 init =
     ( { texture = Nothing, theta = 0 }
-    , Texture.load "texture/woodCrate.jpg"
-        |> Task.attempt
-            (\result ->
-                case result of
-                    Err err ->
-                        TextureError err
-
-                    Ok val ->
-                        TextureLoaded val
-            )
+    , Task.attempt TextureLoaded (Texture.load "texture/wood-crate.jpg")
     )
 
 
-main : Program Never Model Action
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -72,233 +59,242 @@ main =
 
 
 
+-- VIEW
+
+
+view : Model -> Html Msg
+view { texture, theta } =
+    WebGL.toHtmlWith
+        [ WebGL.alpha True
+        , WebGL.antialias
+        , WebGL.depth 1
+        , WebGL.stencil 0
+        ]
+        [ width 400
+        , height 400
+        , style [ ( "display", "block" ) ]
+        ]
+        (texture
+            |> Maybe.map (scene (perspective theta))
+            |> Maybe.withDefault []
+        )
+
+
+perspective : Float -> Mat4
+perspective angle =
+    List.foldr Mat4.mul
+        Mat4.identity
+        [ Mat4.makePerspective 45 1 0.01 100
+        , Mat4.makeLookAt (vec3 0 3 8) (vec3 0 0 0) (vec3 0 1 0)
+        , Mat4.makeRotate (3 * angle) (vec3 0 1 0)
+        ]
+
+
+scene : Mat4 -> Texture -> List Entity
+scene camera texture =
+    [ WebGL.entity
+        crateVertex
+        crateFragment
+        crateMesh
+        { texture = texture
+        , perspective = camera
+        }
+    , WebGL.entityWith
+        [ DepthTest.less
+            { write = False
+            , near = 0
+            , far = 1
+            }
+        , StencilTest.test
+            { test = StencilTest.always 1 0xFF
+            , fail = StencilTest.keep
+            , zfail = StencilTest.keep
+            , zpass = StencilTest.replace
+            , writeMask = 0xFF
+            }
+        ]
+        floorVertex
+        floorFragment
+        floorMesh
+        { texture = texture
+        , perspective = camera
+        }
+    , WebGL.entityWith
+        [ StencilTest.test
+            { test = StencilTest.equal 1 0xFF
+            , fail = StencilTest.keep
+            , zfail = StencilTest.keep
+            , zpass = StencilTest.keep
+            , writeMask = 0
+            }
+        , DepthTest.default
+        , Blend.custom
+            { r = 0
+            , g = 0
+            , b = 0
+            , a = 0.5
+            , color = Blend.customAdd Blend.constantAlpha Blend.zero
+            , alpha = Blend.customAdd Blend.one Blend.zero
+            }
+        ]
+        crateVertex
+        crateFragment
+        crateMesh
+        { texture = texture
+        , perspective =
+            Mat4.mul camera (Mat4.makeScale (vec3 1 -1 1))
+        }
+    ]
+
+
+
 -- MESHES
 
 
-crate : Mesh { pos : Vec3, coord : Vec3 }
-crate =
-    triangles <|
-        List.concatMap rotatedFace [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
+type alias Vertex =
+    { position : Vec3
+    , coord : Vec2
+    }
 
 
-rotatedFace : ( Float, Float ) -> List ( { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 } )
-rotatedFace ( angleX, angleY ) =
+type alias Uniforms =
+    { perspective : Mat4
+    , texture : Texture
+    }
+
+
+crateMesh : Mesh Vertex
+crateMesh =
+    [ ( 0, 0 ), ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, 270 ) ]
+        |> List.concatMap rotatedFace
+        |> WebGL.triangles
+
+
+rotatedFace : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
+rotatedFace ( angleXZ, angleYZ ) =
     let
-        x =
-            makeRotate (degrees angleX) (vec3 1 0 0)
+        transformMat =
+            List.foldr Mat4.mul
+                Mat4.identity
+                [ Mat4.makeTranslate (vec3 0 1 0)
+                , Mat4.makeRotate (degrees angleXZ) Vec3.j
+                , Mat4.makeRotate (degrees angleYZ) Vec3.i
+                , Mat4.makeTranslate (vec3 0 0 1)
+                ]
 
-        y =
-            makeRotate (degrees angleY) (vec3 0 1 0)
+        transform vertex =
+            { vertex
+                | position =
+                    Mat4.transform
+                        transformMat
+                        vertex.position
+            }
 
-        t =
-            mul (mul x y) (makeTranslate (vec3 0 0 1))
-
-        each f ( a, b, c ) =
-            ( f a, f b, f c )
+        transformTriangle ( a, b, c ) =
+            ( transform a, transform b, transform c )
     in
-        List.map (each (\x -> { x | pos = Math.Vector3.add (vec3 0 1 0) (transform t x.pos) })) face
+        List.map transformTriangle square
 
 
-face : List ( { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 }, { pos : Vec3, coord : Vec3 } )
-face =
+square : List ( Vertex, Vertex, Vertex )
+square =
     let
         topLeft =
-            { pos = vec3 -1 1 0, coord = vec3 0 1 0 }
+            { position = vec3 -1 1 0, coord = vec2 0 1 }
 
         topRight =
-            { pos = vec3 1 1 0, coord = vec3 1 1 0 }
+            { position = vec3 1 1 0, coord = vec2 1 1 }
 
         bottomLeft =
-            { pos = vec3 -1 -1 0, coord = vec3 0 0 0 }
+            { position = vec3 -1 -1 0, coord = vec2 0 0 }
 
         bottomRight =
-            { pos = vec3 1 -1 0, coord = vec3 1 0 0 }
+            { position = vec3 1 -1 0, coord = vec2 1 0 }
     in
         [ ( topLeft, topRight, bottomLeft )
         , ( bottomLeft, topRight, bottomRight )
         ]
 
 
-floor : Mesh { pos : Vec3 }
-floor =
+floorMesh : Mesh { position : Vec3 }
+floorMesh =
     let
         topLeft =
-            { pos = vec3 -2 0 -2 }
+            { position = vec3 -2 0 -2 }
 
         topRight =
-            { pos = vec3 2 0 -2 }
+            { position = vec3 2 0 -2 }
 
         bottomLeft =
-            { pos = vec3 -2 0 2 }
+            { position = vec3 -2 0 2 }
 
         bottomRight =
-            { pos = vec3 2 0 2 }
+            { position = vec3 2 0 2 }
     in
-        triangles
+        WebGL.triangles
             [ ( topLeft, topRight, bottomLeft )
             , ( bottomLeft, topRight, bottomRight )
             ]
 
 
 
--- VIEW
-
-
-perspective : Float -> Mat4
-perspective angle =
-    List.foldr mul
-        Math.Matrix4.identity
-        [ perspectiveMatrix
-        , camera
-        , makeRotate (3 * angle) (vec3 0 1 0)
-        ]
-
-
-perspectiveMatrix : Mat4
-perspectiveMatrix =
-    makePerspective 45 1 0.01 100
-
-
-camera : Mat4
-camera =
-    makeLookAt (vec3 0 3 8) (vec3 0 0 0) (vec3 0 1 0)
-
-
-view : Model -> Html Action
-view { texture, theta } =
-    WebGL.toHtmlWith
-        [ alpha True, antialias, depth 1, stencil 0 ]
-        [ width 400, height 400 ]
-        (case texture of
-            Nothing ->
-                []
-
-            Just tex ->
-                let
-                    camera =
-                        perspective theta
-                in
-                    [ renderBox
-                        [ DepthTest.default ]
-                        Math.Matrix4.identity
-                        (vec3 1 1 1)
-                        tex
-                        camera
-                    , renderFloor
-                        [ DepthTest.less
-                            { write = False
-                            , near = 0
-                            , far = 1
-                            }
-                        , StencilTest.test
-                            { test = StencilTest.always 1
-                            , fail = StencilTest.keep
-                            , zfail = StencilTest.keep
-                            , zpass = StencilTest.replace
-                            , writeMask = 0xFF
-                            }
-                        ]
-                        camera
-                    , renderBox
-                        [ StencilTest.test
-                            { test = StencilTest.equal 1 0xFF
-                            , fail = StencilTest.keep
-                            , zfail = StencilTest.keep
-                            , zpass = StencilTest.keep
-                            , writeMask = 0
-                            }
-                        , DepthTest.default
-                        ]
-                        (makeScale (vec3 1 -1 1))
-                        (vec3 0.6 0.6 0.6)
-                        tex
-                        camera
-                    ]
-        )
-
-
-renderBox : List Setting -> Mat4 -> Vec3 -> Texture -> Mat4 -> Entity
-renderBox settings worldTransform overrideColor tex camera =
-    entityWith settings
-        boxVert
-        boxFrag
-        crate
-        { texture = tex
-        , overrideColor = overrideColor
-        , modelViewMatrix = worldTransform
-        , perspective = camera
-        }
-
-
-renderFloor : List Setting -> Mat4 -> Entity
-renderFloor settings camera =
-    entityWith settings
-        floorVert
-        floorFrag
-        floor
-        { perspective = camera }
-
-
-
 -- SHADERS
 
 
-boxVert : Shader { pos : Vec3, coord : Vec3 } { u | modelViewMatrix : Mat4, perspective : Mat4 } { vcoord : Vec2 }
-boxVert =
+crateVertex : Shader Vertex Uniforms { vcoord : Vec2 }
+crateVertex =
     [glsl|
 
-attribute vec3 pos;
-attribute vec3 coord;
-uniform mat4 perspective;
-uniform mat4 modelViewMatrix;
-varying vec2 vcoord;
+        attribute vec3 position;
+        attribute vec2 coord;
+        uniform mat4 perspective;
+        varying vec2 vcoord;
 
-void main () {
-  gl_Position = perspective * modelViewMatrix * vec4(pos, 1.0);
-  vcoord = coord.xy;
-}
+        void main () {
+          gl_Position = perspective * vec4(position, 1.0);
+          vcoord = coord;
+        }
 
-|]
+    |]
 
 
-boxFrag : Shader {} { u | texture : Texture, overrideColor : Vec3 } { vcoord : Vec2 }
-boxFrag =
+crateFragment : Shader {} { u | texture : Texture } { vcoord : Vec2 }
+crateFragment =
     [glsl|
 
-precision mediump float;
-uniform sampler2D texture;
-uniform vec3 overrideColor;
-varying vec2 vcoord;
+        precision mediump float;
+        uniform sampler2D texture;
+        varying vec2 vcoord;
 
-void main () {
-  gl_FragColor = vec4(overrideColor, 1.0) * texture2D(texture, vcoord);
-}
+        void main () {
+          gl_FragColor = texture2D(texture, vcoord);
+        }
 
-|]
+    |]
 
 
-floorVert : Shader { pos : Vec3 } { u | perspective : Mat4 } {}
-floorVert =
+floorVertex : Shader { position : Vec3 } Uniforms {}
+floorVertex =
     [glsl|
 
-attribute vec3 pos;
-uniform mat4 perspective;
+        attribute vec3 position;
+        uniform mat4 perspective;
 
-void main () {
-  gl_Position = perspective * vec4(pos, 1.0);
-}
+        void main () {
+          gl_Position = perspective * vec4(position, 1.0);
+        }
 
-|]
+    |]
 
 
-floorFrag : Shader attributes uniforms {}
-floorFrag =
+floorFragment : Shader attributes Uniforms {}
+floorFragment =
     [glsl|
 
-precision mediump float;
+        precision mediump float;
 
-void main () {
-  gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-}
+        void main () {
+          gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        }
 
-|]
+    |]

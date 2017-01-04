@@ -2,7 +2,7 @@
 -- http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
 
 
-module Main exposing (..)
+module Main exposing (main)
 
 import Math.Vector2 exposing (Vec2, vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
@@ -30,20 +30,14 @@ type Action
     | MouseMove Mouse.Position
 
 
-update : Action -> Model -> ( Model, Cmd Action )
-update action model =
-    case action of
-        TexturesError err ->
-            ( model, Cmd.none )
-
-        TexturesLoaded textures ->
-            ( { model | textures = Just textures }, Cmd.none )
-
-        Resize size ->
-            ( { model | size = size }, Cmd.none )
-
-        MouseMove position ->
-            ( { model | position = position }, Cmd.none )
+main : Program Never Model Action
+main =
+    Html.program
+        { init = init
+        , view = view
+        , subscriptions = subscriptions
+        , update = update
+        }
 
 
 init : ( Model, Cmd Action )
@@ -67,20 +61,26 @@ subscriptions _ =
         ]
 
 
-main : Program Never Model Action
-main =
-    Html.program
-        { init = init
-        , view = view
-        , subscriptions = subscriptions
-        , update = update
-        }
+update : Action -> Model -> ( Model, Cmd Action )
+update action model =
+    case action of
+        TexturesError err ->
+            ( model, Cmd.none )
+
+        TexturesLoaded textures ->
+            ( { model | textures = Just textures }, Cmd.none )
+
+        Resize size ->
+            ( { model | size = size }, Cmd.none )
+
+        MouseMove position ->
+            ( { model | position = position }, Cmd.none )
 
 
 fetchTextures : Cmd Action
 fetchTextures =
-    [ "texture/thwomp_face.jpg"
-    , "texture/thwomp_side.jpg"
+    [ "texture/thwomp-face.jpg"
+    , "texture/thwomp-side.jpg"
     ]
         |> List.map
             (Texture.loadWith
@@ -120,14 +120,14 @@ type alias Vertex =
     }
 
 
-face : Mesh Vertex
-face =
+faceMesh : Mesh Vertex
+faceMesh =
     WebGL.triangles square
 
 
-sides : Mesh Vertex
-sides =
-    [ ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
+sidesMesh : Mesh Vertex
+sidesMesh =
+    [ ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, 270 ) ]
         |> List.concatMap rotatedSquare
         |> WebGL.triangles
 
@@ -135,18 +135,15 @@ sides =
 rotatedSquare : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
 rotatedSquare ( angleXZ, angleYZ ) =
     let
-        x =
-            Mat4.makeRotate (degrees angleXZ) Vec3.j
-
-        y =
-            Mat4.makeRotate (degrees angleYZ) Vec3.i
+        transformMat =
+            Mat4.mul
+                (Mat4.makeRotate (degrees angleXZ) Vec3.j)
+                (Mat4.makeRotate (degrees angleYZ) Vec3.i)
 
         transform vertex =
             { vertex
                 | position =
-                    Mat4.transform
-                        (Mat4.mul x y)
-                        vertex.position
+                    Mat4.transform transformMat vertex.position
             }
 
         transformTriangle ( a, b, c ) =
@@ -188,8 +185,8 @@ view { textures, size, position } =
                 , height size.height
                 , style [ ( "display", "block" ) ]
                 ]
-                [ toEntity face faceTexture size position
-                , toEntity sides sideTexture size position
+                [ toEntity faceMesh faceTexture size position
+                , toEntity sidesMesh sideTexture size position
                 ]
 
         Nothing ->
@@ -220,7 +217,8 @@ perspective width height x y =
                 |> Vec3.normalize
                 |> Vec3.scale 6
     in
-        Mat4.mul (Mat4.makePerspective 45 (width / height) 0.01 100)
+        Mat4.mul
+            (Mat4.makePerspective 45 (width / height) 0.01 100)
             (Mat4.makeLookAt eye (vec3 0 0 0) Vec3.j)
 
 
@@ -228,33 +226,39 @@ perspective width height x y =
 -- SHADERS
 
 
-vertexShader : Shader Vertex { u | perspective : Mat4 } { vcoord : Vec2 }
+type alias Uniforms =
+    { perspective : Mat4
+    , texture : Texture
+    }
+
+
+vertexShader : Shader Vertex Uniforms { vcoord : Vec2 }
 vertexShader =
     [glsl|
 
-attribute vec3 position;
-attribute vec2 coord;
-uniform mat4 perspective;
-varying vec2 vcoord;
+        attribute vec3 position;
+        attribute vec2 coord;
+        uniform mat4 perspective;
+        varying vec2 vcoord;
 
-void main () {
-  gl_Position = perspective * vec4(position, 1.0);
-  vcoord = coord.xy;
-}
+        void main () {
+          gl_Position = perspective * vec4(position, 1.0);
+          vcoord = coord.xy;
+        }
 
-|]
+    |]
 
 
-fragmentShader : Shader {} { u | texture : Texture } { vcoord : Vec2 }
+fragmentShader : Shader {} Uniforms { vcoord : Vec2 }
 fragmentShader =
     [glsl|
 
-precision mediump float;
-uniform sampler2D texture;
-varying vec2 vcoord;
+        precision mediump float;
+        uniform sampler2D texture;
+        varying vec2 vcoord;
 
-void main () {
-  gl_FragColor = texture2D(texture, vcoord);
-}
+        void main () {
+          gl_FragColor = texture2D(texture, vcoord);
+        }
 
-|]
+    |]

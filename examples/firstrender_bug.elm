@@ -1,53 +1,39 @@
 module Main exposing (main)
 
 -- A test case for https://github.com/elm-community/elm-webgl/issues/23
--- WebGL should render before the first virtual-dom diff is applied
+-- WebGL should render a blue triangle before the first virtual-dom diffing
 
-import Math.Vector3 as Vec3 exposing (Vec3)
-import Html as H exposing (Html)
-import Html.Attributes as HA
-import WebGL
+import Html exposing (Html)
+import Html.Attributes exposing (width, height, style)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+import WebGL exposing (Mesh, Shader)
 
 
-main : Html msg
+main : Html ()
 main =
     WebGL.toHtml
-        [ HA.width 400
-        , HA.height 300
+        [ width 400, height 400, style [ ( "display", "block" ) ] ]
+        [ WebGL.entity
+            [glsl|
+                attribute vec3 position;
+                uniform float scale;
+                void main() {
+                   gl_Position = vec4(scale * position, 1);
+                }
+            |]
+            [glsl|
+                precision mediump float;
+                uniform vec3 color;
+                void main() {
+                  gl_FragColor = vec4(color, 1);
+                }
+            |]
+            (WebGL.triangles
+                [ ( { position = vec3 1 0 0 }
+                  , { position = vec3 -1 1 0 }
+                  , { position = vec3 -1 -1 0 }
+                  )
+                ]
+            )
+            { scale = 0.5, color = vec3 0 0 1 }
         ]
-        [ WebGL.entity vertexShader fragmentShader heroVertices {} ]
-
-
-type alias Vertex =
-    { pos : Vec3 }
-
-
-heroVertices : WebGL.Mesh Vertex
-heroVertices =
-    WebGL.triangles
-        [ ( { pos = Vec3.vec3 0 0 0 }
-          , { pos = Vec3.vec3 1 1 0 }
-          , { pos = Vec3.vec3 1 -1 0 }
-          )
-        ]
-
-
-vertexShader : WebGL.Shader Vertex {} {}
-vertexShader =
-    [glsl|
-  precision mediump float;
-  attribute vec3 pos;
-  void main() {
-    gl_Position = vec4(0.5 * pos, 1);
-  }
-|]
-
-
-fragmentShader : WebGL.Shader {} {} {}
-fragmentShader =
-    [glsl|
-  precision mediump float;
-  void main() {
-    gl_FragColor = vec4(0, 0, 1, 1);
-  }
-|]
