@@ -180,7 +180,7 @@ the shader code block and derive the type signature for your shader.
 * `varyings` define the output from the vertex shader.
 
 `attributes`, `uniforms` and `varyings` are records with the fields of the
-following types: `Int`, `Float`, `[Texture](#Texture)` and `Vec2`, `Vec3`, `Vec4`,
+following types: `Int`, `Float`, [`Texture`](#Texture) and `Vec2`, `Vec3`, `Vec4`,
 `Mat4` from the
 [linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
 package.
@@ -198,7 +198,7 @@ unsafeShader =
 
 
 {-| Use `Texture` to pass the `sampler2D` uniform value to the shader. Find
-more about textures in `[WebGL.Texture](WebGL-Texture)`.
+more about textures in [`WebGL.Texture`](WebGL-Texture).
 -}
 type Texture
     = Texture
