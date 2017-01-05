@@ -7,7 +7,12 @@
         "src"
     ],
     "exposed-modules": [
-        "WebGL"
+        "WebGL",
+        "WebGL.Settings",
+        "WebGL.Settings.Blend",
+        "WebGL.Settings.DepthTest",
+        "WebGL.Settings.StencilTest",
+        "WebGL.Texture"
     ],
     "native-modules": true,
     "dependencies": {

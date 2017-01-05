@@ -7,17 +7,24 @@ var _elm_community$webgl$Native_WebGL = function () {
     // console.log(msg);
   }
 
-  /* eslint-disable camelcase */
   function guid() {
+    // eslint-disable-next-line camelcase
     return _elm_lang$core$Native_Utils.guid();
   }
+  function listEach(fn, list) {
+    while (list.ctor !== '[]') {
+      fn(list._0);
+      list = list._1;
+    }
+  }
   function listLength(list) {
-    return _elm_lang$core$List$length(list);
+    var length = 0;
+    while (list.ctor !== '[]') {
+      length++;
+      list = list._1;
+    }
+    return length;
   }
-  function listMap(fn, list) {
-    return A2(_elm_lang$core$List$map, fn, list);
-  }
-  /* eslint-enable camelcase */
 
   var rAF = typeof requestAnimationFrame !== 'undefined' ?
     requestAnimationFrame :
@@ -27,75 +34,116 @@ var _elm_community$webgl$Native_WebGL = function () {
     return { src: src };
   }
 
-  function loadTextureWithFilter(filter, source) {
-    // eslint-disable-next-line camelcase
-    var Scheduler = _elm_lang$core$Native_Scheduler;
-    return Scheduler.nativeBinding(function (callback) {
-      var img = new Image();
-      // prevent the debugger from serializing the image as a record
-      function getImage() {
-        return img;
-      }
-      img.onload = function () {
-        callback(Scheduler.succeed({
-          ctor: 'Texture',
-          img: getImage,
-          filter: filter,
-          width: img.width,
-          height: img.height
-        }));
-      };
-      img.onerror = function () {
-        callback(Scheduler.fail({ ctor: 'Error' }));
-      };
-      img.crossOrigin = 'Anonymous';
-      img.src = source;
-    });
-  }
-
-  function textureSize(texture) {
-    // eslint-disable-next-line camelcase
-    return _elm_lang$core$Native_Utils.Tuple2(texture.width, texture.height);
-  }
-
-  function render(vert, frag, buffer, uniforms, functionCalls) {
+  function entity(settings, vert, frag, buffer, uniforms) {
 
     if (!buffer.guid) {
       buffer.guid = guid();
     }
 
     return {
+      ctor: 'Entity',
       vert: vert,
       frag: frag,
       buffer: buffer,
       uniforms: uniforms,
-      functionCalls: functionCalls
+      settings: settings
     };
 
   }
 
-  function doTexture(gl, texture) {
-
-    var tex = gl.createTexture();
-    LOG('Created texture');
-
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img());
-    switch (texture.filter.ctor) {
-      case 'Linear':
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+ /**
+  *  Apply setting to the gl context
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {Setting} setting coming in from Elm
+  */
+  function applySetting(gl, setting) {
+    switch (setting.ctor) {
+      case 'Blend':
+        gl.enable(gl.BLEND);
+        // eq1 f11 f12 eq2 f21 f22 r g b a
+        gl.blendEquationSeparate(setting._0, setting._3);
+        gl.blendFuncSeparate(setting._1, setting._2, setting._4, setting._5);
+        gl.blendColor(setting._6, setting._7, setting._8, setting._9);
         break;
-      case 'Nearest':
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      case 'DepthTest':
+        gl.enable(gl.DEPTH_TEST);
+        // func mask near far
+        gl.depthFunc(setting._0);
+        gl.depthMask(setting._1);
+        gl.depthRange(setting._2, setting._3);
+        break;
+      case 'StencilTest':
+        gl.enable(gl.STENCIL_TEST);
+        // ref mask writeMask test1 fail1 zfail1 zpass1 test2 fail2 zfail2 zpass2
+        gl.stencilFuncSeparate(gl.FRONT, setting._3, setting._0, setting._1);
+        gl.stencilOpSeparate(gl.FRONT, setting._4, setting._5, setting._6);
+        gl.stencilMaskSeparate(gl.FRONT, setting._2);
+        gl.stencilFuncSeparate(gl.BACK, setting._7, setting._0, setting._1);
+        gl.stencilOpSeparate(gl.BACK, setting._8, setting._9, setting._10);
+        gl.stencilMaskSeparate(gl.BACK, setting._2);
+        break;
+      case 'Scissor':
+        gl.enable(gl.SCISSOR_TEST);
+        gl.scissor(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'ColorMask':
+        gl.colorMask(setting._0, setting._1, setting._2, setting._3);
+        break;
+      case 'CullFace':
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(setting._0);
+        break;
+      case 'PolygonOffset':
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(setting._0, setting._1);
+        break;
+      case 'SampleCoverage':
+        gl.enable(gl.SAMPLE_COVERAGE);
+        gl.sampleCoverage(setting._0, setting._1);
+        break;
+      case 'SampleAlphaToCoverage':
+        gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
         break;
     }
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    return tex;
+  }
 
+ /**
+  *  Revert setting that was applied to the gl context
+  *
+  *  @param {WebGLRenderingContext} gl context
+  *  @param {Setting} setting coming in from Elm
+  */
+  function revertSetting(gl, setting) {
+    switch (setting.ctor) {
+      case 'Blend':
+        gl.disable(gl.BLEND);
+        break;
+      case 'DepthTest':
+        gl.disable(gl.DEPTH_TEST);
+        break;
+      case 'StencilTest':
+        gl.disable(gl.STENCIL_TEST);
+        break;
+      case 'Scissor':
+        gl.disable(gl.SCISSOR_TEST);
+        break;
+      case 'ColorMask':
+        gl.colorMask(true, true, true, true);
+        break;
+      case 'CullFace':
+        gl.disable(gl.CULL_FACE);
+        break;
+      case 'PolygonOffset':
+        gl.disable(gl.POLYGON_OFFSET_FILL);
+        break;
+      case 'SampleCoverage':
+        gl.disable(gl.SAMPLE_COVERAGE);
+        break;
+      case 'SampleAlphaToCoverage':
+        gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        break;
+    }
   }
 
   function doCompile(gl, src, type) {
@@ -131,20 +179,22 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   function getRenderInfo(gl, renderType) {
     switch (renderType) {
-      case 'Triangle':
-        return { mode: gl.TRIANGLES, elemSize: 3 };
+      case 'Triangles':
+        return { mode: gl.TRIANGLES, elemSize: 3, indexSize: 0 };
       case 'LineStrip':
-        return { mode: gl.LINE_STRIP, elemSize: 1 };
+        return { mode: gl.LINE_STRIP, elemSize: 1, indexSize: 0 };
       case 'LineLoop':
-        return { mode: gl.LINE_LOOP, elemSize: 1 };
+        return { mode: gl.LINE_LOOP, elemSize: 1, indexSize: 0 };
       case 'Points':
-        return { mode: gl.POINTS, elemSize: 1 };
+        return { mode: gl.POINTS, elemSize: 1, indexSize: 0 };
       case 'Lines':
-        return { mode: gl.LINES, elemSize: 2 };
+        return { mode: gl.LINES, elemSize: 2, indexSize: 0 };
       case 'TriangleStrip':
-        return { mode: gl.TRIANGLE_STRIP, elemSize: 1 };
+        return { mode: gl.TRIANGLE_STRIP, elemSize: 1, indexSize: 0 };
       case 'TriangleFan':
-        return { mode: gl.TRIANGLE_FAN, elemSize: 1 };
+        return { mode: gl.TRIANGLE_FAN, elemSize: 1, indexSize: 0 };
+      case 'IndexedTriangles':
+        return { mode: gl.TRIANGLES, elemSize: 1, indexSize: 3 };
     }
   }
 
@@ -211,7 +261,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     var dataIdx = 0;
     var array = new attributeInfo.type(listLength(bufferElems) * attributeInfo.size * elemSize);
 
-    listMap(function (elem) {
+    listEach(function (elem) {
       dataFill(array, attributeInfo.size, dataIdx, elem, attribute.name);
       dataIdx += attributeInfo.size * elemSize;
     }, bufferElems);
@@ -225,48 +275,79 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
  /**
-  *  This sets up the binding cacheing buffers.
+  *  This sets up the binding caching buffers.
   *
-  *  We don't actually bind any buffers now except for the indices buffer,
-  *  which we fill with 0..n. The problem with filling the buffers here is
-  *  that it is possible to have a buffer shared between two webgl shaders;
+  *  We don't actually bind any buffers now except for the indices buffer.
+  *  The problem with filling the buffers here is that it is possible to
+  *  have a buffer shared between two webgl shaders;
   *  which could have different active attributes. If we bind it here against
   *  a particular program, we might not bind them all. That final bind is now
   *  done right before drawing.
   *
   *  @param {WebGLRenderingContext} gl context
-  *  @param {List} bufferElems The list coming in from Elm.
-  *  @param {Number} elemSize The length of the number of vertices that
-  *         complete one 'thing' based on the drawing mode.
-  *         ie, 2 for Lines, 3 for Triangles, etc.
-  *
+  *  @param {Object} renderType
+  *  @param {Number} renderType.indexSize size of the index
+  *  @param {Number} renderType.elemSize size of the element
+  *  @param {Drawable} drawable a drawable object from Elm
+  *         that contains elements and optionally indices
   *  @return {Object} buffer - an object with the following properties
   *  @return {Number} buffer.numIndices
   *  @return {WebGLBuffer} buffer.indexBuffer
-  *  @return {Object} buffer.buffers
+  *  @return {Object} buffer.buffers - will be used to buffer attributes
   */
-  function doBindSetup(gl, bufferElems, elemSize) {
-    var buffers = {};
-
-    var numIndices = elemSize * listLength(bufferElems);
-    var indices = new Uint16Array(numIndices);
-    for (var i = 0; i < numIndices; i += 1) {
-      indices[i] = i;
-    }
-    var indexBuffer = gl.createBuffer();
+  function doBindSetup(gl, renderType, drawable) {
     LOG('Created index buffer');
+    var indexBuffer = gl.createBuffer();
+    var indices = (renderType.indexSize === 0)
+      ? makeSequentialBuffer(renderType.elemSize * listLength(drawable._0))
+      : makeIndexedBuffer(drawable._1, renderType.indexSize);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    var bufferObject = {
-      numIndices: numIndices,
+    return {
+      numIndices: indices.length,
       indexBuffer: indexBuffer,
-      buffers: buffers
+      buffers: {}
     };
+  }
 
-    return bufferObject;
+ /**
+  *  Create an indices array and fill it with 0..n
+  *
+  *  @param {Number} numIndices The number of indices
+  *  @return {Uint16Array} indices
+  */
+  function makeSequentialBuffer(numIndices) {
+    var indices = new Uint16Array(numIndices);
+    for (var i = 0; i < numIndices; i += 1) {
+      indices[i] = i;
+    }
+    return indices;
+  }
 
+ /**
+  *  Create an indices array and fill it from indices
+  *  based on the size of the index
+  *
+  *  @param {List} indicesList the list of indices
+  *  @param {Number} indexSize the size of the index
+  *  @return {Uint16Array} indices
+  */
+  function makeIndexedBuffer(indicesList, indexSize) {
+    var indices = new Uint16Array(listLength(indicesList) * indexSize);
+    var fillOffset = 0;
+    var i;
+    listEach(function (elem) {
+      if (indexSize === 1) {
+        indices[fillOffset++] = elem;
+      } else {
+        for (i = 0; i < indexSize; i++) {
+          indices[fillOffset++] = elem['_' + i.toString()];
+        }
+      }
+    }, indicesList);
+    return indices;
   }
 
   function getProgID(vertID, fragID) {
@@ -283,75 +364,73 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
 
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     LOG('Drawing');
 
-    function drawEntity(render) {
-      if (listLength(render.buffer._0) === 0) {
+    function drawEntity(entity) {
+      if (listLength(entity.buffer._0) === 0) {
         return;
       }
 
       var progid;
       var program;
-      if (render.vert.id && render.frag.id) {
-        progid = getProgID(render.vert.id, render.frag.id);
+      if (entity.vert.id && entity.frag.id) {
+        progid = getProgID(entity.vert.id, entity.frag.id);
         program = model.cache.programs[progid];
       }
 
       if (!program) {
 
         var vshader;
-        if (render.vert.id) {
-          vshader = model.cache.shaders[render.vert.id];
+        if (entity.vert.id) {
+          vshader = model.cache.shaders[entity.vert.id];
         } else {
-          render.vert.id = guid();
+          entity.vert.id = guid();
         }
 
         if (!vshader) {
-          vshader = doCompile(gl, render.vert.src, gl.VERTEX_SHADER);
-          model.cache.shaders[render.vert.id] = vshader;
+          vshader = doCompile(gl, entity.vert.src, gl.VERTEX_SHADER);
+          model.cache.shaders[entity.vert.id] = vshader;
         }
 
         var fshader;
-        if (render.frag.id) {
-          fshader = model.cache.shaders[render.frag.id];
+        if (entity.frag.id) {
+          fshader = model.cache.shaders[entity.frag.id];
         } else {
-          render.frag.id = guid();
+          entity.frag.id = guid();
         }
 
         if (!fshader) {
-          fshader = doCompile(gl, render.frag.src, gl.FRAGMENT_SHADER);
-          model.cache.shaders[render.frag.id] = fshader;
+          fshader = doCompile(gl, entity.frag.src, gl.FRAGMENT_SHADER);
+          model.cache.shaders[entity.frag.id] = fshader;
         }
 
         program = doLink(gl, vshader, fshader);
-        progid = getProgID(render.vert.id, render.frag.id);
+        progid = getProgID(entity.vert.id, entity.frag.id);
         model.cache.programs[progid] = program;
 
       }
 
       gl.useProgram(program);
 
-      progid = progid || getProgID(render.vert.id, render.frag.id);
+      progid = progid || getProgID(entity.vert.id, entity.frag.id);
       var setters = model.cache.uniformSetters[progid];
       if (!setters) {
         setters = createUniformSetters(gl, model, program);
         model.cache.uniformSetters[progid] = setters;
       }
 
-      setUniforms(setters, render.uniforms);
+      setUniforms(setters, entity.uniforms);
 
-      var renderType = getRenderInfo(gl, render.buffer.ctor);
-      var buffer = model.cache.buffers[render.buffer.guid];
+      var entityType = getRenderInfo(gl, entity.buffer.ctor);
+      var buffer = model.cache.buffers[entity.buffer.guid];
 
       if (!buffer) {
-        buffer = doBindSetup(gl, render.buffer._0, renderType.elemSize);
-        model.cache.buffers[render.buffer.guid] = buffer;
+        buffer = doBindSetup(gl, entityType, entity.buffer);
+        model.cache.buffers[entity.buffer.guid] = buffer;
       }
 
-      var numIndices = buffer.numIndices;
-      var indexBuffer = buffer.indexBuffer;
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
 
       var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
 
@@ -362,23 +441,28 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.enableVertexAttribArray(attribLocation);
 
         if (buffer.buffers[attribute.name] === undefined) {
-          buffer.buffers[attribute.name] = doBindAttribute(gl, attribute, render.buffer._0, renderType.elemSize);
+          buffer.buffers[attribute.name] = doBindAttribute(gl, attribute, entity.buffer._0, entityType.elemSize);
         }
         var attributeBuffer = buffer.buffers[attribute.name];
         var attributeInfo = getAttributeInfo(gl, attribute.type);
 
-        listMap(function (functionCall) {
-          functionCall(gl);
-        }, render.functionCalls);
-
         gl.bindBuffer(gl.ARRAY_BUFFER, attributeBuffer);
         gl.vertexAttribPointer(attribLocation, attributeInfo.size, attributeInfo.baseType, false, 0, 0);
       }
-      gl.drawElements(renderType.mode, numIndices, gl.UNSIGNED_SHORT, 0);
+
+      listEach(function (setting) {
+        applySetting(gl, setting);
+      }, entity.settings);
+
+      gl.drawElements(entityType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
+
+      listEach(function (setting) {
+        revertSetting(gl, setting);
+      }, entity.settings);
 
     }
 
-    listMap(drawEntity, model.renderables);
+    listEach(drawEntity, model.entities);
     return domNode;
   }
 
@@ -425,7 +509,8 @@ var _elm_community$webgl$Native_WebGL = function () {
               texture.id = guid();
             }
             if (!tex) {
-              tex = doTexture(gl, texture);
+              LOG('Created texture');
+              tex = texture.createTexture(gl);
               model.cache.textures[texture.id] = tex;
             }
             gl.activeTexture(gl[activeName]);
@@ -461,93 +546,20 @@ var _elm_community$webgl$Native_WebGL = function () {
     });
   }
 
-  function enable(capability) {
-    return function (gl) {
-      gl.enable(gl[capability]);
-    };
-  }
-
-  function disable(capability) {
-    return function (gl) {
-      gl.disable(gl[capability]);
-    };
-  }
-
-  function blendColor(r, g, b, a) {
-    return function (gl) {
-      gl.blendColor(r, g, b, a);
-    };
-  }
-
-  function blendEquation(mode) {
-    return function (gl) {
-      gl.blendEquation(gl[mode]);
-    };
-  }
-
-  function blendEquationSeparate(modeRGB, modeAlpha) {
-    return function (gl) {
-      gl.blendEquationSeparate(gl[modeRGB], gl[modeAlpha]);
-    };
-  }
-
-  function blendFunc(src, dst) {
-    return function (gl) {
-      gl.blendFunc(gl[src], gl[dst]);
-    };
-  }
-
-  function depthFunc(mode) {
-    return function (gl) {
-      gl.depthFunc(gl[mode]);
-    };
-  }
-
-  function sampleCoverage(value, invert) {
-    return function (gl) {
-      gl.sampleCoverage(value, invert);
-    };
-  }
-
-  function stencilFunc(func, ref, mask) {
-    return function (gl) {
-      gl.stencilFunc(gl[func], ref, mask);
-    };
-  }
-
-  function stencilFuncSeparate(face, func, ref, mask) {
-    return function (gl) {
-      gl.stencilFuncSeparate(gl[face], gl[func], ref, mask);
-    };
-  }
-
-  function stencilOperation(fail, zfail, zpass) {
-    return function (gl) {
-      gl.stencilOp(gl[fail], gl[zfail], gl[zpass]);
-    };
-  }
-
-  function stencilOperationSeparate(face, fail, zfail, zpass) {
-    return function (gl) {
-      gl.stencilOpSeparate(gl[face], gl[fail], gl[zfail], gl[zpass]);
-    };
-  }
-
-
   // VIRTUAL-DOM WIDGET
 
-  function toHtml(functionCalls, factList, renderables) {
+  function toHtml(options, factList, entities) {
     var model = {
-      functionCalls: functionCalls,
-      renderables: renderables,
-      cache: {}
+      entities: entities,
+      cache: {},
+      options: options
     };
     // eslint-disable-next-line camelcase
     return _elm_lang$virtual_dom$Native_VirtualDom.custom(factList, model, implementation);
   }
 
   var implementation = {
-    render: renderCanvas,
+    render: render,
     diff: diff
   };
 
@@ -556,20 +568,62 @@ var _elm_community$webgl$Native_WebGL = function () {
    *  @param {Object} model
    *  @param {Object} model.cache that may contain the following properties:
              gl, shaders, programs, uniformSetters, buffers, textures
-   *  @param {List} model.functionCalls
-   *  @param {List} model.renderables
+   *  @param {List<Option>} model.options list of options coming from Elm
+   *  @param {List<Entity>} model.entities list of entities coming from Elm
    *  @return {HTMLElement} <canvas> if WebGL is supported, otherwise a <div>
    */
-  function renderCanvas(model) {
+  function render(model) {
+
+    var contextAttributes = {
+      alpha: false,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      premultipliedAlpha: false
+    };
+    var sceneSettings = [];
+
+    listEach(function (option) {
+      var s1 = option._0;
+      switch (option.ctor) {
+        case 'Alpha':
+          contextAttributes.alpha = true;
+          contextAttributes.premultipliedAlpha = s1;
+          break;
+        case 'Antialias':
+          contextAttributes.antialias = true;
+          break;
+        case 'Depth':
+          contextAttributes.depth = true;
+          sceneSettings.push(function (gl) {
+            gl.clearDepth(s1);
+          });
+          break;
+        case 'ClearColor':
+          sceneSettings.push(function (gl) {
+            gl.clearColor(option._0, option._1, option._2, option._3);
+          });
+          break;
+        case 'Stencil':
+          contextAttributes.stencil = true;
+          sceneSettings.push(function (gl) {
+            gl.clearStencil(s1);
+          });
+          break;
+      }
+    }, model.options);
 
     LOG('Render canvas');
     var canvas = document.createElement('canvas');
-    var gl = canvas.getContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+    var gl = canvas.getContext && (
+      canvas.getContext('webgl', contextAttributes) ||
+      canvas.getContext('experimental-webgl', contextAttributes)
+    );
 
     if (gl) {
-      listMap(function (functionCall) {
-        functionCall(gl);
-      }, model.functionCalls);
+      sceneSettings.forEach(function (sceneSetting) {
+        sceneSetting(gl);
+      });
     } else {
       canvas = document.createElement('div');
       canvas.innerHTML = '<a href="http://get.webgl.org/">Enable WebGL</a> to see this content!';
@@ -604,22 +658,8 @@ var _elm_community$webgl$Native_WebGL = function () {
 
   return {
     unsafeCoerceGLSL: unsafeCoerceGLSL,
-    textureSize: textureSize,
-    loadTextureWithFilter: F2(loadTextureWithFilter),
-    render: F5(render),
-    toHtml: F3(toHtml),
-    enable: enable,
-    disable: disable,
-    blendColor: F4(blendColor),
-    blendEquation: blendEquation,
-    blendEquationSeparate: F2(blendEquationSeparate),
-    blendFunc: F2(blendFunc),
-    depthFunc: depthFunc,
-    sampleCoverage: F2(sampleCoverage),
-    stencilFunc: F3(stencilFunc),
-    stencilFuncSeparate: F4(stencilFuncSeparate),
-    stencilOperation: F3(stencilOperation),
-    stencilOperationSeparate: F4(stencilOperationSeparate)
+    entity: F5(entity),
+    toHtml: F3(toHtml)
   };
 
 }();

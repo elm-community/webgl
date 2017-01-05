@@ -1,70 +1,169 @@
-module WebGL exposing (..)
+module WebGL
+    exposing
+        ( Texture
+        , Shader
+        , Entity
+        , Mesh
+        , triangles
+        , indexedTriangles
+        , lines
+        , lineStrip
+        , lineLoop
+        , points
+        , triangleFan
+        , triangleStrip
+        , entity
+        , entityWith
+        , toHtml
+        , toHtmlWith
+        , Option
+        , alpha
+        , depth
+        , stencil
+        , antialias
+        , clearColor
+        , unsafeShader
+        )
 
 {-| The WebGL API is for high performance rendering. Definitely read about
 [how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)
-and look at some examples before trying to do too much with just the
-documentation provided here.
+and look at [some examples](https://github.com/elm-community/webgl/tree/master/examples)
+before trying to do too much with just the documentation provided here.
 
-# Main Types
-@docs Texture, TextureFilter, Shader, Renderable, Error, Drawable
+# Mesh
+@docs Mesh, triangles
+
+# Shaders
+@docs Shader, Texture
 
 # Entities
-@docs render, renderWithConfig
+@docs Entity, entity
 
 # WebGL Html
-@docs toHtml, toHtmlWith, defaultConfiguration
+@docs toHtml
 
-# WebGL API Calls
-@docs FunctionCall
+# Advanced Usage
+@docs entityWith, toHtmlWith, Option, alpha, depth, stencil, antialias,
+  clearColor
 
-# WebGL API Types
-@docs Capability, BlendOperation, BlendMode, CompareMode, FaceMode, ZMode
-
-# Loading Textures
-@docs loadTexture, loadTextureWithFilter, textureSize
+# Meshes
+@docs indexedTriangles, lines, lineStrip, lineLoop, points, triangleFan,
+  triangleStrip
 
 # Unsafe Shader Creation (for library writers)
 @docs unsafeShader
-
-# Functions
-@docs computeAPICall, computeAPICalls, computeBlendModeString, computeBlendOperationString, computeCapabilityString, computeCompareModeString, computeFaceModeString, computeZModeString
-
 -}
 
 import Html exposing (Html, Attribute)
-import Task exposing (Task)
-import List
+import WebGL.Settings as Settings exposing (Setting)
+import WebGL.Settings.DepthTest as DepthTest
 import Native.WebGL
 
 
-{-|
-WebGl has a number of rendering modes available. Each of the tagged union types
-maps to a separate rendering mode.
+{-| Mesh forms geometry from the specified vertices. Each vertex contains a
+bunch of attributes, defined as a custom record type, e.g.:
 
-Triangles are the basic building blocks of a mesh. You can put them together
-to form any shape. Each corner of a triangle is called a *vertex* and contains a
-bunch of *attributes* that describe that particular corner. These attributes can
-be things like position and color.
+    type alias Attributes =
+        { position : Vec3
+        , color : Vec3
+        }
 
-So when you create a `Triangle` you are really providing three sets of attributes
-that describe the corners of a triangle.
-
-See: [Library reference](https://msdn.microsoft.com/en-us/library/dn302395%28v=vs.85%29.aspx) for the description of each type.
+The supported types in attributes are: `Int`, `Float`, `WebGL.Texture`
+and `Vec2`, `Vec3`, `Vec4`, `Mat4` from the
+[linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
+package.
 -}
-type Drawable attributes
-    = Triangle (List ( attributes, attributes, attributes ))
+type Mesh attributes
+    = Triangles (List ( attributes, attributes, attributes ))
     | Lines (List ( attributes, attributes ))
     | LineStrip (List attributes)
     | LineLoop (List attributes)
     | Points (List attributes)
     | TriangleFan (List attributes)
     | TriangleStrip (List attributes)
+    | IndexedTriangles (List attributes) (List ( Int, Int, Int ))
 
 
-{-| Shader is a phantom data type. Don't instantiate it yourself. See below.
+{-| Triangles are the basic building blocks of a mesh. You can put them together
+to form any shape.
+
+So when you create `triangles` you are really providing three sets of attributes
+that describe the corners of each triangle.
 -}
-type Shader attributes uniforms varyings
-    = Shader
+triangles : List ( attributes, attributes, attributes ) -> Mesh attributes
+triangles =
+    Triangles
+
+
+{-| Creates a strip of triangles where each additional vertex creates an
+additional triangle once the first three vertices have been drawn.
+-}
+triangleStrip : List attributes -> Mesh attributes
+triangleStrip =
+    TriangleStrip
+
+
+{-| Similar to [`triangleStrip`](#triangleStrip), but creates a fan shaped
+output.
+-}
+triangleFan : List attributes -> Mesh attributes
+triangleFan =
+    TriangleFan
+
+
+{-| Create triangles from vertices and indices, grouped in sets of three to
+define each triangle by refering the vertices.
+
+This helps to avoid duplicated vertices whenever two triangles share an
+edge. For example, if you want to define a rectangle using
+[`triangles`](#triangles), `v0` and `v2` will have to be duplicated:
+
+    -- v2 +---+ v1
+    --    |\  |
+    --    | \ |
+    --    |  \|
+    -- v3 +---+ v0
+
+    rectangle =
+        triangles [(v0, v1, v2), (v2, v3, v0)]
+
+This will use two vertices less:
+
+    rectangle =
+        indexedTriangles [v0, v1, v2, v3] [(0, 1, 2), (2, 3, 0)]
+-}
+indexedTriangles : List attributes -> List ( Int, Int, Int ) -> Mesh attributes
+indexedTriangles =
+    IndexedTriangles
+
+
+{-| Connects each pair of vertices with a line.
+-}
+lines : List ( attributes, attributes ) -> Mesh attributes
+lines =
+    Lines
+
+
+{-| Connects each two subsequent vertices with a line.
+-}
+lineStrip : List attributes -> Mesh attributes
+lineStrip =
+    LineStrip
+
+
+{-| Similar to [`lineStrip`](#lineStrip), but connects the last vertex back to
+the first.
+-}
+lineLoop : List attributes -> Mesh attributes
+lineLoop =
+    LineLoop
+
+
+{-| Draws a single dot per vertex.
+-}
+points : List attributes -> Mesh attributes
+points =
+    Points
 
 
 {-| Shaders are programs for running many computations on the GPU in parallel.
@@ -72,573 +171,182 @@ They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
 shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Normally you specify a shader with a `shader` block. This is because shaders
-must be compiled before they are used, imposing an overhead that it is best to
-avoid in general. This function lets you create a shader with a raw string of
-GLSL. It is intended specifically for libary writers who want to create shader
-combinators.
+Normally you specify a shader with a `glsl[| |]` block. Elm compiler will parse
+the shader code block and derive the type signature for your shader.
+
+* `attributes` define vertices in the [mesh](#Mesh);
+* `uniforms` allow you to pass scene parameters like
+  transformation matrix, texture, screen size, etc.;
+* `varyings` define the output from the vertex shader.
+
+`attributes`, `uniforms` and `varyings` are records with the fields of the
+following types: `Int`, `Float`, `[Texture](#Texture)` and `Vec2`, `Vec3`, `Vec4`,
+`Mat4` from the
+[linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
+package.
 -}
-unsafeShader : String -> Shader attribute uniform varying
+type Shader attributes uniforms varyings
+    = Shader
+
+
+{-| Creates a shader with a raw string of GLSL. It is intended specifically
+for library writers, who want to create shader combinators.
+-}
+unsafeShader : String -> Shader attributes uniforms varyings
 unsafeShader =
     Native.WebGL.unsafeCoerceGLSL
 
 
-{-| A `Texture` loads a texture with linear filtering enabled. If you do not
-want filtering, create a `RawTexture` with `loadTextureRaw`.
+{-| Use `Texture` to pass the `sampler2D` uniform value to the shader. Find
+more about textures in `[WebGL.Texture](WebGL-Texture)`.
 -}
 type Texture
     = Texture
 
 
-{-| Textures work in two ways when looking up a pixel value - Linear or Nearest
+{-| Conceptually, an encapsulation of the instructions to render something.
 -}
-type TextureFilter
-    = Linear
-    | Nearest
+type Entity
+    = Entity
 
 
-{-| An error which occured in the graphics context
--}
-type Error
-    = Error
-
-
-{-| Loads a texture from the given url. PNG and JPEG are known to work, but
-other formats have not been as well-tested yet.
--}
-loadTexture : String -> Task Error Texture
-loadTexture =
-    loadTextureWithFilter Linear
-
-
-{-| Loads a texture from the given url. PNG and JPEG are known to work, but
-other formats have not been as well-tested yet. Configurable filter.
--}
-loadTextureWithFilter : TextureFilter -> String -> Task Error Texture
-loadTextureWithFilter =
-    Native.WebGL.loadTextureWithFilter
-
-
-{-| Return the (width, height) size of a texture. Useful for sprite sheets
-or other times you may want to use only a potion of a texture image.
--}
-textureSize : Texture -> ( Int, Int )
-textureSize =
-    Native.WebGL.textureSize
-
-
-{-| Conceptually, an encapsulataion of the instructions to render something
--}
-type Renderable
-    = Renderable
-
-
-{-| Packages a vertex shader, a fragment shader, a mesh, and uniform variables
-as an `Renderable`. This specifies a full rendering pipeline to be run on the GPU.
-You can read more about the pipeline
+{-| Packages a vertex shader, a fragment shader, a mesh, and uniforms
+as an `Entity`. This specifies a full rendering pipeline to be run
+on the GPU. You can read more about the pipeline
 [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Values will be cached intelligently, so if you have already sent a shader or
-mesh to the GPU, it will not be resent. This means it is fairly cheap to create
-new entities if you are reusing shaders and meshes that have been used before.
+The vertex shader receives `attributes` and `uniforms` and returns `varyings`
+and `gl_Position`—the position of the vertex on the screen, defined as
+`vec4(x, y, z, w)`, that means `(x/w, y/w, z/w)` in the clip space coordinates:
+
+    --   (-1,1,1) +================+ (1,1,1)
+    --           /|               /|
+    --          / |     |        / |
+    --(-1,1,-1)+================+ (1,1,-1)
+    --         |  |     | /     |  |
+    --         |  |     |/      |  |
+    --         |  |     +-------|->|
+    -- (-1,-1,1|) +--(0,0,0)----|--+ (1,-1,1)
+    --         | /              | /
+    --         |/               |/
+    --         +================+
+    --   (-1,-1,-1)         (1,-1,-1)
+
+The fragment shader is called for each pixel inside the clip space with
+`varyings` and `uniforms` and returns `gl_FragColor`—the color of
+the pixel, defined as `vec4(r, g, b, a)` where each color component is a float
+from 0 to 1.
+
+Shaders and a mesh are cached so that they do not get resent to the GPU.
+It should be relatively cheap to create new entities out of existing
+values.
+
+By default, [depth test](WebGL-Settings-DepthTest#default) is enabled for you.
+If you need more [settings](WebGL-Settings), like
+[blending](WebGL-Settings-Blend) or [stencil test](WebG-Settings-StencilTest),
+then use [`entityWith`](#entityWith).
+
+    entity =
+        entityWith [ DepthTest.default ]
 -}
-renderWithConfig : List FunctionCall -> Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
-renderWithConfig functionCalls vert frag buffer uniforms =
-    computeAPICalls functionCalls
-        |> Native.WebGL.render vert frag buffer uniforms
+entity :
+    Shader attributes uniforms varyings
+    -> Shader {} uniforms varyings
+    -> Mesh attributes
+    -> uniforms
+    -> Entity
+entity =
+    entityWith [ DepthTest.default ]
 
 
-{-| Same as `renderWithConfig` but without using
-custom per-render configurations.
+{-| The same as [`entity`](#entity), but allows to configure an entity with
+[settings](WebGL-Settings).
 -}
-render : Shader attributes uniforms varyings -> Shader {} uniforms varyings -> Drawable attributes -> uniforms -> Renderable
-render =
-    renderWithConfig []
+entityWith :
+    List Setting
+    -> Shader attributes uniforms varyings
+    -> Shader {} uniforms varyings
+    -> Mesh attributes
+    -> uniforms
+    -> Entity
+entityWith =
+    Native.WebGL.entity
 
 
-{-| Default configuration that is used as
-the implicit configurations for `webgl`.
+{-| Render a WebGL scene with the given html attributes, and entities.
+
+By default, alpha channel with premultiplied alpha, antialias and depth buffer
+are enabled. Use [`toHtmlWith`](#toHtmlWith) for custom options.
+
+    toHtml =
+        toHtmlWith [ alpha True, antialias, depth 1 ]
 -}
-defaultConfiguration : List FunctionCall
-defaultConfiguration =
-    [ Enable DepthTest
-    ]
-
-
-{-| Same as toHtmlWith but with default configurations,
-implicitly configured for you. See `defaultConfiguration` for more information.
--}
-toHtml : List (Attribute msg) -> List Renderable -> Html msg
+toHtml : List (Attribute msg) -> List Entity -> Html msg
 toHtml =
-    toHtmlWith defaultConfiguration
+    toHtmlWith [ alpha True, antialias, depth 1 ]
 
 
-{-| Render a WebGL scene with the given dimensions and entities. Shaders and
-meshes are cached so that they do not get resent to the GPU, so it should be
-relatively cheap to create new entities out of existing values.
+{-| Render a WebGL scene with the given options, html attributes, and entities.
+
+Due to browser limitations, options will be applied only once,
+when the canvas is created for the first time.
 -}
-toHtmlWith : List FunctionCall -> List (Attribute msg) -> List Renderable -> Html msg
-toHtmlWith functionCalls =
-    Native.WebGL.toHtml (computeAPICalls functionCalls)
+toHtmlWith : List Option -> List (Attribute msg) -> List Entity -> Html msg
+toHtmlWith options attributes entities =
+    Native.WebGL.toHtml options attributes entities
 
 
-{-| -}
-computeAPICalls : List FunctionCall -> List (a -> b)
-computeAPICalls functionCalls =
-    List.map
-        computeAPICall
-        functionCalls
-
-
-{-| -}
-computeAPICall : FunctionCall -> (a -> b)
-computeAPICall function =
-    case function of
-        Enable capability ->
-            computeCapabilityString capability
-                |> Native.WebGL.enable
-
-        Disable capability ->
-            computeCapabilityString capability
-                |> Native.WebGL.disable
-
-        BlendColor ( r, g, b, a ) ->
-            Native.WebGL.blendColor r g b a
-
-        BlendEquation mode ->
-            computeBlendModeString mode
-                |> Native.WebGL.blendEquation
-
-        BlendEquationSeparate ( modeRGB_, modeAlpha_ ) ->
-            let
-                modeRGB =
-                    computeBlendModeString modeRGB_
-
-                modeAlpha =
-                    computeBlendModeString modeAlpha_
-            in
-                Native.WebGL.blendEquationSeparate modeRGB modeAlpha
-
-        BlendFunc ( src_, dst_ ) ->
-            let
-                src =
-                    computeBlendOperationString src_
-
-                dst =
-                    computeBlendOperationString dst_
-            in
-                Native.WebGL.blendFunc src dst
-
-        DepthFunc mode ->
-            computeCompareModeString mode
-                |> Native.WebGL.depthFunc
-
-        SampleCoverageFunc ( value, invert ) ->
-            Native.WebGL.sampleCoverage value invert
-
-        StencilFunc ( func, ref, mask ) ->
-            let
-                mode =
-                    computeCompareModeString func
-            in
-                Native.WebGL.stencilFunc mode ref mask
-
-        StencilFuncSeparate ( face_, func, ref, mask ) ->
-            let
-                face =
-                    computeFaceModeString face_
-
-                mode =
-                    computeCompareModeString func
-            in
-                Native.WebGL.stencilFuncSeparate face mode ref mask
-
-        StencilOperation ( fail_, zfail_, zpass_ ) ->
-            let
-                fail =
-                    computeZModeString fail_
-
-                zfail =
-                    computeZModeString zfail_
-
-                zpass =
-                    computeZModeString zpass_
-            in
-                Native.WebGL.stencilOperation fail zfail zpass
-
-        StencilOperationSeparate ( face_, fail_, zfail_, zpass_ ) ->
-            let
-                face =
-                    computeFaceModeString face_
-
-                fail =
-                    computeZModeString fail_
-
-                zfail =
-                    computeZModeString zfail_
-
-                zpass =
-                    computeZModeString zpass_
-            in
-                Native.WebGL.stencilOperationSeparate face fail zfail zpass
-
-
-{-| The `FunctionCall` provides a typesafe way to call
-all pre-fragment operations and some special functions.
-
-`Enable(capability: Capability)`
-+ enable server-side GL capabilities
-
-`Disable(cap: Capability)`
-+ disable server-side GL capabilities
-
-`BlendColor(red: Float, green: Float, blue: Float, alpha: Float)`
-+ set the blend color
-
-`BlendEquation(mode: BlendMode)`
-+ specify the equation used for both the
-RGB blend equation and the Alpha blend equation
-+ `mode`: specifies how source and destination colors are combined
-
-`BlendEquationSeparate(modeRGB: BlendMode, modeAlpha: BlendMode)`
-+ set the RGB blend equation and the alpha blend equation separately
-+ `modeRGB`: specifies the RGB blend equation, how the red, green,
-and blue components of the source and destination colors are combined
-+ `modeAlpha`: specifies the alpha blend equation, how the alpha component
-of the source and destination colors are combined
-
-`BlendFunc(srcFactor: BlendMode, dstFactor: BlendMode)`
-+ specify pixel arithmetic
-+ `srcFactor`: Specifies how the red, green, blue,
-and alpha source blending factors are computed
-+ `dstFactor`: Specifies how the red, green, blue,
-and alpha destination blending factors are computed
-+ `SrcAlphaSaturate` should only be used for the srcFactor);
-+ Both values may not reference a `ConstantColor` value;
-
-`SampleCoverageFunc(value: Float, invert: Bool)`
-+ specify multisample coverage parameters
-+ `value`: Specify a single floating-point sample coverage value.
-The value is clamped to the range 0 1 . The initial value is `1`
-+ `invert`: Specify a single boolean value representing
-if the coverage masks should be inverted. The initial value is `False`
-
-`StencilFunc(func: CompareMode, ref: Int, mask: Int)`
-+ set front and back function and reference value for stencil testing
-+ `func`: Specifies the test function.  The initial value is `Always`
-+ `ref`: Specifies the reference value for the stencil test. ref is
-clamped to the range 0 2 n - 1 , n is the number of bitplanes
-in the stencil buffer. The initial value is `0`.
-+ `mask`: Specifies a mask that is ANDed with both the reference value
-and the stored stencil value when the test is done.
-The initial value is all `1`'s.
-
-`StencilFuncSeparate(face: FaceMode, func: CompareMode, ref: Int, mask: Int)`
-+ set front and/or back function and reference value for stencil testing
-+ `face`: Specifies whether front and/or back stencil state is updated
-+ see the description of `StencilFunc` for info about the other parameters
-
-`StencilOperation(fail: ZMode, zfail: ZMode, pass: ZMode)`
-+ set front and back stencil test actions
-+ `fail`: Specifies the action to take when the stencil test fails.
-The initial value is `Keep`
-+ `zfail`: Specifies the stencil action when the stencil test passes,
-but the depth test fails. The initial value is `Keep`
-+ `pass`: Specifies the stencil action when both the stencil test
-and the depth test pass, or when the stencil test passes and either
-there is no depth buffer or depth testing is not enabled.
-The initial value is `Keep`
-
-`StencilOperationSeparate(face: FaceMode, fail: ZMode, zfail: ZMode, pass: Zmode)`
-+ set front and/or back stencil test actions
-+ `face`: Specifies whether front and/or back stencil state is updated.
-+ See the description of `StencilOperation` for info about the other parameters.
+{-| Provides a way to enable features and change the scene behavior
+in [`toHtmlWith`](#toHtmlWith).
 -}
-type FunctionCall
-    = Enable Capability
-    | Disable Capability
-    | BlendColor ( Float, Float, Float, Float )
-    | BlendEquation BlendMode
-    | BlendEquationSeparate ( BlendMode, BlendMode )
-    | BlendFunc ( BlendOperation, BlendOperation )
-    | DepthFunc CompareMode
-    | SampleCoverageFunc ( Float, Bool )
-    | StencilFunc ( CompareMode, Int, Int )
-    | StencilFuncSeparate ( FaceMode, CompareMode, Int, Int )
-    | StencilOperation ( ZMode, ZMode, ZMode )
-    | StencilOperationSeparate ( FaceMode, ZMode, ZMode, ZMode )
+type Option
+    = Alpha Bool
+    | Depth Float
+    | Stencil Int
+    | Antialias
+    | ClearColor Float Float Float Float
 
 
-{-| -}
-computeCapabilityString : Capability -> String
-computeCapabilityString capability =
-    case capability of
-        Blend ->
-            "BLEND"
-
-        CullFace ->
-            "CULL_FACE"
-
-        DepthTest ->
-            "DEPTH_TEST"
-
-        Dither ->
-            "DITHER"
-
-        PolygonOffsetFill ->
-            "POLYGON_OFFSET_FILL"
-
-        SampleAlphaToCoverage ->
-            "SAMPLE_ALPHA_TO_COVERAGE"
-
-        SampleCoverage ->
-            "SAMPLE_COVERAGE"
-
-        ScissorTest ->
-            "SCISSOR_TEST"
-
-        StencilTest ->
-            "STENCIL_TEST"
-
-
-{-| The `Capability` type is used to enable/disable server-side GL capabilities.
-
-+ `Blend`: If enabled, blend the computed fragment color values
-with the values in the color buffers.
-+ `CullFace`: If enabled, cull polygons based on their winding in window coordinates.
-+ `DepthTest`: If enabled, do depth comparisons and update the depth buffer.
-+ `Dither`: If enabled, dither color components.
-or indices before they are written to the color buffer.
-+ `PolygonOffsetFill`: If enabled, an offset is added
-to depth values of a polygon's fragments produced by rasterization.
-+ `SampleAlphaToCoverage`: If enabled, compute a temporary coverage value
-where each bit is determined by the alpha value at the corresponding sample location.
-The temporary coverage value is then ANDed with the fragment coverage value.
-+ `SampleCoverage`: If enabled, the fragment's coverage
-is ANDed with the temporary coverage value.
-+ `ScissorTest`: If enabled, discard fragments that are outside the scissor rectangle
-+ `StencilTest`: If enabled, do stencil testing and update the stencil buffer.
+{-| Enable alpha channel in the drawing buffer. If the argument is `True`, then
+the page compositor will assume the drawing buffer contains colors with
+premultiplied alpha `(r * a, g * a, b * a, a)`.
 -}
-type Capability
-    = Blend
-    | CullFace
-    | DepthTest
-    | Dither
-    | PolygonOffsetFill
-    | SampleAlphaToCoverage
-    | SampleCoverage
-    | ScissorTest
-    | StencilTest
+alpha : Bool -> Option
+alpha =
+    Alpha
 
 
-{-| -}
-computeBlendOperationString : BlendOperation -> String
-computeBlendOperationString operation =
-    case operation of
-        Zero ->
-            "ZERO"
-
-        One ->
-            "ONE"
-
-        SrcColor ->
-            "SRC_COLOR"
-
-        OneMinusSrcColor ->
-            "ONE_MINUS_SRC_COLOR"
-
-        DstColor ->
-            "DST_COLOR"
-
-        OneMinusDstColor ->
-            "ONE_MINUS_DST_COLOR"
-
-        SrcAlpha ->
-            "SRC_ALPHA"
-
-        OneMinusSrcAlpha ->
-            "ONE_MINUS_SRC_ALPHA"
-
-        DstAlpha ->
-            "DST_ALPHA"
-
-        OneMinusDstAlpha ->
-            "ONE_MINUS_DST_ALPHA"
-
-        ConstantColor ->
-            "CONSTANT_COLOR"
-
-        OneMinusConstantColor ->
-            "ONE_MINUS_CONSTANT_COLOR"
-
-        ConstantAlpha ->
-            "CONSTANT_ALPHA"
-
-        OneMinusConstantAlpha ->
-            "ONE_MINUS_CONSTANT_ALPHA"
-
-        SrcAlphaSaturate ->
-            "SRC_ALPHA_SATURATE"
-
-
-{-| The `BlendOperation` type allows you to define which blend operation to use.
+{-| Enable the depth buffer, and prefill it with given value each time before
+the scene is rendered. The value is clamped between 0 and 1.
 -}
-type BlendOperation
-    = Zero
-    | One
-    | SrcColor
-    | OneMinusSrcColor
-    | DstColor
-    | OneMinusDstColor
-    | SrcAlpha
-    | OneMinusSrcAlpha
-    | DstAlpha
-    | OneMinusDstAlpha
-    | ConstantColor
-    | OneMinusConstantColor
-    | ConstantAlpha
-    | OneMinusConstantAlpha
-    | SrcAlphaSaturate
+depth : Float -> Option
+depth =
+    Depth
 
 
-{-| -}
-computeBlendModeString : BlendMode -> String
-computeBlendModeString mode =
-    case mode of
-        Add ->
-            "FUNC_ADD"
-
-        Subtract ->
-            "FUNC_SUBTRACT"
-
-        ReverseSubtract ->
-            "FUNC_REVERSE_SUBTRACT"
-
-
-{-| The `BlendMode` type allows you to define which blend mode to use.
+{-| Enable the stencil buffer, specifying the index used to fill the
+stencil buffer before we render the scene. The index is masked with 2^m - 1,
+where m >= 8 is the number of bits in the stencil buffer. The default is 0.
 -}
-type BlendMode
-    = Add
-    | Subtract
-    | ReverseSubtract
+stencil : Int -> Option
+stencil =
+    Stencil
 
 
-{-| -}
-computeCompareModeString : CompareMode -> String
-computeCompareModeString mode =
-    case mode of
-        Never ->
-            "NEVER"
-
-        Always ->
-            "ALWAYS"
-
-        Less ->
-            "LESS"
-
-        LessOrEqual ->
-            "LEQUAL"
-
-        Equal ->
-            "EQUAL"
-
-        GreaterOrEqual ->
-            "GEQUAL"
-
-        Greater ->
-            "Greater"
-
-        NotEqual ->
-            "NOTEQUAL"
-
-
-{-| The `CompareMode` type allows you to define how to compare values.
+{-| Enable multisample antialiasing of the drawing buffer, if supported by
+the platform. Useful when you need to have smooth lines and smooth edges of
+triangles at a lower cost than supersampling (rendering to larger dimensions and
+then scaling down with CSS transform).
 -}
-type CompareMode
-    = Never
-    | Always
-    | Less
-    | LessOrEqual
-    | Equal
-    | GreaterOrEqual
-    | Greater
-    | NotEqual
+antialias : Option
+antialias =
+    Antialias
 
 
-{-| -}
-computeFaceModeString : FaceMode -> String
-computeFaceModeString mode =
-    case mode of
-        Front ->
-            "FRONT"
-
-        Back ->
-            "BACK"
-
-        FrontAndBack ->
-            "FRONT_AND_BACK"
-
-
-{-| The `FaceMode` type defines which face of the stencil state is updated.
+{-| Set the red, green, blue and alpha channels, that will be used to
+fill the drawing buffer every time before drawing the scene. The values are
+clamped between 0 and 1. The default is all 0's.
 -}
-type FaceMode
-    = Front
-    | Back
-    | FrontAndBack
-
-
-{-| -}
-computeZModeString : ZMode -> String
-computeZModeString mode =
-    case mode of
-        Keep ->
-            "KEEP"
-
-        None ->
-            "ZERO"
-
-        Replace ->
-            "REPLACE"
-
-        Increment ->
-            "INCREMENT"
-
-        Decrement ->
-            "DECREMENT"
-
-        Invert ->
-            "INVERT"
-
-        IncrementWrap ->
-            "INCREMENT_WRAP"
-
-        DecrementWrap ->
-            "DECREMENT_WRAP"
-
-
-{-| The `ZMode` type allows you to define what to do with the stencil buffer value.
-
-+ `Keep`: Keeps the current value.
-+ `None`: Sets the stencil buffer value to 0.
-+ `Replace`: Sets the stencil buffer value to `ref`,
-See `StencilFunc` for more information.
-+ `Increment`: Increments the current stencil buffer value.
-Clamps to the maximum representable unsigned value.
-+ `Decrement`: Decrements the current stencil buffer value. Clamps to 0.
-+ `Invert`: Bitwise inverts the current stencil buffer value.
-+ `IncrementWrap`: Increments the current stencil buffer value.
-Wraps stencil buffer value to zero when incrementing
-the maximum representable unsigned value.
-+ `DecrementWrap`: Decrements the current stencil buffer value.
-Wraps stencil buffer value to the maximum representable unsigned
-value when decrementing a stencil buffer value of zero.
--}
-type ZMode
-    = Keep
-    | None
-    | Replace
-    | Increment
-    | Decrement
-    | Invert
-    | IncrementWrap
-    | DecrementWrap
+clearColor : Float -> Float -> Float -> Float -> Option
+clearColor =
+    ClearColor

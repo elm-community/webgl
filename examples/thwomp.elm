@@ -1,68 +1,55 @@
--- Thanks to The PaperNES Guy for the texture:
--- http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
+module Main exposing (main)
 
+{-
+   Thanks to The PaperNES Guy for the texture:
+   http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
+-}
 
-module Main exposing (..)
-
-import Math.Vector2 exposing (Vec2)
-import Math.Vector3 as V3 exposing (..)
-import Math.Matrix4 exposing (..)
+import Html exposing (Html, text)
+import Html.Attributes exposing (width, height, style)
+import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector2 as Vec2 exposing (Vec2, vec2)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Mouse
 import Task exposing (Task)
-import WebGL exposing (..)
+import WebGL exposing (Mesh, Shader, Entity)
+import WebGL.Texture as Texture exposing (Texture, defaultOptions, Error)
 import Window
-import Html exposing (Html)
-import Html.Attributes exposing (width, height)
 
 
 type alias Model =
     { size : Window.Size
     , position : Mouse.Position
-    , textures : ( Maybe Texture, Maybe Texture )
+    , textures : Maybe ( Texture, Texture )
     }
 
 
 type Action
     = TexturesError Error
-    | TexturesLoaded ( Maybe Texture, Maybe Texture )
+    | TexturesLoaded ( Texture, Texture )
     | Resize Window.Size
     | MouseMove Mouse.Position
 
 
-update : Action -> Model -> ( Model, Cmd Action )
-update action model =
-    case action of
-        TexturesError err ->
-            ( model, Cmd.none )
-
-        TexturesLoaded textures ->
-            ( { model | textures = textures }, Cmd.none )
-
-        Resize size ->
-            ( { model | size = size }, Cmd.none )
-
-        MouseMove position ->
-            ( { model | position = position }, Cmd.none )
+main : Program Never Model Action
+main =
+    Html.program
+        { init = init
+        , view = view
+        , subscriptions = subscriptions
+        , update = update
+        }
 
 
 init : ( Model, Cmd Action )
 init =
-    ( { size = { width = 0, height = 0 }
-      , position = { x = 0, y = 0 }
-      , textures = ( Nothing, Nothing )
+    ( { size = Window.Size 0 0
+      , position = Mouse.Position 0 0
+      , textures = Nothing
       }
     , Cmd.batch
         [ Task.perform Resize Window.size
         , fetchTextures
-            |> Task.attempt
-                (\result ->
-                    case result of
-                        Err err ->
-                            TexturesError err
-
-                        Ok val ->
-                            TexturesLoaded val
-                )
         ]
     )
 
@@ -75,79 +62,111 @@ subscriptions _ =
         ]
 
 
-main : Program Never Model Action
-main =
-    Html.program
-        { init = init
-        , view = view face sides
-        , subscriptions = subscriptions
-        , update = update
-        }
+update : Action -> Model -> ( Model, Cmd Action )
+update action model =
+    case action of
+        TexturesError err ->
+            ( model, Cmd.none )
+
+        TexturesLoaded textures ->
+            ( { model | textures = Just textures }, Cmd.none )
+
+        Resize size ->
+            ( { model | size = size }, Cmd.none )
+
+        MouseMove position ->
+            ( { model | position = position }, Cmd.none )
 
 
-fetchTextures : Task Error ( Maybe Texture, Maybe Texture )
+fetchTextures : Cmd Action
 fetchTextures =
-    loadTextureWithFilter Nearest "texture/thwomp_face.jpg"
+    [ "texture/thwomp-face.jpg"
+    , "texture/thwomp-side.jpg"
+    ]
+        |> List.map
+            (Texture.loadWith
+                { defaultOptions
+                    | magnify = Texture.nearest
+                    , minify = Texture.nearest
+                }
+            )
+        |> Task.sequence
         |> Task.andThen
-            (\faceTexture ->
-                loadTextureWithFilter Nearest "texture/thwomp_side.jpg"
-                    |> Task.andThen
-                        (\sideTexture ->
-                            Task.succeed ( Just faceTexture, Just sideTexture )
-                        )
+            (\textures ->
+                case textures of
+                    face :: side :: _ ->
+                        Task.succeed ( face, side )
+
+                    _ ->
+                        Task.fail Texture.LoadError
+            )
+        |> Task.attempt
+            (\result ->
+                case result of
+                    Err error ->
+                        TexturesError error
+
+                    Ok textures ->
+                        TexturesLoaded textures
             )
 
 
 
--- MESHES - define the mesh for a Thwomp's face
+-- Meshes
 
 
 type alias Vertex =
-    { position : Vec3, coord : Vec3 }
+    { position : Vec3
+    , coord : Vec2
+    }
 
 
-face : List ( Vertex, Vertex, Vertex )
-face =
-    rotatedSquare ( 0, 0 )
+faceMesh : Mesh Vertex
+faceMesh =
+    WebGL.triangles square
 
 
-sides : List ( Vertex, Vertex, Vertex )
-sides =
-    List.concatMap rotatedSquare [ ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, -90 ) ]
+sidesMesh : Mesh Vertex
+sidesMesh =
+    [ ( 90, 0 ), ( 180, 0 ), ( 270, 0 ), ( 0, 90 ), ( 0, 270 ) ]
+        |> List.concatMap rotatedSquare
+        |> WebGL.triangles
 
 
 rotatedSquare : ( Float, Float ) -> List ( Vertex, Vertex, Vertex )
 rotatedSquare ( angleXZ, angleYZ ) =
     let
-        x =
-            makeRotate (degrees angleXZ) j
+        transformMat =
+            Mat4.mul
+                (Mat4.makeRotate (degrees angleXZ) Vec3.j)
+                (Mat4.makeRotate (degrees angleYZ) Vec3.i)
 
-        y =
-            makeRotate (degrees angleYZ) i
+        transform vertex =
+            { vertex
+                | position =
+                    Mat4.transform transformMat vertex.position
+            }
 
-        t =
-            mul x y
-
-        each f ( a, b, c ) =
-            ( f a, f b, f c )
+        transformTriangle ( a, b, c ) =
+            ( transform a, transform b, transform c )
     in
-        List.map (each (\v -> { v | position = transform t v.position })) square
+        List.map transformTriangle square
 
 
 square : List ( Vertex, Vertex, Vertex )
 square =
     let
         topLeft =
-            Vertex (vec3 -1 1 1) (vec3 0 1 0)
+            Vertex (vec3 -1 1 1) (vec2 0 1)
 
         topRight =
-            Vertex (vec3 1 1 1) (vec3 1 1 0)
+            Vertex (vec3 1 1 1) (vec2 1 1)
 
         bottomLeft =
-            Vertex (vec3 -1 -1 1) (vec3 0 0 0)
+            Vertex (vec3 -1 -1 1) (vec2 0 0)
 
         bottomRight =
-            Vertex (vec3 1 -1 1) (vec3 1 0 0)
+            Vertex (vec3 1 -1 1) (vec2 1 0)
     in
         [ ( topLeft, topRight, bottomLeft )
         , ( bottomLeft, topRight, bottomRight )
@@ -158,98 +177,89 @@ square =
 -- VIEW
 
 
-perspective : Model -> Mat4
-perspective { size, position } =
+view : Model -> Html Action
+view { textures, size, position } =
+    case textures of
+        Just ( faceTexture, sideTexture ) ->
+            WebGL.toHtml
+                [ width size.width
+                , height size.height
+                , style [ ( "display", "block" ) ]
+                ]
+                [ toEntity faceMesh faceTexture size position
+                , toEntity sidesMesh sideTexture size position
+                ]
+
+        Nothing ->
+            text "Loading textures..."
+
+
+toEntity : Mesh Vertex -> Texture -> Window.Size -> Mouse.Position -> Entity
+toEntity mesh texture { width, height } { x, y } =
+    WebGL.entity
+        vertexShader
+        fragmentShader
+        mesh
+        { texture = texture
+        , perspective =
+            perspective
+                (toFloat width)
+                (toFloat height)
+                (toFloat x)
+                (toFloat y)
+        }
+
+
+perspective : Float -> Float -> Float -> Float -> Mat4
+perspective width height x y =
     let
-        w =
-            toFloat size.width
-
-        h =
-            toFloat size.height
-
-        x =
-            toFloat position.x
-
-        y =
-            toFloat position.y
-
-        distance =
-            6
-
-        eyeX =
-            distance * (w / 2 - x) / w
-
-        eyeY =
-            distance * (y - h / 2) / h
-
         eye =
-            V3.scale distance (V3.normalize (vec3 eyeX eyeY distance))
+            vec3 (0.5 - x / width) -(0.5 - y / height) 1
+                |> Vec3.normalize
+                |> Vec3.scale 6
     in
-        mul (makePerspective 45 (w / h) 0.01 100)
-            (makeLookAt eye (vec3 0 0 0) j)
-
-
-view :
-    List ( Vertex, Vertex, Vertex )
-    -> List ( Vertex, Vertex, Vertex )
-    -> Model
-    -> Html Action
-view mesh1 mesh2 ({ textures, size } as model) =
-    let
-        perspectiveMatrix =
-            perspective model
-
-        ( texture1, texture2 ) =
-            textures
-    in
-        WebGL.toHtml
-            [ width size.width, height size.height ]
-            (toEntity mesh1 texture1 perspectiveMatrix
-                ++ toEntity mesh2 texture2 perspectiveMatrix
-            )
-
-
-toEntity : List ( Vertex, Vertex, Vertex ) -> Maybe Texture -> Mat4 -> List Renderable
-toEntity mesh response perspective =
-    response
-        |> Maybe.map
-            (\texture ->
-                [ render vertexShader fragmentShader (Triangle mesh) { texture = texture, perspective = perspective } ]
-            )
-        |> Maybe.withDefault []
+        Mat4.mul
+            (Mat4.makePerspective 45 (width / height) 0.01 100)
+            (Mat4.makeLookAt eye (vec3 0 0 0) Vec3.j)
 
 
 
 -- SHADERS
 
 
-vertexShader : Shader { position : Vec3, coord : Vec3 } { u | perspective : Mat4 } { vcoord : Vec2 }
+type alias Uniforms =
+    { perspective : Mat4
+    , texture : Texture
+    }
+
+
+vertexShader : Shader Vertex Uniforms { vcoord : Vec2 }
 vertexShader =
     [glsl|
 
-attribute vec3 position;
-attribute vec3 coord;
-uniform mat4 perspective;
-varying vec2 vcoord;
+        attribute vec3 position;
+        attribute vec2 coord;
+        uniform mat4 perspective;
+        varying vec2 vcoord;
 
-void main () {
-  gl_Position = perspective * vec4(position, 1.0);
-  vcoord = coord.xy;
-}
+        void main () {
+          gl_Position = perspective * vec4(position, 1.0);
+          vcoord = coord.xy;
+        }
 
-|]
+    |]
 
 
-fragmentShader : Shader {} { u | texture : Texture } { vcoord : Vec2 }
+fragmentShader : Shader {} Uniforms { vcoord : Vec2 }
 fragmentShader =
     [glsl|
 
-precision mediump float;
-uniform sampler2D texture;
-varying vec2 vcoord;
+        precision mediump float;
+        uniform sampler2D texture;
+        varying vec2 vcoord;
 
-void main () {
-  gl_FragColor = texture2D(texture, vcoord);
-}
+        void main () {
+          gl_FragColor = texture2D(texture, vcoord);
+        }
 
-|]
+    |]
