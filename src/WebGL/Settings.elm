@@ -3,7 +3,6 @@ module WebGL.Settings
         ( Setting
         , scissor
         , colorMask
-        , dither
         , polygonOffset
         , sampleCoverage
         , sampleAlphaToCoverage
@@ -15,7 +14,7 @@ module WebGL.Settings
         )
 
 {-| # Settings
-@docs Setting, scissor, colorMask, dither, polygonOffset, sampleAlphaToCoverage,
+@docs Setting, scissor, colorMask, polygonOffset, sampleAlphaToCoverage,
   sampleCoverage, cullFace
 
 ## Face Modes
@@ -58,15 +57,6 @@ output on the screen.
 colorMask : Bool -> Bool -> Bool -> Bool -> Setting
 colorMask =
     I.ColorMask
-
-
-{-| Dither color components or indices before they are written on the screen.
-This is needed to prevent gradient banding, when transitioning between close
-colors. The implementation is platform specific.
--}
-dither : Setting
-dither =
-    I.Dither
 
 
 {-| When you want to draw the highlighting wireframe on top of the solid

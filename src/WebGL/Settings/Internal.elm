@@ -8,7 +8,6 @@ type Setting
     | Scissor Int Int Int Int
     | ColorMask Bool Bool Bool Bool
     | CullFace Int
-    | Dither
     | PolygonOffset Float Float
     | SampleCoverage Float Bool
     | SampleAlphaToCoverage

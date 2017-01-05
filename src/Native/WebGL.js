@@ -94,9 +94,6 @@ var _elm_community$webgl$Native_WebGL = function () {
         gl.enable(gl.CULL_FACE);
         gl.cullFace(setting._0);
         break;
-      case 'Dither':
-        gl.enable(gl.DITHER);
-        break;
       case 'PolygonOffset':
         gl.enable(gl.POLYGON_OFFSET_FILL);
         gl.polygonOffset(setting._0, setting._1);
@@ -136,9 +133,6 @@ var _elm_community$webgl$Native_WebGL = function () {
         break;
       case 'CullFace':
         gl.disable(gl.CULL_FACE);
-        break;
-      case 'Dither':
-        gl.disable(gl.DITHER);
         break;
       case 'PolygonOffset':
         gl.disable(gl.POLYGON_OFFSET_FILL);
