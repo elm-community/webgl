@@ -1,5 +1,9 @@
 module Main exposing (main)
 
+{-
+   Rotating cube with colored sides.
+-}
+
 import AnimationFrame
 import Color exposing (Color)
 import Html exposing (Html)
@@ -56,7 +60,7 @@ uniforms theta =
 
 
 
--- MESH: a cube in which each vertex has a position and color
+-- Mesh
 
 
 type alias Vertex =
@@ -71,11 +75,9 @@ cubeMesh =
         rft =
             vec3 1 1 1
 
-        -- right, front, top
         lft =
             vec3 -1 1 1
 
-        -- left,  front, top
         lbt =
             vec3 -1 -1 1
 
@@ -127,7 +129,7 @@ face rawColor a b c d =
 
 
 
--- SHADERS
+-- Shaders
 
 
 vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }

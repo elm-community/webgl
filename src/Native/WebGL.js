@@ -75,13 +75,13 @@ var _elm_community$webgl$Native_WebGL = function () {
         break;
       case 'StencilTest':
         gl.enable(gl.STENCIL_TEST);
-        // t1 ref1 vMask1 fail1 zfail1 zpass1 mask1 t2 ref2 vMask2 fail2 zfail2 zpass2 mask2
-        gl.stencilFuncSeparate(gl.FRONT, setting._0, setting._1, setting._2);
-        gl.stencilOpSeparate(gl.FRONT, setting._3, setting._4, setting._5);
-        gl.stencilMaskSeparate(gl.FRONT, setting._6);
-        gl.stencilFuncSeparate(gl.BACK, setting._7, setting._8, setting._9);
-        gl.stencilOpSeparate(gl.BACK, setting._10, setting._11, setting._12);
-        gl.stencilMaskSeparate(gl.BACK, setting._13);
+        // ref mask writeMask test1 fail1 zfail1 zpass1 test2 fail2 zfail2 zpass2
+        gl.stencilFuncSeparate(gl.FRONT, setting._3, setting._0, setting._1);
+        gl.stencilOpSeparate(gl.FRONT, setting._4, setting._5, setting._6);
+        gl.stencilMaskSeparate(gl.FRONT, setting._2);
+        gl.stencilFuncSeparate(gl.BACK, setting._7, setting._0, setting._1);
+        gl.stencilOpSeparate(gl.BACK, setting._8, setting._9, setting._10);
+        gl.stencilMaskSeparate(gl.BACK, setting._2);
         break;
       case 'Scissor':
         gl.enable(gl.SCISSOR_TEST);

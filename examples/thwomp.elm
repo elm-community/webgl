@@ -1,19 +1,20 @@
--- Thanks to The PaperNES Guy for the texture:
--- http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
-
-
 module Main exposing (main)
 
-import Math.Vector2 exposing (Vec2, vec2)
-import Math.Vector3 as Vec3 exposing (Vec3, vec3)
+{-
+   Thanks to The PaperNES Guy for the texture:
+   http://the-papernes-guy.deviantart.com/art/Thwomps-Thwomps-Thwomps-186879685
+-}
+
+import Html exposing (Html, text)
+import Html.Attributes exposing (width, height, style)
 import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector2 as Vec2 exposing (Vec2, vec2)
+import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Mouse
 import Task exposing (Task)
 import WebGL exposing (Mesh, Shader, Entity)
 import WebGL.Texture as Texture exposing (Texture, defaultOptions, Error)
 import Window
-import Html exposing (Html, text)
-import Html.Attributes exposing (width, height, style)
 
 
 type alias Model =
@@ -42,8 +43,8 @@ main =
 
 init : ( Model, Cmd Action )
 init =
-    ( { size = { width = 0, height = 0 }
-      , position = { x = 0, y = 0 }
+    ( { size = Window.Size 0 0
+      , position = Mouse.Position 0 0
       , textures = Nothing
       }
     , Cmd.batch
@@ -111,7 +112,7 @@ fetchTextures =
 
 
 
--- MESHES - define the mesh for a Thwomp's face
+-- Meshes
 
 
 type alias Vertex =

@@ -1,12 +1,16 @@
 module Main exposing (main)
 
-import Math.Vector3 as Vec3 exposing (vec3, Vec3)
-import Math.Matrix4 as Mat4 exposing (Mat4)
-import WebGL exposing (Mesh, Shader)
+{-
+   Rotating triangle, that is a "hello world" of the WebGL
+-}
+
+import AnimationFrame
 import Html exposing (Html)
 import Html.Attributes exposing (width, height, style)
-import AnimationFrame
+import Math.Matrix4 as Mat4 exposing (Mat4)
+import Math.Vector3 as Vec3 exposing (vec3, Vec3)
 import Time exposing (Time)
+import WebGL exposing (Mesh, Shader)
 
 
 main : Program Never Time Time

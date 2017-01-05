@@ -2,7 +2,6 @@ module WebGL.Settings.StencilTest
     exposing
         ( test
         , testSeparate
-        , Options
         , Test
         , always
         , equal
@@ -28,7 +27,7 @@ module WebGL.Settings.StencilTest
 or [OpenGL docs](https://www.opengl.org/sdk/docs/man2/xhtml/glStencilFunc.xml).
 
 # Stencil Test
-@docs test, Options
+@docs test
 
 ## Tests
 @docs Test, always, equal, never, less, greater, notEqual,
@@ -46,17 +45,11 @@ import WebGL.Settings exposing (Setting)
 import WebGL.Settings.Internal as I
 
 
-{-| -}
-test : Options -> Setting
-test options =
-    testSeparate options options
-
-
 {-| When you need to draw an intercection of two entities, e.g. a reflection in
 the mirror, you can test against the stencil buffer, that has to be enabled
 with [`stencil`](WebGL#stencil) option in [`toHtmlWith`](WebGL#toHtmlWith).
 
-Stencil [test](#Test) decides if the pixel should be drawn on the screen.
+Stencil test decides if the pixel should be drawn on the screen.
 Depending on the results, it performs one of the following
 [operations](#Operation) on the stencil buffer:
 
@@ -71,96 +64,108 @@ For example, draw the mirror `Entity` on the screen and fill the stencil buffer
 with all 1's:
 
     test
-        { test = always 1 0xFF -- pass for each pixel and set ref to 1
-        , fail = keep          -- noop
-        , zfail = keep         -- noop
-        , zpass = replace      -- write ref to the stencil buffer
-        , writeMask = 0xFF     -- enable all stencil bits for writing
+        { ref = 1
+        , mask = 0xFF
+        , test = always    -- pass for each pixel
+        , fail = keep      -- noop
+        , zfail = keep     -- noop
+        , zpass = replace  -- write ref to the stencil buffer
+        , writeMask = 0xFF -- enable all stencil bits for writing
         }
 
 Crop the reflection `Entity` using the values from the stencil buffer:
 
     test
-        { test = equal 1 0xFF -- pass when the stencil value is 1
-        , fail = keep         -- noop
-        , zfail = keep        -- noop
-        , zpass = keep        -- noop
-        , writeMask = 0       -- disable writing to the stencil buffer
+        { ref = 1
+        , mask = 0xFF
+        , test = equal  -- pass when the stencil value is equal to ref = 1
+        , fail = keep   -- noop
+        , zfail = keep  -- noop
+        , zpass = keep  -- noop
+        , writeMask = 0 -- disable writing to the stencil buffer
         }
 
 You can see the complete example
 [here](https://github.com/elm-community/webgl/blob/master/examples/crate.elm).
 -}
-type alias Options =
-    { test : Test
+test :
+    { ref : Int
+    , mask : Int
+    , test : Test
     , fail : Operation
     , zfail : Operation
     , zpass : Operation
     , writeMask : Int
     }
+    -> Setting
+test { ref, mask, test, fail, zfail, zpass, writeMask } =
+    testSeparate
+        { ref = ref, mask = mask, writeMask = writeMask }
+        { test = test, fail = fail, zfail = zfail, zpass = zpass }
+        { test = test, fail = fail, zfail = zfail, zpass = zpass }
 
 
 {-| The `Test` allows you to define how to compare the reference value
 with the stencil buffer value, in order to set the conditions under which
 the pixel will be drawn.
 
-    always ref mask         -- Always pass
-    equal ref mask          -- ref & mask == stencil & mask
-    never ref mask          -- Never pass
-    less ref mask           -- ref & mask < stencil & mask
-    greater ref mask        -- ref & mask > stencil & mask
-    notEqual ref mask       -- ref & mask != stencil & mask
-    lessOrEqual ref mask    -- ref & mask <= stencil & mask
-    greaterOrEqual ref mask -- ref & mask >= stencil & mask
+    always         -- Always pass
+    equal          -- ref & mask == stencil & mask
+    never          -- Never pass
+    less           -- ref & mask < stencil & mask
+    greater        -- ref & mask > stencil & mask
+    notEqual       -- ref & mask != stencil & mask
+    lessOrEqual    -- ref & mask <= stencil & mask
+    greaterOrEqual -- ref & mask >= stencil & mask
 -}
 type Test
-    = Test Int Int Int
+    = Test Int
 
 
 {-| -}
-always : Int -> Int -> Test
-always ref =
-    Test 519 ref
+always : Test
+always =
+    Test 519
 
 
 {-| -}
-equal : Int -> Int -> Test
+equal : Test
 equal =
     Test 514
 
 
 {-| -}
-never : Int -> Int -> Test
-never ref =
-    Test 512 ref
+never : Test
+never =
+    Test 512
 
 
 {-| -}
-less : Int -> Int -> Test
+less : Test
 less =
     Test 513
 
 
 {-| -}
-greater : Int -> Int -> Test
+greater : Test
 greater =
     Test 516
 
 
 {-| -}
-notEqual : Int -> Int -> Test
+notEqual : Test
 notEqual =
     Test 517
 
 
 {-| -}
-lessOrEqual : Int -> Int -> Test
+lessOrEqual : Test
 lessOrEqual =
     Test 515
 
 
 {-| -}
-greaterOrEqual : Int -> Int -> Test
+greaterOrEqual : Test
 greaterOrEqual =
     Test 518
 
@@ -231,26 +236,27 @@ decrementWrap =
     Operation 34056
 
 
-{-| Different options for front and back facing polygons. Both options must
-use the same `ref`, `mask` and `writeMask`,
-[see here](https://www.khronos.org/registry/webgl/specs/latest/1.0/#6.10).
+{-| Different options for front and back facing polygons.
 -}
-testSeparate : Options -> Options -> Setting
-testSeparate options1 options2 =
+testSeparate :
+    { ref : Int, mask : Int, writeMask : Int }
+    -> { test : Test, fail : Operation, zfail : Operation, zpass : Operation }
+    -> { test : Test, fail : Operation, zfail : Operation, zpass : Operation }
+    -> Setting
+testSeparate { ref, mask, writeMask } options1 options2 =
     let
-        expandTest (Test test ref mask) fn =
-            fn test ref mask
+        expandTest (Test test) fn =
+            fn test
 
         expandOp (Operation op) fn =
             fn op
 
-        expand { test, fail, zfail, zpass, writeMask } =
+        expand { test, fail, zfail, zpass } =
             expandTest test
                 >> expandOp fail
                 >> expandOp zfail
                 >> expandOp zpass
-                >> (|>) writeMask
     in
-        I.StencilTest
+        I.StencilTest ref mask writeMask
             |> expand options1
             |> expand options2

@@ -1,6 +1,8 @@
 module Main exposing (main)
 
-{- Try adding the ability to crouch or to land on top of the crate. -}
+{-
+   Try adding the ability to crouch or to land on top of the crate.
+-}
 
 import AnimationFrame
 import Html exposing (Html, text, div)
@@ -250,7 +252,7 @@ scene { width, height } person texture =
 
 
 
--- Define the mesh for a crate
+-- Mesh
 
 
 type alias Vertex =

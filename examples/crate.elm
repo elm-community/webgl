@@ -59,7 +59,7 @@ main =
 
 
 
--- VIEW
+-- View
 
 
 view : Model -> Html Msg
@@ -106,7 +106,9 @@ scene camera texture =
             , far = 1
             }
         , StencilTest.test
-            { test = StencilTest.always 1 0xFF
+            { ref = 1
+            , mask = 0xFF
+            , test = StencilTest.always
             , fail = StencilTest.keep
             , zfail = StencilTest.keep
             , zpass = StencilTest.replace
@@ -121,7 +123,9 @@ scene camera texture =
         }
     , WebGL.entityWith
         [ StencilTest.test
-            { test = StencilTest.equal 1 0xFF
+            { ref = 1
+            , mask = 0xFF
+            , test = StencilTest.equal
             , fail = StencilTest.keep
             , zfail = StencilTest.keep
             , zpass = StencilTest.keep
@@ -148,18 +152,12 @@ scene camera texture =
 
 
 
--- MESHES
+-- Meshes
 
 
 type alias Vertex =
     { position : Vec3
     , coord : Vec2
-    }
-
-
-type alias Uniforms =
-    { perspective : Mat4
-    , texture : Texture
     }
 
 
@@ -238,7 +236,13 @@ floorMesh =
 
 
 
--- SHADERS
+-- Shaders
+
+
+type alias Uniforms =
+    { perspective : Mat4
+    , texture : Texture
+    }
 
 
 crateVertex : Shader Vertex Uniforms { vcoord : Vec2 }
