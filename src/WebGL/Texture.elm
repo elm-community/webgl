@@ -77,15 +77,15 @@ load =
 
 {-| Loading a texture can result in two kinds of errors:
 
-    - `LoadError` means the image did not load for some reason. Maybe
-    it was a network problem, or maybe it was a bad file format.
+* `LoadError` means the image did not load for some reason. Maybe
+  it was a network problem, or maybe it was a bad file format.
 
-    - `SizeError` means you are trying to load a weird shaped image.
-    For most operations you want a rectangle where the width is a power
-    of two and the height is a power of two. This is more efficient on
-    the GPU and it makes mipmapping possible. You can use
-    [`nonPowerOfTwoOptions`](#nonPowerOfTwoOptions) to get things working
-    now, but it is way better to create power-of-two assets!
+* `SizeError` means you are trying to load a weird shaped image.
+  For most operations you want a rectangle where the width is a power
+  of two and the height is a power of two. This is more efficient on
+  the GPU and it makes mipmapping possible. You can use
+  [`nonPowerOfTwoOptions`](#nonPowerOfTwoOptions) to get things working
+  now, but it is way better to create power-of-two assets!
 -}
 type Error
     = LoadError
