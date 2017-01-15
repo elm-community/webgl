@@ -5,6 +5,11 @@ var _elm_community$webgl$Native_Texture = function () {
   var LINEAR = 9729;
   var CLAMP_TO_EDGE = 33071;
 
+  function guid() {
+    // eslint-disable-next-line camelcase
+    return _elm_lang$core$Native_Utils.guid();
+  }
+
   function load(magnify, mininify, horizontalWrap, verticalWrap, flipY, url) {
     // eslint-disable-next-line camelcase
     var Scheduler = _elm_lang$core$Native_Scheduler;
@@ -39,6 +44,7 @@ var _elm_community$webgl$Native_Texture = function () {
         if (isSizeValid) {
           callback(Scheduler.succeed({
             ctor: 'Texture',
+            id: guid(),
             createTexture: createTexture,
             width: width,
             height: height

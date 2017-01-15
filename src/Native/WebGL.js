@@ -320,7 +320,7 @@ var _elm_community$webgl$Native_WebGL = function () {
   */
   function makeSequentialBuffer(numIndices) {
     var indices = new Uint16Array(numIndices);
-    for (var i = 0; i < numIndices; i += 1) {
+    for (var i = 0; i < numIndices; i++) {
       indices[i] = i;
     }
     return indices;
@@ -434,7 +434,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
       var numAttributes = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
 
-      for (var i = 0; i < numAttributes; i += 1) {
+      for (var i = 0; i < numAttributes; i++) {
         var attribute = gl.getActiveAttrib(program, i);
 
         var attribLocation = gl.getAttribLocation(program, attribute.name);
@@ -467,7 +467,6 @@ var _elm_community$webgl$Native_WebGL = function () {
   }
 
   function createUniformSetters(gl, model, program) {
-
     var textureCounter = 0;
     function createUniformSetter(program, uniform) {
       var uniformLocation = gl.getUniformLocation(program, uniform.name);
@@ -497,23 +496,15 @@ var _elm_community$webgl$Native_WebGL = function () {
             gl.uniformMatrix4fv(uniformLocation, false, value);
           };
         case gl.SAMPLER_2D:
-          var currentTexture = textureCounter;
-          var activeName = 'TEXTURE' + currentTexture;
-          textureCounter += 1;
-          return function (value) {
-            var texture = value;
-            var tex = undefined;
-            if (texture.id) {
-              tex = model.cache.textures[texture.id];
-            } else {
-              texture.id = guid();
-            }
+          var currentTexture = textureCounter++;
+          return function (texture) {
+            gl.activeTexture(gl.TEXTURE0 + currentTexture);
+            var tex = model.cache.textures[texture.id];
             if (!tex) {
               LOG('Created texture');
               tex = texture.createTexture(gl);
               model.cache.textures[texture.id] = tex;
             }
-            gl.activeTexture(gl[activeName]);
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
           };
@@ -529,7 +520,7 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     var uniformSetters = {};
     var numUniforms = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
-    for (var i = 0; i < numUniforms; i += 1) {
+    for (var i = 0; i < numUniforms; i++) {
       var uniform = gl.getActiveUniform(program, i);
       uniformSetters[uniform.name] = createUniformSetter(program, uniform);
     }
