@@ -60,7 +60,9 @@ var _elm_community$webgl$Native_Texture = function () {
       img.onerror = function () {
         callback(Scheduler.fail({ ctor: 'LoadError' }));
       };
-      img.crossOrigin = 'Anonymous';
+      if (url.slice(0, 5) !== 'data:') {
+        img.crossOrigin = 'Anonymous';
+      }
       img.src = url;
     });
   }
