@@ -21,6 +21,7 @@ module WebGL.Texture
         , clampToEdge
         , mirroredRepeat
         , size
+        , fromEntities
         )
 
 {-|
@@ -28,7 +29,7 @@ module WebGL.Texture
 @docs Texture, load, Error, size
 
 # Custom Loading
-@docs loadWith, Options, defaultOptions
+@docs loadWith, Options, defaultOptions, fromEntities
 
 ## Resizing
 @docs Resize, linear, nearest,
@@ -288,3 +289,17 @@ or other times you may want to use only a potion of a texture image.
 size : Texture -> ( Int, Int )
 size =
     Native.Texture.size
+
+
+{-| Create a texture from a list of entities
+-}
+fromEntities : Options -> ( Int, Int ) -> List WebGL.Entity -> Result Error Texture
+fromEntities { magnify, minify, horizontalWrap, verticalWrap, flipY } ( width, height ) entities =
+    let
+        expand (Resize mag) (Resize min) (Wrap hor) (Wrap vert) =
+            Native.Texture.fromEntities mag min hor vert flipY width height entities
+    in
+        expand magnify
+            minify
+            horizontalWrap
+            verticalWrap

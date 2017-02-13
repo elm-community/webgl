@@ -34,6 +34,7 @@
         "F4": false,
         "F5": false,
         "F6": false,
+        "F8": false,
         "Float32Array": false,
         "Int32Array": false,
         "Uint16Array": false

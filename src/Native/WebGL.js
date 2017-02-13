@@ -363,71 +363,106 @@ var _elm_community$webgl$Native_WebGL = function () {
       return domNode;
     }
 
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     LOG('Drawing');
+
+    drawEntities(gl, null, model.cache, gl.drawingBufferWidth, gl.drawingBufferHeight, model.entities);
+
+    return domNode;
+  }
+
+  function drawEntities(gl, framebuffer, cache, width, height, entities) {
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.viewport(0, 0, width, height);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+
+    listEach(drawEntity, entities);
 
     function drawEntity(entity) {
       if (entity.buffer._0.ctor === '[]') {
         return;
       }
 
+      // Resolve all textures from the uniforms
+      var t;
+      var tex;
+      for (var u in entity.uniforms) {
+        tex = entity.uniforms[u];
+        if (tex.initTexture) {
+          t = tex.initTexture(gl);
+          drawEntities(gl, t.framebuffer, cache, tex.width, tex.height, tex.entities);
+          // Generate mipmap
+          if (t.isMipmap) {
+            gl.bindTexture(gl.TEXTURE_2D, t.texture);
+            gl.generateMipmap(gl.TEXTURE_2D);
+          }
+          // Restore the previous settings
+          gl.bindTexture(gl.TEXTURE_2D, null);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+          gl.viewport(0, 0, width, height);
+          delete tex.initTexture;
+          tex.createTexture = function () {
+            return t.texture;
+          };
+        }
+      }
+
       var progid;
       var program;
       if (entity.vert.id && entity.frag.id) {
         progid = getProgID(entity.vert.id, entity.frag.id);
-        program = model.cache.programs[progid];
+        program = cache.programs[progid];
       }
 
       if (!program) {
 
         var vshader;
         if (entity.vert.id) {
-          vshader = model.cache.shaders[entity.vert.id];
+          vshader = cache.shaders[entity.vert.id];
         } else {
           entity.vert.id = guid();
         }
 
         if (!vshader) {
           vshader = doCompile(gl, entity.vert.src, gl.VERTEX_SHADER);
-          model.cache.shaders[entity.vert.id] = vshader;
+          cache.shaders[entity.vert.id] = vshader;
         }
 
         var fshader;
         if (entity.frag.id) {
-          fshader = model.cache.shaders[entity.frag.id];
+          fshader = cache.shaders[entity.frag.id];
         } else {
           entity.frag.id = guid();
         }
 
         if (!fshader) {
           fshader = doCompile(gl, entity.frag.src, gl.FRAGMENT_SHADER);
-          model.cache.shaders[entity.frag.id] = fshader;
+          cache.shaders[entity.frag.id] = fshader;
         }
 
         program = doLink(gl, vshader, fshader);
         progid = getProgID(entity.vert.id, entity.frag.id);
-        model.cache.programs[progid] = program;
+        cache.programs[progid] = program;
 
       }
 
       gl.useProgram(program);
 
       progid = progid || getProgID(entity.vert.id, entity.frag.id);
-      var setters = model.cache.uniformSetters[progid];
+      var setters = cache.uniformSetters[progid];
       if (!setters) {
-        setters = createUniformSetters(gl, model, program);
-        model.cache.uniformSetters[progid] = setters;
+        setters = createUniformSetters(gl, cache, program);
+        cache.uniformSetters[progid] = setters;
       }
 
       setUniforms(setters, entity.uniforms);
 
       var entityType = getRenderInfo(gl, entity.buffer.ctor);
-      var buffer = model.cache.buffers[entity.buffer.guid];
+      var buffer = cache.buffers[entity.buffer.guid];
 
       if (!buffer) {
         buffer = doBindSetup(gl, entityType, entity.buffer);
-        model.cache.buffers[entity.buffer.guid] = buffer;
+        cache.buffers[entity.buffer.guid] = buffer;
       }
 
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.indexBuffer);
@@ -462,11 +497,9 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     }
 
-    listEach(drawEntity, model.entities);
-    return domNode;
   }
 
-  function createUniformSetters(gl, model, program) {
+  function createUniformSetters(gl, cache, program) {
     var textureCounter = 0;
     function createUniformSetter(program, uniform) {
       var uniformLocation = gl.getUniformLocation(program, uniform.name);
@@ -499,11 +532,11 @@ var _elm_community$webgl$Native_WebGL = function () {
           var currentTexture = textureCounter++;
           return function (texture) {
             gl.activeTexture(gl.TEXTURE0 + currentTexture);
-            var tex = model.cache.textures[texture.id];
+            var tex = cache.textures[texture.id];
             if (!tex) {
               LOG('Created texture');
               tex = texture.createTexture(gl);
-              model.cache.textures[texture.id] = tex;
+              cache.textures[texture.id] = tex;
             }
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
