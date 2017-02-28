@@ -481,19 +481,19 @@ var _elm_community$webgl$Native_WebGL = function () {
           };
         case gl.FLOAT_VEC2:
           return function (value) {
-            gl.uniform2fv(uniformLocation, value);
+            gl.uniform2fv(uniformLocation, new Float32Array(value));
           };
         case gl.FLOAT_VEC3:
           return function (value) {
-            gl.uniform3fv(uniformLocation, value);
+            gl.uniform3fv(uniformLocation, new Float32Array(value));
           };
         case gl.FLOAT_VEC4:
           return function (value) {
-            gl.uniform4fv(uniformLocation, value);
+            gl.uniform4fv(uniformLocation, new Float32Array(value));
           };
         case gl.FLOAT_MAT4:
           return function (value) {
-            gl.uniformMatrix4fv(uniformLocation, false, value);
+            gl.uniformMatrix4fv(uniformLocation, false, new Float32Array(value));
           };
         case gl.SAMPLER_2D:
           var currentTexture = textureCounter++;
