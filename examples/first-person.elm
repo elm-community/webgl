@@ -202,7 +202,6 @@ view { size, person, texture } =
         ]
         [ WebGL.toHtmlWith
             [ WebGL.depth 1
-            , WebGL.antialias
             ]
             [ width size.width
             , height size.height
