@@ -368,7 +368,7 @@ var _elm_community$webgl$Native_WebGL = function () {
     LOG('Drawing');
 
     function drawEntity(entity) {
-      if (listLength(entity.buffer._0) === 0) {
+      if (entity.buffer._0.ctor === '[]') {
         return;
       }
 
