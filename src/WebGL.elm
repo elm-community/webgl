@@ -275,6 +275,13 @@ entityWith =
 
 {-| Render a WebGL scene with the given html attributes, and entities.
 
+`width` and `height` html attributes set the coordinate space dimensions,
+while corresponding css properties set the displayed size of the canvas.
+
+To prevent blurriness on retina screens, render at 2x and scale down with css.
+
+To remove an extra whitespace around the canvas, set `display: block`.
+
 By default, alpha channel with premultiplied alpha, antialias and depth buffer
 are enabled. Use [`toHtmlWith`](#toHtmlWith) for custom options.
 
