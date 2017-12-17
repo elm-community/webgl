@@ -275,10 +275,11 @@ entityWith =
 
 {-| Render a WebGL scene with the given html attributes, and entities.
 
-`width` and `height` html attributes set the coordinate space dimensions,
-while corresponding css properties set the displayed size of the canvas.
+`width` and `height` html attributes resize the drawing buffer, while
+the corresponding css properties scale the canvas element.
 
-To prevent blurriness on retina screens, render at 2x and scale down with css.
+To prevent blurriness on retina screens, you may want the drawing buffer 
+to be twice the size of the canvas element.
 
 To remove an extra whitespace around the canvas, set `display: block`.
 
