@@ -26,7 +26,7 @@ module WebGL
         )
 
 {-| The WebGL API is for high performance rendering. Definitely read about
-[how WebGL works](https://github.com/elm-community/webgl/blob/master/README.md)
+[how WebGL works](http://package.elm-lang.org/packages/elm-community/webgl/latest)
 and look at [some examples](https://github.com/elm-community/webgl/tree/master/examples)
 before trying to do too much with just the documentation provided here.
 
@@ -72,6 +72,8 @@ The supported types in attributes are: `Int`, `Float`, `WebGL.Texture`
 and `Vec2`, `Vec3`, `Vec4`, `Mat4` from the
 [linear-algebra](http://package.elm-lang.org/packages/elm-community/linear-algebra/latest)
 package.
+
+Do not generate meshes in `view`, [read more about this here](http://package.elm-lang.org/packages/elm-community/webgl/latest#making-the-most-of-the-gpu).
 -}
 type Mesh attributes
     = Triangles (List ( attributes, attributes, attributes ))
