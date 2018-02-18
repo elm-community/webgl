@@ -173,7 +173,7 @@ They are written in a language called
 [GLSL](http://en.wikipedia.org/wiki/OpenGL_Shading_Language). Read more about
 shaders [here](https://github.com/elm-community/webgl/blob/master/README.md).
 
-Normally you specify a shader with a `glsl[| |]` block. Elm compiler will parse
+Normally you specify a shader with a `[glsl| |]` block. Elm compiler will parse
 the shader code block and derive the type signature for your shader.
 
 * `attributes` define vertices in the [mesh](#Mesh);
