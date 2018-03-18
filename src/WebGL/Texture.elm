@@ -21,6 +21,8 @@ module WebGL.Texture
         , clampToEdge
         , mirroredRepeat
         , size
+        , FrameBuffer
+        , frameBuffer
         , fromEntities
         )
 
@@ -29,7 +31,7 @@ module WebGL.Texture
 @docs Texture, load, Error, size
 
 # Custom Loading
-@docs loadWith, Options, defaultOptions, fromEntities
+@docs loadWith, Options, defaultOptions, FrameBuffer, frameBuffer, fromEntities
 
 ## Resizing
 @docs Resize, linear, nearest,
@@ -291,15 +293,26 @@ size =
     Native.Texture.size
 
 
-{-| Create a texture from a list of entities
+{-| Sometimes you may need to do a multipass rendering, 
+in which case you need to reserve a separate buffer
 -}
-fromEntities : Options -> ( Int, Int ) -> List WebGL.Entity -> Result Error Texture
-fromEntities { magnify, minify, horizontalWrap, verticalWrap, flipY } ( width, height ) entities =
-    let
+type FrameBuffer 
+    = FrameBuffer
+
+
+{-| Reserve a buffer for the offscreen rendering
+-}
+frameBuffer : Options -> (Int, Int) -> Result Error FrameBuffer
+frameBuffer {magnify, minify, horizontalWrap, verticalWrap, flipY} ( width, height ) =
+   let
         expand (Resize mag) (Resize min) (Wrap hor) (Wrap vert) =
-            Native.Texture.fromEntities mag min hor vert flipY width height entities
-    in
-        expand magnify
-            minify
-            horizontalWrap
-            verticalWrap
+            Native.Texture.frameBuffer mag min hor vert flipY width height
+   in
+        expand magnify minify horizontalWrap verticalWrap
+
+
+{-| Creates a texture, that is rendered on the offscreen buffer
+-}
+fromEntities : FrameBuffer -> List WebGL.Entity -> Texture
+fromEntities buffer entities =
+    Native.Texture.fromEntities buffer entities

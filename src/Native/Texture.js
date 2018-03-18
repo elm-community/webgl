@@ -80,17 +80,14 @@ var _elm_community$webgl$Native_Texture = function () {
     return _elm_lang$core$Native_Utils.Tuple2(texture.width, texture.height);
   }
 
-  function fromEntities(magnify, mininify, horizontalWrap, verticalWrap, flipY, width, height, entities) {
+  function frameBuffer(magnify, mininify, horizontalWrap, verticalWrap, flipY, width, height) {
     var isMipmap = mininify !== NEAREST && mininify !== LINEAR;
 
     if (isSizeValid(width, height, isMipmap, horizontalWrap, verticalWrap)) {
       return { ctor: 'Ok', _0: {
-        ctor: 'Texture',
+        ctor: 'FrameBuffer',
         id: guid(),
-        initTexture: initTexture,
-        entities: entities,
-        width: width,
-        height: height
+        fromEntities: fromEntities
       }};
     } else {
       return { ctor: 'Err', _0: {
@@ -100,7 +97,7 @@ var _elm_community$webgl$Native_Texture = function () {
       }};
     }
 
-    function initTexture(gl) {
+    function initFrameBuffer(gl) {
       var framebuffer = gl.createFramebuffer();
       var texture = gl.createTexture();
       var renderbuffer = gl.createRenderbuffer();
@@ -117,17 +114,34 @@ var _elm_community$webgl$Native_Texture = function () {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       return {
         texture: texture,
-        framebuffer: framebuffer,
-        isMipmap: isMipmap
+        framebuffer: framebuffer
+      };
+    }
+
+    function fromEntities(id, entities) {
+      return {
+        ctor: 'Texture',
+        id: guid(),
+        bufferId: id,
+        initFrameBuffer: initFrameBuffer,
+        isMipmap: isMipmap,
+        entities: entities,
+        width: width,
+        height: height
       };
     }
 
   }
 
+  function fromEntities(framebuffer, entities) {
+    return framebuffer.fromEntities(framebuffer.id, entities);
+  }
+
   return {
     size: size,
     load: F6(load),
-    fromEntities: F8(fromEntities)
+    frameBuffer: F7(frameBuffer),
+    fromEntities: F2(fromEntities)
   };
 
 }();

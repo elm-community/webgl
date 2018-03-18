@@ -358,6 +358,9 @@ var _elm_community$webgl$Native_WebGL = function () {
 
     var model = data.model;
     var gl = model.cache.gl;
+    
+    // Keep a track of used frame buffers
+    model.cache.usedFrameBuffers = [];
 
     if (!gl) {
       return domNode;
@@ -370,9 +373,9 @@ var _elm_community$webgl$Native_WebGL = function () {
     return domNode;
   }
 
-  function drawEntities(gl, framebuffer, cache, width, height, entities) {
+  function drawEntities(gl, currentFrameBuffer, cache, width, height, entities) {
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, currentFrameBuffer);
     gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 
@@ -384,26 +387,41 @@ var _elm_community$webgl$Native_WebGL = function () {
       }
 
       // Resolve all textures from the uniforms
-      var t;
+      var framebuffer;
       var tex;
       for (var u in entity.uniforms) {
         tex = entity.uniforms[u];
-        if (tex.initTexture) {
-          t = tex.initTexture(gl);
-          drawEntities(gl, t.framebuffer, cache, tex.width, tex.height, tex.entities);
-          // Generate mipmap
-          if (t.isMipmap) {
-            gl.bindTexture(gl.TEXTURE_2D, t.texture);
-            gl.generateMipmap(gl.TEXTURE_2D);
+        if (tex.bufferId !== undefined) {
+
+          // Count used buffers
+          cache.usedFrameBuffers[tex.bufferId] = (cache.usedFrameBuffers[tex.bufferId] || 0) + 1;
+
+          if (cache.framebuffers[tex.bufferId] && cache.framebuffers[tex.bufferId].length >= cache.usedFrameBuffers[tex.bufferId]) {
+            framebuffer = cache.framebuffers[tex.bufferId][cache.usedFrameBuffers[tex.bufferId] - 1];
+          } else {
+            framebuffer = (cache.framebuffers[tex.bufferId] || (cache.framebuffers[tex.bufferId] = []))[cache.usedFrameBuffers[tex.bufferId] - 1] = tex.initFrameBuffer(gl);
           }
+
+          if (framebuffer.lastTextureId !== tex.id) {
+            drawEntities(gl, framebuffer.framebuffer, cache, tex.width, tex.height, tex.entities);
+          
+            // Generate mipmap if needed
+            if (tex.isMipmap) {
+              gl.bindTexture(gl.TEXTURE_2D, framebuffer.texture);
+              gl.generateMipmap(gl.TEXTURE_2D);
+            }
+
+            framebuffer.lastTextureId = tex.id;
+
+            tex.createTexture = function () {
+              return framebuffer.texture;
+            };
+          }
+
           // Restore the previous settings
           gl.bindTexture(gl.TEXTURE_2D, null);
-          gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, currentFrameBuffer);
           gl.viewport(0, 0, width, height);
-          delete tex.initTexture;
-          tex.createTexture = function () {
-            return t.texture;
-          };
         }
       }
 
@@ -536,7 +554,10 @@ var _elm_community$webgl$Native_WebGL = function () {
             if (!tex) {
               LOG('Created texture');
               tex = texture.createTexture(gl);
-              cache.textures[texture.id] = tex;
+              if (tex.bufferId === undefined) {
+                // Only textures loaded from images are cached
+                cache.textures[texture.id] = tex;
+              }
             }
             gl.bindTexture(gl.TEXTURE_2D, tex);
             gl.uniform1i(uniformLocation, currentTexture);
@@ -659,6 +680,8 @@ var _elm_community$webgl$Native_WebGL = function () {
     model.cache.uniformSetters = {};
     model.cache.buffers = [];
     model.cache.textures = [];
+    model.cache.framebuffers = [];
+    model.cache.usedFrameBuffers = [];
 
     // Render for the first time.
     // This has to be done in animation frame,

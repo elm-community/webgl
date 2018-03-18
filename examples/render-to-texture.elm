@@ -11,8 +11,8 @@ import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Time exposing (Time)
-import WebGL exposing (Mesh, Shader, Texture)
-import WebGL.Texture as Texture
+import WebGL exposing (Mesh, Shader)
+import WebGL.Texture as Texture exposing (Texture, FrameBuffer)
 
 
 main : Program Never Time Time
@@ -27,8 +27,8 @@ main =
 
 view : Float -> Html msg
 view t =
-    case maybeTexture of
-        Just texture ->
+    case maybeFrameBuffer of
+        Just frameBuffer ->
             WebGL.toHtml
                 [ width 400
                 , height 400
@@ -39,7 +39,9 @@ view t =
                     texturedFragmentShader
                     texturedMesh
                     { perspective = perspective (t / 1000)
-                    , texture = texture
+                    , texture = Texture.fromEntities 
+                          frameBuffer 
+                          [ WebGL.entity vertexShader fragmentShader mesh { brightness = (1 + sin (t / 500) / 2) / 1.5 } ]
                     }
                 ]
 
@@ -107,16 +109,13 @@ type alias Uniforms =
     }
 
 
-maybeTexture : Maybe Texture
-maybeTexture =
-    Texture.fromEntities
-        Texture.defaultOptions
-        ( 256, 256 )
-        [ WebGL.entity vertexShader fragmentShader mesh {} ]
+maybeFrameBuffer : Maybe FrameBuffer
+maybeFrameBuffer =
+    Texture.frameBuffer Texture.defaultOptions ( 256, 256 )
         |> Result.toMaybe
 
 
-vertexShader : Shader Vertex {} { vcolor : Vec3 }
+vertexShader : Shader Vertex { brightness : Float } { vcolor : Vec3 }
 vertexShader =
     [glsl|
 
@@ -132,15 +131,16 @@ vertexShader =
     |]
 
 
-fragmentShader : Shader {} {} { vcolor : Vec3 }
+fragmentShader : Shader {} { brightness : Float } { vcolor : Vec3 }
 fragmentShader =
     [glsl|
 
         precision mediump float;
         varying vec3 vcolor;
+        uniform float brightness;
 
         void main () {
-            gl_FragColor = vec4(vcolor, 1.0);
+            gl_FragColor = vec4(vcolor * brightness, 1.0);
         }
 
     |]
