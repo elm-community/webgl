@@ -4,32 +4,36 @@ module Main exposing (main)
    Rotating square, that uses a texture
 -}
 
-import AnimationFrame
 import Html exposing (Html, text)
 import Html.Attributes exposing (height, style, width)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import Time exposing (Time)
 import WebGL exposing (Mesh, Shader)
 import WebGL.Texture as Texture exposing (Texture, FrameBuffer)
+import Crate
 
 
-main : Program Never Time Time
+main : Program Never Crate.Model Crate.Msg
 main =
     Html.program
-        { init = ( 1000, Cmd.none )
+        { init = Crate.init
         , view = view
-        , subscriptions = (\model -> AnimationFrame.diffs Basics.identity)
-        , update = (\elapsed currentTime -> ( elapsed + currentTime, Cmd.none ))
+        , subscriptions = Crate.subscriptions
+        , update = Crate.update
         }
 
 
-view : Float -> Html msg
-view t =
-    case maybeFrameBuffer of
-        Just frameBuffer ->
-            WebGL.toHtml
+view : Crate.Model -> Html Crate.Msg
+view { theta, texture } =
+    case (maybeFrameBuffer, texture) of
+        (Just frameBuffer, Just tex) ->
+            WebGL.toHtmlWith
+                [ WebGL.alpha True
+                , WebGL.antialias
+                , WebGL.depth 1
+                , WebGL.stencil 0
+                ]
                 [ width 400
                 , height 400
                 , style [ ( "display", "block" ) ]
@@ -38,14 +42,14 @@ view t =
                     texturedVertexShader
                     texturedFragmentShader
                     texturedMesh
-                    { perspective = perspective (t / 1000)
+                    { perspective = perspective (-theta * 5)
                     , texture = Texture.fromEntities 
                           frameBuffer 
-                          [ WebGL.entity vertexShader fragmentShader mesh { brightness = (1 + sin (t / 500) / 2) / 1.5 } ]
+                          (Crate.scene (Crate.perspective 0) tex)
                     }
                 ]
 
-        Nothing ->
+        _ ->
             text "no texture"
 
 
@@ -111,40 +115,8 @@ type alias Uniforms =
 
 maybeFrameBuffer : Maybe FrameBuffer
 maybeFrameBuffer =
-    Texture.frameBuffer Texture.defaultOptions ( 256, 256 )
+    Texture.frameBuffer Texture.defaultOptions ( 512, 512 )
         |> Result.toMaybe
-
-
-vertexShader : Shader Vertex { brightness : Float } { vcolor : Vec3 }
-vertexShader =
-    [glsl|
-
-        attribute vec3 position;
-        attribute vec3 color;
-        varying vec3 vcolor;
-
-        void main () {
-            gl_Position = vec4(position, 1.0);
-            vcolor = color;
-        }
-
-    |]
-
-
-fragmentShader : Shader {} { brightness : Float } { vcolor : Vec3 }
-fragmentShader =
-    [glsl|
-
-        precision mediump float;
-        varying vec3 vcolor;
-        uniform float brightness;
-
-        void main () {
-            gl_FragColor = vec4(vcolor * brightness, 1.0);
-        }
-
-    |]
-
 
 texturedVertexShader : Shader TexturedVertex Uniforms { vcoord : Vec2 }
 texturedVertexShader =

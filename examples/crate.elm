@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Crate exposing (..)
 
 {-
    This example was inspired by https://open.gl/depthstencils
@@ -48,12 +48,17 @@ init =
     )
 
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    AnimationFrame.diffs Animate
+
+
 main : Program Never Model Msg
 main =
     Html.program
         { init = init
         , view = view
-        , subscriptions = (\model -> AnimationFrame.diffs Animate)
+        , subscriptions = subscriptions
         , update = update
         }
 
