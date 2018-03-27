@@ -122,6 +122,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         break;
       case 'DepthTest':
         gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(true);
         break;
       case 'StencilTest':
         gl.disable(gl.STENCIL_TEST);
