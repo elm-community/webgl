@@ -90,7 +90,7 @@ perspective angle =
     List.foldr Mat4.mul
         Mat4.identity
         [ Mat4.makePerspective 45 1 0.01 100
-        , Mat4.makeLookAt (vec3 0 3 8) (vec3 0 0 0) (vec3 0 1 0)
+        , Mat4.makeLookAt (vec3 0 4 6) (vec3 0 0 0) (vec3 0 1 0)
         , Mat4.makeRotate (3 * angle) (vec3 0 1 0)
         ]
 
