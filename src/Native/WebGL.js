@@ -113,8 +113,9 @@ var _elm_community$webgl$Native_WebGL = function () {
   *
   *  @param {WebGLRenderingContext} gl context
   *  @param {Setting} setting coming in from Elm
+  *  @param {Constants} constants default values from WebGL
   */
-  function revertSetting(gl, setting) {
+  function revertSetting(gl, setting, constants) {
     switch (setting.ctor) {
       case 'Blend':
         gl.disable(gl.BLEND);
@@ -124,6 +125,7 @@ var _elm_community$webgl$Native_WebGL = function () {
         break;
       case 'StencilTest':
         gl.disable(gl.STENCIL_TEST);
+        gl.stencilMask(constants.STENCIL_WRITEMASK);
         break;
       case 'Scissor':
         gl.disable(gl.SCISSOR_TEST);
@@ -511,7 +513,7 @@ var _elm_community$webgl$Native_WebGL = function () {
       gl.drawElements(entityType.mode, buffer.numIndices, gl.UNSIGNED_SHORT, 0);
 
       listEach(function (setting) {
-        revertSetting(gl, setting);
+        revertSetting(gl, setting, cache.constants);
       }, entity.settings);
 
     }
@@ -676,6 +678,9 @@ var _elm_community$webgl$Native_WebGL = function () {
     }
 
     model.cache.gl = gl;
+    model.cache.constants = {
+      STENCIL_WRITEMASK: gl.getParameter(gl.STENCIL_WRITEMASK)
+    };
     model.cache.shaders = [];
     model.cache.programs = {};
     model.cache.uniformSetters = {};
