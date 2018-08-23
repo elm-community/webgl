@@ -1,3 +1,5 @@
+DEPRECATED: Moved to [elm-explorations/webgl](https://package.elm-lang.org/packages/elm-explorations/webgl/latest)
+
 # WebGL for Elm
 
 [A simple API](http://package.elm-lang.org/packages/elm-community/webgl/latest/WebGL)
