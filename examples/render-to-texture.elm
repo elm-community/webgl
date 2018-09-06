@@ -6,7 +6,7 @@ module Main exposing (main)
 
 import Html exposing (Html, text)
 import Html.Attributes exposing (height, style, width)
-import WebGL exposing (Mesh, Shader)
+import WebGL exposing (Mesh, Shader, Entity)
 import WebGL.Texture as Texture exposing (Texture, FrameBuffer, Error, defaultOptions)
 import Crate
 
@@ -40,14 +40,27 @@ view { theta, texture } =
                     Crate.crateFragment
                     Crate.crateMesh
                     { perspective = Crate.perspective (-theta)
-                    , texture =
-                        Texture.fromEntities frameBuffer
-                            (Crate.scene (Crate.perspective (theta * 5)) tex)
+                    , texture = viewCrateCube frameBuffer tex theta
                     }
                 ]
 
         _ ->
             text "no texture"
+
+
+viewCrateCube : FrameBuffer -> Texture -> Float -> Texture
+viewCrateCube  frameBuffer texture theta =
+    Texture.fromEntities frameBuffer 
+        [ WebGL.entity
+            Crate.crateVertex
+            Crate.crateFragment
+            Crate.crateMesh
+            { perspective = Crate.perspective (-theta)
+            , texture =
+                Texture.fromEntities frameBuffer
+                    (Crate.scene (Crate.perspective (theta * 5)) texture)
+            }
+        ]
 
 
 frameBufferOptions : Texture.Options
